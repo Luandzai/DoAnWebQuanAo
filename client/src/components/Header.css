@@ -1,0 +1,76 @@
+/* client/src/components/Header.css */
+
+.header-container {
+  position: sticky; /* Giữ header ở trên cùng khi cuộn */
+  top: 0;
+  z-index: 1020; /* Đảm bảo header đè lên trên */
+  background-color: white;
+}
+
+/* 1. Thanh Top-bar */
+.top-bar {
+  padding: 0.35rem 1rem;
+  font-size: 0.85rem;
+}
+
+/* 2. Thanh Navbar chính */
+.main-navbar {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* 3. Các link điều hướng */
+.nav-links .nav-link {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  margin: 0 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.nav-links .nav-link:hover {
+  color: #0d6efd; /* Màu xanh khi hover */
+}
+
+/* 4. Ô tìm kiếm */
+.search-form {
+  min-width: 200px;
+}
+
+.search-button {
+  border-left: none;
+}
+.search-form .form-control:focus {
+  box-shadow: none;
+  border-color: #ced4da;
+}
+.search-button:hover {
+  background-color: #f8f9fa;
+}
+
+/* 5. Các icon bên phải */
+.nav-icons .nav-icon-link {
+  color: #333;
+  padding: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.nav-icons .nav-icon-link:hover {
+  color: #0d6efd;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 991.98px) {
+  .nav-links {
+    margin: 1rem 0; /* Thêm khoảng cách trên/dưới khi ở mobile */
+  }
+  .search-form {
+    min-width: 100%;
+    margin: 0.5rem 0;
+  }
+  .nav-icons {
+    flex-direction: row; /* Giữ các icon trên 1 hàng */
+    justify-content: flex-start;
+    margin-top: 0.5rem;
+  }
+}

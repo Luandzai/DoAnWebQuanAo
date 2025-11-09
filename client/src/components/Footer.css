@@ -1,0 +1,19 @@
+/* client/src/components/Footer.css */
+
+.footer-container {
+  font-size: 0.9rem;
+}
+
+.footer-text {
+  color: #adb5bd; /* Màu xám nhạt */
+}
+
+.footer-links .nav-link {
+  padding: 0.3rem 0; /* Giảm padding */
+  color: #adb5bd;
+  transition: color 0.2s ease;
+}
+
+.footer-links .nav-link:hover {
+  color: #ffffff; /* Màu trắng khi hover */
+}

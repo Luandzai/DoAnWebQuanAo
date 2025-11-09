@@ -1,0 +1,30 @@
+/* client/src/index.css (Nội dung MỚI) */
+
+/*
+  CSS Reset cơ bản
+  Chúng ta xóa bỏ mọi giới hạn chiều rộng (max-width)
+  và căn giữa (margin: 0 auto)
+*/
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Đảm bảo body chiếm toàn bộ không gian */
+  width: 100%;
+  overflow-x: hidden; /* Ngăn cuộn ngang */
+}
+
+#root {
+  /* Đảm bảo #root (nơi React render) cũng chiếm 100% */
+  width: 100%;
+}
+
+/* Tùy chỉnh nhỏ cho Link (tái sử dụng từ code cũ) */
+a {
+  text-decoration: none;
+}
