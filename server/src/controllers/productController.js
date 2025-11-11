@@ -352,6 +352,62 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+// @desc    Admin: Lấy chi tiết 1 sản phẩm (cho trang admin)
+// @route   GET /api/admin/products/:id
+// @access  Private (Admin)
+exports.getAdminProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Lấy thông tin sản phẩm cơ bản
+    const [productRows] = await pool.query(
+      `SELECT * FROM SanPham WHERE SanPhamID = ?`,
+      [id]
+    );
+    if (productRows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    }
+    const product = productRows[0];
+
+    // 2. Lấy danh sách hình ảnh
+    const [images] = await pool.query(
+      "SELECT HinhAnhID, URL, LaAnhChinh FROM HinhAnhSanPham WHERE SanPhamID = ? ORDER BY ViTri ASC",
+      [id]
+    );
+
+    // 3. Lấy danh sách phiên bản và thuộc tính của chúng
+    const [variants] = await pool.query(
+      `SELECT
+         pb.PhienBanID, pb.SKU, pb.GiaBan, pb.SoLuongTonKho,
+         JSON_OBJECTAGG(tt.TenThuocTinh, gtt.GiaTri) AS options
+       FROM PhienBanSanPham AS pb
+       JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
+       JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+       JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+       WHERE pb.SanPhamID = ?
+       GROUP BY pb.PhienBanID`,
+      [id]
+    );
+
+    // Đổi tên các key cho nhất quán với frontend
+    const formattedVariants = variants.map((v) => ({
+      ...v,
+      sku: v.SKU,
+      price: v.GiaBan,
+      stock: v.SoLuongTonKho,
+    }));
+
+    res.json({
+      ...product,
+      images: images,
+      versions: formattedVariants, // Trả về 'versions' thay vì 'PhienBan'
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiết sản phẩm admin:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
 exports.updateProduct = async (req, res) => {
   const connection = await pool.getConnection();
   try {
@@ -364,12 +420,23 @@ exports.updateProduct = async (req, res) => {
       ThuongHieu,
       ChatLieu,
       versions: versionsJson,
-      deletedImages,
+      deletedImages: deletedImagesJson, // Ảnh bị xóa
+      deletedVariantIds: deletedVariantIdsJson, // Phiên bản bị xóa
     } = req.body;
 
     let versions = [];
     if (versionsJson) {
       versions = JSON.parse(versionsJson);
+    }
+
+    let deletedImages = [];
+    if (deletedImagesJson) {
+      deletedImages = JSON.parse(deletedImagesJson);
+    }
+
+    let deletedVariantIds = [];
+    if (deletedVariantIdsJson) {
+      deletedVariantIds = JSON.parse(deletedVariantIdsJson);
     }
 
     await connection.beginTransaction();
@@ -391,16 +458,17 @@ exports.updateProduct = async (req, res) => {
 
     // 2. Handle deleted images
     if (deletedImages && deletedImages.length > 0) {
+      const imageIdsToDelete = deletedImages.map((img) => img.HinhAnhID);
+
       // Delete from Cloudinary
       for (const image of deletedImages) {
-        const publicId = image.URL.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(publicId);
+        const publicId = image.URL.split("/").pop().split(".")[0]; // Cần logic tốt hơn để lấy publicId
+        if (publicId) await cloudinary.uploader.destroy(publicId);
       }
-
-      // Delete from database
+      // Delete from DB
       await connection.query(
         "DELETE FROM HinhAnhSanPham WHERE HinhAnhID IN (?)",
-        [deletedImages.map((img) => img.HinhAnhID)]
+        [imageIdsToDelete]
       );
     }
 
@@ -429,57 +497,54 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    // 4. Update variants
-    // First, get existing variants to compare
-    const [existingVariants] = await connection.query(
-      "SELECT PhienBanID FROM PhienBanSanPham WHERE SanPhamID = ?",
-      [id]
-    );
-    const existingVariantIds = existingVariants.map((v) => v.PhienBanID);
-
-    // Delete all existing variants and their details
-    if (existingVariantIds.length > 0) {
+    // 4. Handle deleted variants
+    if (deletedVariantIds && deletedVariantIds.length > 0) {
       await connection.query(
         "DELETE FROM ChiTietPhienBan WHERE PhienBanID IN (?)",
-        [existingVariantIds]
+        [deletedVariantIds]
       );
       await connection.query(
-        "DELETE FROM PhienBanSanPham WHERE SanPhamID = ?",
-        [id]
+        "DELETE FROM PhienBanSanPham WHERE PhienBanID IN (?)",
+        [deletedVariantIds]
       );
     }
 
-    // Insert new variants
+    // 5. Handle new and updated variants
     for (const version of versions) {
-      // Insert PhienBanSanPham
-      const [pbResult] = await connection.query(
-        `INSERT INTO PhienBanSanPham (SanPhamID, SKU, GiaBan, SoLuongTonKho) 
-         VALUES (?, ?, ?, ?)`,
-        [id, version.sku, version.price, version.stock]
-      );
-      const newPhienBanID = pbResult.insertId;
-
-      // Insert ChiTietPhienBan
-      for (const [attrName, attrValue] of Object.entries(version.options)) {
-        const [attrValueRows] = await connection.query(
-          `SELECT gtt.GiaTriID 
-           FROM GiaTriThuocTinh AS gtt
-           JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
-           WHERE tt.TenThuocTinh = ? AND gtt.GiaTri = ?`,
-          [attrName, attrValue]
+      if (version.PhienBanID) {
+        // UPDATE existing variant
+        await connection.query(
+          `UPDATE PhienBanSanPham SET SKU = ?, GiaBan = ?, SoLuongTonKho = ? WHERE PhienBanID = ?`,
+          [version.sku, version.price, version.stock, version.PhienBanID]
         );
+      } else {
+        // INSERT new variant
+        const [pbResult] = await connection.query(
+          `INSERT INTO PhienBanSanPham (SanPhamID, SKU, GiaBan, SoLuongTonKho) VALUES (?, ?, ?, ?)`,
+          [id, version.sku, version.price, version.stock]
+        );
+        const newPhienBanID = pbResult.insertId;
 
-        if (attrValueRows.length === 0) {
-          throw new Error(
-            `Giá trị thuộc tính không hợp lệ: ${attrName}: ${attrValue}`
+        // Insert ChiTietPhienBan for the new variant
+        for (const [attrName, attrValue] of Object.entries(version.options)) {
+          const [attrValueRows] = await connection.query(
+            `SELECT gtt.GiaTriID FROM GiaTriThuocTinh AS gtt
+             JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+             WHERE tt.TenThuocTinh = ? AND gtt.GiaTri = ?`,
+            [attrName, attrValue]
+          );
+
+          if (attrValueRows.length === 0) {
+            throw new Error(
+              `Giá trị thuộc tính không hợp lệ: ${attrName}: ${attrValue}`
+            );
+          }
+
+          await connection.query(
+            `INSERT INTO ChiTietPhienBan (PhienBanID, GiaTriID) VALUES (?, ?)`,
+            [newPhienBanID, attrValueRows[0].GiaTriID]
           );
         }
-
-        await connection.query(
-          `INSERT INTO ChiTietPhienBan (PhienBanID, GiaTriID) 
-           VALUES (?, ?)`,
-          [newPhienBanID, attrValueRows[0].GiaTriID]
-        );
       }
     }
 

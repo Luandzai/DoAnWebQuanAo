@@ -53,6 +53,7 @@ const AdminProductModal = ({
   const [previewImages, setPreviewImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]); // Trạng thái lưu trữ ảnh hiện có
 
+  const [deletedVariantIds, setDeletedVariantIds] = useState([]); // <-- MỚI: Theo dõi ID phiên bản bị xóa
   // 1. Tải dữ liệu cần thiết (Danh mục, Thuộc tính)
   useEffect(() => {
     const fetchData = async () => {
@@ -107,31 +108,20 @@ const AdminProductModal = ({
     setSelectedOptions({}); // Reset options khi đổi danh mục
   }, [formData.DanhMucID, allAttributes]);
 
-  // 3. Thiết lập dữ liệu khi chế độ EDIT/CREATE
+  // 3. Thiết lập dữ liệu khi mở modal (Chế độ CREATE)
   useEffect(() => {
     if (show) {
+      // Reset tất cả state khi modal mở
+      setError(null);
       setVersions([]);
       setImages([]);
       setPreviewImages([]);
       setSelectedOptions({});
+      setExistingImages([]);
+      setDeletedVariantIds([]);
 
-      if (isEdit && productToEdit) {
-        // Add this block to handle existing images
-        if (productToEdit.images) {
-          setExistingImages(productToEdit.images);
-        }
-
-        setFormData({
-          TenSanPham: productToEdit.TenSanPham || "",
-          Slug: productToEdit.Slug || "",
-          MoTa: productToEdit.MoTa || "",
-          DanhMucID: productToEdit.DanhMucID || "",
-          GiaGoc: productToEdit.GiaGoc || 0,
-          ThuongHieu: productToEdit.ThuongHieu || "",
-          ChatLieu: productToEdit.ChatLieu || "",
-        });
-      } else {
-        setExistingImages([]); // Reset existing images for create mode
+      // Nếu là chế độ "Thêm mới", reset form
+      if (!isEdit) {
         setFormData({
           TenSanPham: "",
           Slug: "",
@@ -142,7 +132,40 @@ const AdminProductModal = ({
           ChatLieu: "",
         });
       }
-      setError(null);
+    }
+  }, [show, isEdit]);
+
+  // 4. Tải dữ liệu chi tiết khi ở chế độ EDIT
+  useEffect(() => {
+    const fetchProductDetailsForEdit = async () => {
+      if (isEdit && productToEdit?.SanPhamID) {
+        setLoadingData(true);
+        try {
+          const { data } = await api.get(
+            `/admin/products/${productToEdit.SanPhamID}`
+          );
+          setFormData({
+            TenSanPham: data.TenSanPham || "",
+            Slug: data.Slug || "",
+            MoTa: data.MoTa || "",
+            DanhMucID: data.DanhMucID || "",
+            GiaGoc: data.GiaGoc || 0,
+            ThuongHieu: data.ThuongHieu || "",
+            ChatLieu: data.ChatLieu || "",
+          });
+          setExistingImages(data.images || []);
+          setVersions(data.versions || []);
+        } catch (err) {
+          setError("Không thể tải chi tiết sản phẩm để chỉnh sửa.");
+          console.error("Error fetching product details for edit:", err);
+        } finally {
+          setLoadingData(false);
+        }
+      }
+    };
+
+    if (show && isEdit) {
+      fetchProductDetailsForEdit();
     }
   }, [show, isEdit, productToEdit, api]);
 
@@ -213,11 +236,17 @@ const AdminProductModal = ({
   };
 
   const handleRemoveVersion = (index) => {
-    setVersions(versions.filter((_, i) => i !== index));
+    const versionToRemove = versions[index];
+    // Nếu phiên bản này đã có trong DB (có PhienBanID), thêm ID vào danh sách xóa
+    if (versionToRemove.PhienBanID) {
+      setDeletedVariantIds((prev) => [...prev, versionToRemove.PhienBanID]);
+    }
+    // Xóa khỏi state hiển thị
+    setVersions((prev) => prev.filter((_, i) => i !== index));
   };
   // -----------------------
 
-  // === HÀM SUBMIT CHÍNH (POST API) ===
+  // === HÀM SUBMIT CHÍNH (POST/PUT API) ===
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitLoading(true);
@@ -247,8 +276,15 @@ const AdminProductModal = ({
     data.append("ChatLieu", formData.ChatLieu || "");
     data.append("versions", JSON.stringify(versions));
 
-    if (formData.deletedImages && formData.deletedImages.length > 0) {
-      data.append("deletedImages", JSON.stringify(formData.deletedImages));
+    // Gửi danh sách ảnh và phiên bản cần xóa (chỉ ở chế độ edit)
+    if (isEdit) {
+      const deletedImages = (formData.deletedImages || []).filter(
+        (img) => img.HinhAnhID
+      );
+      if (deletedImages.length > 0) {
+        data.append("deletedImages", JSON.stringify(deletedImages));
+      }
+      data.append("deletedVariantIds", JSON.stringify(deletedVariantIds));
     }
 
     if (images.length > 0) {
@@ -558,7 +594,7 @@ const AdminProductModal = ({
                           type="text"
                           size="sm"
                           // SỬA: Đảm bảo giá trị là chuỗi cho SKU
-                          value={v.sku || `SKU-${Date.now()}-${index}`}
+                          value={v.sku || ""}
                           onChange={(e) => {
                             const newVersions = [...versions];
                             newVersions[index].sku = e.target.value;

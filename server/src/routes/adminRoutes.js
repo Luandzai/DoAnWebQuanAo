@@ -17,6 +17,7 @@ router.get("/sales/monthly", adminController.getMonthlySales);
 
 // Quản lý Sản phẩm
 router.get("/products", productController.getAdminProducts);
+router.get("/products/:id", productController.getAdminProductById); // <-- ROUTE MỚI
 
 // Quản lý Người dùng
 router.get("/users", adminController.getAllUsers);

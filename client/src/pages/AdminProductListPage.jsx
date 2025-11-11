@@ -405,6 +405,7 @@ const AdminProductListPage = () => {
 
   const handleShowEditModal = (product) => {
     setIsEditMode(true);
+    // Chỉ cần truyền đối tượng có SanPhamID, Modal sẽ tự fetch chi tiết
     setProductToEdit(product);
     setShowModal(true);
   };
