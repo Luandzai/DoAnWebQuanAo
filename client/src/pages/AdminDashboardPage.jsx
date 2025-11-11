@@ -1,5 +1,3 @@
-// client/src/pages/AdminDashboardPage.jsx (HOÀN CHỈNH VỚI BIỂU ĐỒ)
-
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import {
   Card,
@@ -10,6 +8,7 @@ import {
   Alert,
   Badge,
   Form,
+  Button, // FIX: Đã thêm Button
 } from "react-bootstrap";
 import AdminLayout from "../components/AdminLayout";
 import AuthContext from "../context/AuthContext";
@@ -40,21 +39,41 @@ const AdminDashboardPage = () => {
     totalSales: 0,
     newOrdersCount: 0,
     lowStockCount: 0,
-    totalUsersCount: 0, // Đã thêm để hiển thị
+    totalUsersCount: 0,
     latestOrders: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { api } = useContext(AuthContext);
 
-  // STATES MỚI CHO BIỂU ĐỒ
+  // STATES CHO BIỂU ĐỒ (Đã có)
   const [salesData, setSalesData] = useState([]);
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [chartLoading, setChartLoading] = useState(false);
 
+  // === PHẦN CODE MỚI THÊM VÀO ===
+  // STATES MỚI CHO BÁO CÁO SẢN PHẨM / KHÁCH HÀNG
+  const [topProducts, setTopProducts] = useState([]);
+  const [tpLimit, setTpLimit] = useState(10);
+  const [loadingTopProducts, setLoadingTopProducts] = useState(false);
+
+  const [lowStock, setLowStock] = useState([]);
+  const [lsThreshold, setLsThreshold] = useState(10);
+  const [lsLimit, setLsLimit] = useState(50);
+  const [loadingLowStock, setLoadingLowStock] = useState(false);
+
+  const [topCustomers, setTopCustomers] = useState([]);
+  const [tcLimit, setTcLimit] = useState(10);
+  const [loadingTopCustomers, setLoadingTopCustomers] = useState(false);
+  // === KẾT THÚC PHẦN CODE MỚI ===
+
   // Hàm định dạng tiền tệ
   const formatCurrency = (amount) => {
+    // FIX: Thêm kiểm tra an toàn
+    if (typeof amount !== 'number') {
+      amount = 0;
+    }
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
@@ -62,25 +81,71 @@ const AdminDashboardPage = () => {
     }).format(amount);
   };
 
-  // HÀM FETCH DỮ LIỆU BIỂU ĐỒ
+  // HÀM FETCH DỮ LIỆU BIỂU ĐỒ (Đã có)
   const fetchSalesData = async (year) => {
     setChartLoading(true);
     try {
       const { data } = await api.get(`/admin/sales/monthly?year=${year}`);
-      setSalesData(data.salesData);
+      // FIX: Thêm kiểm tra an toàn
+      setSalesData(data.salesData || []);
     } catch (err) {
       console.error("Lỗi tải dữ liệu biểu đồ:", err);
+      setSalesData([]); // Đặt lại mảng rỗng khi lỗi
     } finally {
       setChartLoading(false);
     }
   };
+
+  // === PHẦN CODE MỚI THÊM VÀO ===
+  // HÀM FETCH CHO BÁO CÁO MỚI
+  const fetchTopProducts = async () => {
+    setLoadingTopProducts(true);
+    try {
+      const { data } = await api.get(
+        `/admin/products/top?year=${selectedYear}&limit=${tpLimit}`
+      );
+      setTopProducts(data.products || []);
+    } catch (err) {
+      console.error("Lỗi khi lấy sản phẩm bán chạy:", err);
+    } finally {
+      setLoadingTopProducts(false);
+    }
+  };
+
+  const fetchLowStock = async () => {
+    setLoadingLowStock(true);
+    try {
+      const { data } = await api.get(
+        `/admin/products/low-stock?threshold=${lsThreshold}&limit=${lsLimit}`
+      );
+      setLowStock(data.products || []);
+    } catch (err) {
+      console.error("Lỗi khi lấy sản phẩm sắp hết hàng:", err);
+    } finally {
+      setLoadingLowStock(false);
+    }
+  };
+
+  const fetchTopCustomers = async () => {
+    setLoadingTopCustomers(true);
+    try {
+      const { data } = await api.get(
+        `/admin/customers/top?year=${selectedYear}&limit=${tcLimit}`
+      );
+      setTopCustomers(data.customers || []);
+    } catch (err) {
+      console.error("Lỗi khi lấy khách hàng tiềm năng:", err);
+    } finally {
+      setLoadingTopCustomers(false);
+    }
+  };
+  // === KẾT THÚC PHẦN CODE MỚI ===
 
   // Tải dữ liệu chính (Dashboard Stats)
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        // API đã được sửa ở Backend để trả về totalUsersCount
         const { data } = await api.get("/admin/dashboard-stats");
         setStats(data);
       } catch (err) {
@@ -91,13 +156,36 @@ const AdminDashboardPage = () => {
         setLoading(false);
       }
     };
+    // FIX: Thêm kiểm tra an toàn
+    if (!api) return; 
     fetchStats();
   }, [api]);
 
   // Tải dữ liệu biểu đồ khi năm thay đổi
   useEffect(() => {
+    // FIX: Thêm kiểm tra an toàn
+    if (!api) return;
     fetchSalesData(selectedYear);
   }, [api, selectedYear]);
+
+  // === PHẦN CODE MỚI THÊM VÀO ===
+  // Tự động tải báo cáo khi component mount / tham số thay đổi
+  useEffect(() => {
+    if (!api) return;
+    fetchTopProducts();
+  }, [api, selectedYear, tpLimit]);
+
+  useEffect(() => {
+    if (!api) return;
+    fetchLowStock();
+  }, [api, lsThreshold, lsLimit]);
+
+  useEffect(() => {
+    if (!api) return;
+    fetchTopCustomers();
+  }, [api, selectedYear, tcLimit]);
+  // === KẾT THÚC PHẦN CODE MỚI ===
+
 
   // Mảng năm cho Dropdown (Từ 3 năm trước đến 1 năm sau)
   const availableYears = useMemo(() => {
@@ -111,18 +199,8 @@ const AdminDashboardPage = () => {
   // Dữ liệu và Cấu hình cho Biểu đồ Cột (ChartJS)
   const chartData = {
     labels: [
-      "T1",
-      "T2",
-      "T3",
-      "T4",
-      "T5",
-      "T6",
-      "T7",
-      "T8",
-      "T9",
-      "T10",
-      "T11",
-      "T12",
+      "T1", "T2", "T3", "T4", "T5", "T6",
+      "T7", "T8", "T9", "T10", "T11", "T12",
     ],
     datasets: [
       {
@@ -164,7 +242,6 @@ const AdminDashboardPage = () => {
       y: {
         beginAtZero: true,
         ticks: {
-          // KHẮC PHỤC LỖI TICKS: Chỉ sử dụng callback(value)
           callback: function (value) {
             return formatCurrency(value);
           },
@@ -230,13 +307,10 @@ const AdminDashboardPage = () => {
         )}
       </Row>
 
-      {/* ======================================================= */}
       {/* 2. KHU VỰC BIỂU ĐỒ DOANH THU */}
-      {/* ======================================================= */}
       <Card className="shadow-sm mt-4">
         <Card.Header className="d-flex justify-content-between align-items-center">
           Doanh thu theo tháng
-          {/* Dropdown chọn Năm */}
           <Form.Group controlId="selectYear" className="mb-0">
             <Form.Select
               size="sm"
@@ -257,7 +331,6 @@ const AdminDashboardPage = () => {
               <Spinner animation="border" />
             </div>
           ) : (
-            // Biểu đồ cột Bar Chart
             <Bar options={chartOptions} data={chartData} />
           )}
         </Card.Body>
@@ -267,7 +340,12 @@ const AdminDashboardPage = () => {
       <Card className="shadow-sm mt-4">
         <Card.Header>Đơn hàng chờ xử lý (5 đơn gần nhất)</Card.Header>
         <Card.Body>
-          {stats.latestOrders.length === 0 ? (
+          {/* FIX: Thêm kiểm tra loading và !stats.latestOrders */}
+          {loading ? (
+             <div className="text-center py-3">
+               <Spinner animation="border" size="sm" />
+             </div>
+          ) : !stats.latestOrders || stats.latestOrders.length === 0 ? (
             <p>Không có đơn hàng mới nào cần xử lý.</p>
           ) : (
             <Table responsive hover size="sm">
@@ -299,6 +377,194 @@ const AdminDashboardPage = () => {
           )}
         </Card.Body>
       </Card>
+
+      {/* === PHẦN CODE MỚI THÊM VÀO === */}
+      {/* 4. KHU VỰC BÁO CÁO MỚI */}
+      <Row className="g-3 mt-4">
+        {/* SẢN PHẨM BÁN CHẠY */}
+        <Col lg={6}>
+          <Card>
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Sản phẩm bán chạy</strong>
+                <div className="text-muted small">Năm: {selectedYear}</div>
+              </div>
+              <div className="d-flex gap-2">
+                <Form.Control
+                  type="number"
+                  value={tpLimit}
+                  min={1}
+                  onChange={(e) => setTpLimit(Number(e.target.value) || 1)}
+                  size="sm"
+                  style={{ width: '70px' }}
+                />
+                <Button size="sm" onClick={fetchTopProducts}>
+                  Tải lại
+                </Button>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              {loadingTopProducts ? (
+                <div className="text-center py-3">
+                  <Spinner animation="border" />
+                </div>
+              ) : topProducts.length === 0 ? (
+                <div>Không có dữ liệu.</div>
+              ) : (
+                <Table hover responsive size="sm">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Sản phẩm</th>
+                      <th>Phiên bản</th>
+                      <th>Số lượng bán</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topProducts.map((p, idx) => (
+                      <tr key={p.PhienBanSanPhamID || idx}>
+                        <td>{idx + 1}</td>
+                        <td>{p.TenSanPham}</td>
+                        <td>{p.TenPhienBan}</td>
+                        <td>{p.totalSold}</td>
+                        <td>{formatCurrency(p.totalRevenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* SẢN PHẨM SẮP HẾT HÀNG */}
+        <Col lg={6}>
+          <Card>
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Sản phẩm sắp hết hàng</strong>
+                <div className="text-muted small">Ngưỡng: ≤ {lsThreshold}</div>
+              </div>
+              <div className="d-flex gap-2">
+                <Form.Control
+                  type="number"
+                  placeholder="Ngưỡng"
+                  value={lsThreshold}
+                  min={0}
+                  onChange={(e) => setLsThreshold(Number(e.target.value) || 0)}
+                  size="sm"
+                  style={{ width: '70px' }}
+                />
+                <Form.Control
+                  type="number"
+                  placeholder="SL"
+                  value={lsLimit}
+                  min={1}
+                  onChange={(e) => setLsLimit(Number(e.target.value) || 1)}
+                  size="sm"
+                  style={{ width: '70px' }}
+                />
+                <Button size="sm" onClick={fetchLowStock}>
+                  Tải lại
+                </Button>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              {loadingLowStock ? (
+                <div className="text-center py-3">
+                  <Spinner animation="border" />
+                </div>
+              ) : lowStock.length === 0 ? (
+                <div>Không có sản phẩm thỏa điều kiện.</div>
+              ) : (
+                <Table hover responsive size="sm">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Sản phẩm</th>
+                      <th>Phiên bản</th>
+                      <th>Tồn kho</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lowStock.map((p, idx) => (
+                      <tr key={p.PhienBanSanPhamID || idx}>
+                        <td>{idx + 1}</td>
+                        <td>{p.TenSanPham}</td>
+                        <td>{p.TenPhienBan}</td>
+                        <td>
+                          <Badge bg={p.SoLuongTonKho <= 5 ? "danger" : "warning"}>
+                            {p.SoLuongTonKho}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* KHÁCH HÀNG TIỀM NĂNG */}
+        <Col lg={12}>
+          <Card className="mt-3">
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>Khách hàng tiềm năng</strong>
+                <div className="text-muted small">Năm: {selectedYear}</div>
+              </div>
+              <div className="d-flex gap-2">
+                <Form.Control
+                  type="number"
+                  value={tcLimit}
+                  min={1}
+                  onChange={(e) => setTcLimit(Number(e.target.value) || 1)}
+                  size="sm"
+                  style={{ width: '70px' }}
+                />
+                <Button size="sm" onClick={fetchTopCustomers}>
+                  Tải lại
+                </Button>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              {loadingTopCustomers ? (
+                <div className="text-center py-3">
+                  <Spinner animation="border" />
+                </div>
+              ) : topCustomers.length === 0 ? (
+                <div>Không có khách hàng nào.</div>
+              ) : (
+                <Table hover responsive size="sm">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Khách hàng</th>
+                      <th>Email</th>
+                      <th>Số đơn</th>
+                      <th>Tổng chi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topCustomers.map((c, idx) => (
+                      <tr key={c.NguoiDungID || idx}>
+                        <td>{idx + 1}</td>
+                        <td>{c.HoTen}</td>
+                        <td>{c.Email}</td>
+                        <td>{c.orderCount}</td>
+                        <td>{formatCurrency(c.totalSpent)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      {/* === KẾT THÚC PHẦN CODE MỚI === */}
     </AdminLayout>
   );
 };

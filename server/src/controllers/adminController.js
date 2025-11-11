@@ -287,3 +287,90 @@ exports.getMonthlySales = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi lấy dữ liệu biểu đồ" });
   }
 };
+exports.getTopSellingProducts = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 10;
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        pbs.PhienBanSanPhamID,
+        sp.TenSanPham,
+        pbs.TenPhienBan,
+        SUM(ct.SoLuong) AS totalSold,
+        SUM(ct.SoLuong * ct.DonGia) AS totalRevenue
+      FROM ChiTietDonHang ct
+      JOIN DonHang dh ON ct.DonHangID = dh.DonHangID
+      JOIN PhienBanSanPham pbs ON ct.PhienBanSanPhamID = pbs.PhienBanSanPhamID
+      JOIN SanPham sp ON pbs.SanPhamID = sp.SanPhamID
+      WHERE dh.TrangThai = 'DA_GIAO' AND YEAR(dh.NgayDatHang) = ?
+      GROUP BY pbs.PhienBanSanPhamID, sp.TenSanPham, pbs.TenPhienBan
+      ORDER BY totalSold DESC
+      LIMIT ?
+      `,
+      [year, limit]
+    );
+
+    res.json({ success: true, year, products: rows });
+  } catch (error) {
+    console.error("Lỗi khi lấy sản phẩm bán chạy:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi lấy sản phẩm bán chạy" });
+  }
+};
+exports.getLowStockProducts = async (req, res) => {
+  try {
+    const threshold = Number(req.query.threshold) || 10;
+    const limit = Number(req.query.limit) || 50;
+
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        pbs.PhienBanSanPhamID,
+        sp.TenSanPham,
+        pbs.TenPhienBan,
+        pbs.SoLuongTonKho
+      FROM PhienBanSanPham pbs
+      JOIN SanPham sp ON pbs.SanPhamID = sp.SanPhamID
+      WHERE pbs.SoLuongTonKho <= ?
+      ORDER BY pbs.SoLuongTonKho ASC
+      LIMIT ?
+      `,
+      [threshold, limit]
+    );
+
+    res.json({ success: true, threshold, products: rows });
+  } catch (error) {
+    console.error("Lỗi khi lấy sản phẩm sắp hết hàng:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi lấy sản phẩm sắp hết hàng" });
+  }
+};
+exports.getTopCustomers = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 10;
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+
+    const [rows] = await pool.query(
+      `
+      SELECT
+        nd.NguoiDungID,
+        nd.HoTen,
+        nd.Email,
+        COUNT(dh.DonHangID) AS orderCount,
+        SUM(dh.TongThanhToan) AS totalSpent
+      FROM DonHang dh
+      JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+      WHERE dh.TrangThai = 'DA_GIAO' AND YEAR(dh.NgayDatHang) = ?
+      GROUP BY nd.NguoiDungID, nd.HoTen, nd.Email
+      ORDER BY totalSpent DESC
+      LIMIT ?
+      `,
+      [year, limit]
+    );
+
+    res.json({ success: true, year, customers: rows });
+  } catch (error) {
+    console.error("Lỗi khi lấy khách hàng tiềm năng:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi lấy khách hàng tiềm năng" });
+  }
+};

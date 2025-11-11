@@ -15,6 +15,12 @@ router.get("/dashboard-stats", adminController.getDashboardStats);
 // === ROUTE MỚI CHO BIỂU ĐỒ ===
 router.get("/sales/monthly", adminController.getMonthlySales);
 
+// MỚI: Thống kê sản phẩm bán chạy
+router.get("/products/top", adminController.getTopSellingProducts);
+
+// MỚI: Danh sách sản phẩm sắp hết hàng
+router.get("/products/low-stock", adminController.getLowStockProducts);
+
 // Quản lý Sản phẩm
 router.get("/products", productController.getAdminProducts);
 router.get("/products/:id", productController.getAdminProductById); // <-- ROUTE MỚI
@@ -23,6 +29,9 @@ router.get("/products/:id", productController.getAdminProductById); // <-- ROUTE
 router.get("/users", adminController.getAllUsers);
 router.put("/users/:id/status", adminController.updateUserStatus);
 router.put("/users/:id/role", adminController.updateUserRole);
+
+// MỚI: Khách hàng tiềm năng (mua nhiều)
+router.get("/customers/top", adminController.getTopCustomers);
 
 // === 2. THÊM QUẢN LÝ ĐÁNH GIÁ ===
 // GET /api/admin/reviews
