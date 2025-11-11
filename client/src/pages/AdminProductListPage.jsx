@@ -244,12 +244,6 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import AdminProductModal from "../components/AdminProductModal.jsx";
 
-const STATUS_OPTIONS = {
-  ACTIVE: { name: "Đang bán", color: "success" },
-  DRAFT: { name: "Bản nháp", color: "warning" },
-  ARCHIVED: { name: "Đã ẩn/Xóa", color: "danger" },
-};
-
 const SORT_OPTIONS = {
   DATE_DESC: { key: "DATE_DESC", name: "Mới nhất trước" },
   DATE_ASC: { key: "DATE_ASC", name: "Cũ nhất trước" },
@@ -274,7 +268,6 @@ const AdminProductListPage = () => {
 
   // === STATES CHO FILTER VÀ PAGINATION ===
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.DATE_DESC.key);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -337,12 +330,11 @@ const AdminProductListPage = () => {
   useEffect(() => {
     fetchProducts({
       search: searchTerm,
-      status: statusFilter,
       sortBy: sortBy,
       page: currentPage,
       limit: pageSize,
     });
-  }, [statusFilter, sortBy, currentPage, pageSize, fetchProducts]); // BỎ searchTerm
+  }, [sortBy, currentPage, pageSize, fetchProducts]); // BỎ searchTerm
 
   // 2. Xử lý debounce cho searchTerm (và reset trang nếu cần)
   useEffect(() => {
@@ -354,7 +346,6 @@ const AdminProductListPage = () => {
         // Nếu đã ở trang 1, gọi fetchOrders để debounce việc tìm kiếm (với page 1)
         fetchProducts({
           search: searchTerm,
-          status: statusFilter,
           sortBy: sortBy,
           page: 1, // Dùng page 1 cho lần fetch này
           limit: pageSize,
@@ -384,7 +375,6 @@ const AdminProductListPage = () => {
       // Tải lại danh sách sau khi xóa
       fetchProducts({
         search: searchTerm,
-        status: statusFilter,
         sortBy: sortBy,
         page: currentPage,
         limit: pageSize,
@@ -414,7 +404,6 @@ const AdminProductListPage = () => {
     // Tải lại danh sách khi có cập nhật
     fetchProducts({
       search: searchTerm,
-      status: statusFilter,
       sortBy: sortBy,
       page: currentPage,
       limit: pageSize,
@@ -428,7 +417,7 @@ const AdminProductListPage = () => {
         {/* === START: HEADER CÓ FILTER VÀ SORT === */}
         <Card.Header className="bg-white">
           <Row className="align-items-center">
-            <Col md={3}>
+            <Col md={5}>
               <h5 className="mb-0">Quản lý Sản phẩm ({pagination.total})</h5>
             </Col>
 
@@ -444,22 +433,6 @@ const AdminProductListPage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </InputGroup>
-            </Col>
-
-            {/* 2. Lọc trạng thái */}
-            <Col md={2}>
-              <Form.Select
-                size="sm"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">Tất cả trạng thái</option>
-                {Object.entries(STATUS_OPTIONS).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value.name}
-                  </option>
-                ))}
-              </Form.Select>
             </Col>
 
             {/* 3. Sắp xếp */}
@@ -535,16 +508,11 @@ const AdminProductListPage = () => {
                         <ArrowDownUp className="ms-1" />
                       </div>
                     </th>
-                    <th>Trạng thái</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {products.map((p) => {
-                    const statusConfig = STATUS_OPTIONS[p.TrangThai] || {
-                      name: p.TrangThai,
-                      color: "secondary",
-                    };
                     return (
                       <tr key={p.SanPhamID}>
                         <td>{p.SanPhamID}</td>
@@ -565,11 +533,6 @@ const AdminProductListPage = () => {
                         <td>{p.TenSanPham}</td>
                         <td>{formatCurrency(p.GiaBanThapNhat)}</td>
                         <td>{p.TongTonKho}</td>
-                        <td>
-                          <Badge bg={statusConfig.color}>
-                            {statusConfig.name}
-                          </Badge>
-                        </td>
                         <td>
                           <Button
                             as={Link}
