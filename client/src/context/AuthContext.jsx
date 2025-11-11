@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
         const storedUser = JSON.parse(localStorage.getItem("user"));
         setUser(storedUser);
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      } catch (error) {
+      } catch {
         localStorage.clear();
       }
     }
@@ -37,7 +37,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userData));
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     setUser(userData);
-    navigate("/");
+
+    // =======================================================
+    // <<< LOGIC CHUYỂN HƯỚNG ĐÃ ĐƯỢC CẬP NHẬT Ở ĐÂY >>>
+    // =======================================================
+    // Kiểm tra vai trò của người dùng để quyết định chuyển hướng
+    if (userData && userData.vaiTro === "ADMIN") {
+      navigate("/admin"); // Chuyển hướng Admin đến Dashboard
+    } else {
+      navigate("/"); // Chuyển hướng User bình thường về Trang chủ
+    }
+    // =======================================================
   };
 
   // Hàm Đăng nhập bằng Mật khẩu
