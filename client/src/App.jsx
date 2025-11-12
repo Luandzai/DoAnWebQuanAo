@@ -15,6 +15,7 @@ import CartPage from "./pages/CartPage";
 import AuthPage from "./pages/AuthPage";
 import ComingSoon from "./pages/ComingSoon";
 import CheckoutPage from "./pages/CheckoutPage";
+import ContactForm from './components/ContactForm';
 
 // 1. THÊM CÁC IMPORT MỚI
 import ProfilePage from "./pages/ProfilePage";
@@ -50,6 +51,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/contact" element={<ContactForm />} />
 
           {/* === ROUTE KHÔI PHỤC MẬT KHẨU === */}
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
