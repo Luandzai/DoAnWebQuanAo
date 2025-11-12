@@ -1,6 +1,7 @@
 // client/src/pages/AdminDashboardPage.jsx (HOÀN CHỈNH VỚI BIỂU ĐỒ)
 
 import React, { useState, useEffect, useContext, useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   Card,
   Row,
@@ -10,7 +11,14 @@ import {
   Alert,
   Badge,
   Form,
+  ListGroup,
 } from "react-bootstrap";
+import {
+  TrophyFill,
+  BoxSeam,
+  PersonWorkspace,
+  ExclamationTriangleFill,
+} from "react-bootstrap-icons";
 import AdminLayout from "../components/AdminLayout";
 import AuthContext from "../context/AuthContext";
 import { Bar } from "react-chartjs-2";
@@ -42,6 +50,9 @@ const AdminDashboardPage = () => {
     lowStockCount: 0,
     totalUsersCount: 0, // Đã thêm để hiển thị
     latestOrders: [],
+    topSellingProducts: [],
+    lowStockProducts: [],
+    topCustomer: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,6 +72,13 @@ const AdminDashboardPage = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  // Hàm định dạng số lượng
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat("vi-VN").format(num);
+  };
+
+  const LOW_STOCK_THRESHOLD = 10;
 
   // HÀM FETCH DỮ LIỆU BIỂU ĐỒ
   const fetchSalesData = async (year) => {
@@ -262,6 +280,145 @@ const AdminDashboardPage = () => {
           )}
         </Card.Body>
       </Card>
+
+      {/* ======================================================= */}
+      {/* 4. KHU VỰC THỐNG KÊ CHI TIẾT */}
+      {/* ======================================================= */}
+      <Row className="mt-4 g-4">
+        {/* SẢN PHẨM BÁN CHẠY */}
+        <Col md={6}>
+          <Card className="shadow-sm">
+            <Card.Header className="d-flex align-items-center">
+              <TrophyFill className="me-2 text-warning" />
+              Top 10 Sản phẩm bán chạy
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading ? (
+                <div className="text-center py-5">
+                  <Spinner animation="border" size="sm" />
+                </div>
+              ) : stats.topSellingProducts.length > 0 ? (
+                <Table hover responsive className="align-middle mb-0">
+                  <thead className="bg-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Tên sản phẩm</th>
+                      <th className="text-center">Đã bán</th>
+                      <th className="text-end">Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.topSellingProducts.map((product, index) => (
+                      <tr key={product.Slug}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <Link
+                            to={`/product/${product.Slug}`}
+                            target="_blank"
+                            className="text-decoration-none"
+                          >
+                            {product.TenSanPham}
+                          </Link>
+                        </td>
+                        <td className="text-center">
+                          {formatNumber(product.totalSold)}
+                        </td>
+                        <td className="text-end fw-bold text-success">
+                          {formatCurrency(product.totalRevenue)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              ) : (
+                <p className="text-muted text-center p-3 mb-0">
+                  Chưa có dữ liệu bán hàng.
+                </p>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* SẢN PHẨM TỒN KHO THẤP */}
+        <Col md={6}>
+          <Card className="shadow-sm">
+            <Card.Header className="d-flex align-items-center">
+              <ExclamationTriangleFill className="me-2 text-danger" />
+              Top 10 Sản phẩm tồn kho thấp
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading ? (
+                <div className="text-center py-5">
+                  <Spinner animation="border" size="sm" />
+                </div>
+              ) : stats.lowStockProducts.length > 0 ? (
+                <Table hover responsive className="align-middle mb-0">
+                  <thead className="bg-light">
+                    <tr>
+                      <th>#</th>
+                      <th>Tên sản phẩm</th>
+                      <th className="text-center">Tồn kho</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.lowStockProducts.map((product, index) => (
+                      <tr key={product.Slug}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <Link
+                            to={`/product/${product.Slug}`}
+                            target="_blank"
+                            className="text-decoration-none"
+                          >
+                            {product.TenSanPham}
+                          </Link>
+                        </td>
+                        <td className="text-center fw-bold text-danger">
+                          {formatNumber(product.totalStock)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              ) : (
+                <p className="text-muted text-center p-3 mb-0">
+                  Không có sản phẩm nào có tồn kho thấp.
+                </p>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      <Row className="mt-4">
+        {/* KHÁCH HÀNG TIỀM NĂNG */}
+        {/* Đặt trong một Row riêng */}
+        <Col md={12}>
+          <Card className="shadow-sm">
+            <Card.Header className="d-flex align-items-center">
+              <PersonWorkspace className="me-2 text-info" />
+              Khách hàng tiềm năng nhất
+            </Card.Header>
+            <Card.Body className="text-center">
+              {loading ? (
+                <Spinner animation="border" size="sm" />
+              ) : stats.topCustomer ? (
+                <>
+                  <h5 className="card-title">{stats.topCustomer.HoTen}</h5>
+                  <p className="card-text text-muted">
+                    {stats.topCustomer.Email}
+                  </p>
+                  <h4 className="text-primary">
+                    {formatCurrency(stats.topCustomer.totalSpent)}
+                  </h4>
+                  <p className="text-muted mb-0">Tổng chi tiêu</p>
+                </>
+              ) : (
+                <p className="text-muted mb-0">Chưa có dữ liệu.</p>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       {/* 3. DANH SÁCH ĐƠN HÀNG GẦN ĐÂY */}
       <Card className="shadow-sm mt-4">

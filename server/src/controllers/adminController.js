@@ -50,12 +50,54 @@ exports.getDashboardStats = async (req, res) => {
          LIMIT 5`
     );
 
+    // 6. TOP 10 SẢN PHẨM BÁN CHẠY NHẤT (dựa trên số lượng đã bán)
+    const [topSellingProducts] = await pool.query(
+      `SELECT 
+         sp.TenSanPham, 
+         sp.Slug,
+         SUM(ctdh.SoLuong) AS totalSold,
+         SUM(ctdh.SoLuong * ctdh.GiaLucMua) AS totalRevenue
+       FROM ChiTietDonHang AS ctdh
+       JOIN PhienBanSanPham AS pb ON ctdh.PhienBanID = pb.PhienBanID
+       JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
+       JOIN DonHang AS dh ON ctdh.DonHangID = dh.DonHangID
+       WHERE dh.TrangThai = 'DA_GIAO'
+       GROUP BY sp.SanPhamID, sp.TenSanPham, sp.Slug
+       ORDER BY totalSold DESC
+       LIMIT 10`
+    );
+
+    // 7. TOP 10 SẢN PHẨM TỒN KHO THẤP NHẤT
+    const [lowStockProducts] = await pool.query(
+      `SELECT sp.TenSanPham, sp.Slug, SUM(pb.SoLuongTonKho) as totalStock
+       FROM SanPham sp
+       JOIN PhienBanSanPham pb ON sp.SanPhamID = pb.SanPhamID
+       GROUP BY sp.SanPhamID, sp.TenSanPham, sp.Slug
+       HAVING totalStock >= 0
+       ORDER BY totalStock ASC
+       LIMIT 10`
+    );
+
+    // 8. KHÁCH HÀNG TIỀM NĂNG NHẤT (chi tiêu nhiều nhất)
+    const [topCustomerResult] = await pool.query(
+      `SELECT nd.HoTen, nd.Email, SUM(dh.TongThanhToan) as totalSpent
+       FROM DonHang dh
+       JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+       WHERE dh.TrangThai = 'DA_GIAO'
+       GROUP BY nd.NguoiDungID, nd.HoTen, nd.Email
+       ORDER BY totalSpent DESC
+       LIMIT 1`
+    );
+
     res.json({
       totalSales: totalSales,
       newOrdersCount: newOrdersCount,
       lowStockCount: lowStockCount,
       totalUsersCount: totalUsersCount, // Thêm vào đây
       latestOrders: latestOrders,
+      topSellingProducts: topSellingProducts,
+      lowStockProducts: lowStockProducts,
+      topCustomer: topCustomerResult.length > 0 ? topCustomerResult[0] : null,
     });
   } catch (error) {
     console.error("Lỗi khi lấy dữ liệu Dashboard:", error);
