@@ -428,7 +428,7 @@ const AdminDashboardPage = () => {
                         <td>{p.TenSanPham}</td>
                         <td>{p.TenPhienBan}</td>
                         <td>{p.totalSold}</td>
-                        <td>{formatCurrency(p.totalRevenue)}</td>
+                        <td>{formatCurrency(Number(p.totalRevenue))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -554,7 +554,7 @@ const AdminDashboardPage = () => {
                         <td>{c.HoTen}</td>
                         <td>{c.Email}</td>
                         <td>{c.orderCount}</td>
-                        <td>{formatCurrency(c.totalSpent)}</td>
+                        <td>{formatCurrency(Number(c.totalSpent))}</td>
                       </tr>
                     ))}
                   </tbody>

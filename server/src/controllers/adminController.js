@@ -295,17 +295,17 @@ exports.getTopSellingProducts = async (req, res) => {
     const [rows] = await pool.query(
       `
       SELECT 
-        pbs.PhienBanSanPhamID,
+        pbs.PhienBanID,
         sp.TenSanPham,
-        pbs.TenPhienBan,
+        pbs.SKU, 
         SUM(ct.SoLuong) AS totalSold,
-        SUM(ct.SoLuong * ct.DonGia) AS totalRevenue
-      FROM ChiTietDonHang ct
-      JOIN DonHang dh ON ct.DonHangID = dh.DonHangID
-      JOIN PhienBanSanPham pbs ON ct.PhienBanSanPhamID = pbs.PhienBanSanPhamID
-      JOIN SanPham sp ON pbs.SanPhamID = sp.SanPhamID
+        SUM(ct.SoLuong * ct.GiaLucMua) AS totalRevenue
+      FROM chitietdonhang ct
+      JOIN donhang dh ON ct.DonHangID = dh.DonHangID
+      JOIN phienbansanpham pbs ON ct.PhienBanID = pbs.PhienBanID
+      JOIN sanpham sp ON pbs.SanPhamID = sp.SanPhamID
       WHERE dh.TrangThai = 'DA_GIAO' AND YEAR(dh.NgayDatHang) = ?
-      GROUP BY pbs.PhienBanSanPhamID, sp.TenSanPham, pbs.TenPhienBan
+      GROUP BY pbs.PhienBanID, sp.TenSanPham, pbs.SKU
       ORDER BY totalSold DESC
       LIMIT ?
       `,
@@ -326,12 +326,12 @@ exports.getLowStockProducts = async (req, res) => {
     const [rows] = await pool.query(
       `
       SELECT 
-        pbs.PhienBanSanPhamID,
+        pbs.PhienBanID,
         sp.TenSanPham,
-        pbs.TenPhienBan,
+        pbs.SKU,
         pbs.SoLuongTonKho
-      FROM PhienBanSanPham pbs
-      JOIN SanPham sp ON pbs.SanPhamID = sp.SanPhamID
+      FROM phienbansanpham pbs
+      JOIN sanpham sp ON pbs.SanPhamID = sp.SanPhamID
       WHERE pbs.SoLuongTonKho <= ?
       ORDER BY pbs.SoLuongTonKho ASC
       LIMIT ?
@@ -358,8 +358,8 @@ exports.getTopCustomers = async (req, res) => {
         nd.Email,
         COUNT(dh.DonHangID) AS orderCount,
         SUM(dh.TongThanhToan) AS totalSpent
-      FROM DonHang dh
-      JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+      FROM donhang dh
+      JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
       WHERE dh.TrangThai = 'DA_GIAO' AND YEAR(dh.NgayDatHang) = ?
       GROUP BY nd.NguoiDungID, nd.HoTen, nd.Email
       ORDER BY totalSpent DESC
