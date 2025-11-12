@@ -92,6 +92,61 @@ exports.getMyVouchers = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+// @desc    Lấy các voucher MÀ NGƯỜI DÙNG ĐÃ LƯU và CÓ THỂ ÁP DỤNG cho giỏ hàng
+// @route   POST /api/user/my-applicable-vouchers
+// @access  Private
+exports.getMyApplicableVouchers = async (req, res) => {
+  const { NguoiDungID } = req.user;
+  const { cartItems } = req.body;
+
+  if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+    return res.json([]); // Nếu giỏ hàng trống, không có voucher nào áp dụng được
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    // 1. Lấy SanPhamID và DanhMucID từ các PhienBanID trong giỏ hàng
+    const phienBanIDs = cartItems.map((item) => item.PhienBanID);
+    const [productInfoRows] = await connection.query(
+      `SELECT DISTINCT sp.SanPhamID, sp.DanhMucID
+       FROM PhienBanSanPham pb
+       JOIN SanPham sp ON pb.SanPhamID = sp.SanPhamID
+       WHERE pb.PhienBanID IN (?)`,
+      [phienBanIDs]
+    );
+
+    const sanPhamIDsInCart = productInfoRows.map((p) => p.SanPhamID);
+    const danhMucIDsInCart = productInfoRows.map((p) => p.DanhMucID);
+
+    // 2. Lấy tất cả voucher người dùng đã lưu, còn hạn, còn lượt và đang active
+    // Sau đó lọc ra những voucher có thể áp dụng cho giỏ hàng
+    const [myVouchers] = await connection.query(
+      `SELECT km.* 
+       FROM NguoiDung_Voucher AS ndv
+       JOIN KhuyenMai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
+       WHERE ndv.NguoiDungID = ? 
+         AND km.NgayKetThuc > NOW() 
+         AND km.SoLuongToiDa > 0
+         AND km.TrangThai = 'ACTIVE'
+         AND ndv.TrangThai = 'DA_NHAN'
+         AND (
+            (km.SanPhamID IS NULL AND km.DanhMucID IS NULL) -- Voucher toàn sàn
+            OR (km.SanPhamID IS NOT NULL AND km.SanPhamID IN (?)) -- Voucher cho sản phẩm cụ thể
+            OR (km.DanhMucID IS NOT NULL AND km.DanhMucID IN (?)) -- Voucher cho danh mục cụ thể
+         )`,
+      [NguoiDungID, sanPhamIDsInCart, danhMucIDsInCart]
+    );
+
+    res.json(myVouchers);
+  } catch (error) {
+    console.error("Lỗi khi lấy voucher có thể áp dụng:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  } finally {
+    connection.release();
+  }
+};
+
 // @desc    Lấy danh sách yêu cầu đổi/trả của người dùng
 // @route   GET /api/user/returns
 // @access  Private

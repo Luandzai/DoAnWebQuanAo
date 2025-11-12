@@ -139,19 +139,22 @@ const CheckoutPage = () => {
     };
 
     // 4. Tải Voucher của User
-    const fetchMyVouchers = async () => {
-      if (!user) {
-        // Chỉ tải nếu đã đăng nhập
+    const fetchMyApplicableVouchers = async () => {
+      // Chỉ tải nếu đã đăng nhập và giỏ hàng có sản phẩm
+      if (!user || cartItems.length === 0) {
         setMyVouchersLoading(false);
         return;
       }
       try {
         setMyVouchersLoading(true);
-        // API này đã được tạo ở bước trước (trang Tài khoản)
-        const { data } = await api.get("/user/my-vouchers");
+        // Gọi API mới, gửi kèm cartItems để backend lọc
+        const { data } = await api.post("/user/my-applicable-vouchers", {
+          cartItems: cartItems,
+        });
         setMyVouchers(data || []);
       } catch (err) {
-        console.error("Lỗi tải voucher của tôi:", err);
+        console.error("Lỗi tải voucher có thể áp dụng:", err);
+        setMyVouchers([]); // Đặt lại voucher nếu có lỗi
       } finally {
         setMyVouchersLoading(false);
       }
@@ -159,8 +162,8 @@ const CheckoutPage = () => {
 
     fetchShippingOptions();
     fetchProvinces();
-    fetchMyVouchers();
-  }, [user, api]);
+    fetchMyApplicableVouchers();
+  }, [user, api, cartItems]); // Thêm cartItems vào dependency array
 
   // (useEffect Tải Quận/Huyện - giữ nguyên)
   useEffect(() => {
