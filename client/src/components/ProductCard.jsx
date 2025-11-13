@@ -123,9 +123,9 @@ const ProductCard = ({ product }) => {
           {/* Chỉ hiển thị nếu IsNew = 1 (true) */}
           {product.IsNew == 1 && <span className="badge-new">Hàng Mới</span>}
           {/* Chỉ hiển thị nếu HasVoucher = 1 (true) */}
-          {product.HasVoucher == 1 && (
+          {/* {product.HasVoucher == 1 && (
             <span className="badge-voucher">Voucher</span>
-          )}
+          )} */}
         </div>
         {/* ================================== */}
 

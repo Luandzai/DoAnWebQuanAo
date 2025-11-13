@@ -15,6 +15,7 @@ import CartPage from "./pages/CartPage";
 import AuthPage from "./pages/AuthPage";
 import ContactPage from "./pages/ContactPage"; // 1. Import ContactPage
 import CheckoutPage from "./pages/CheckoutPage";
+import NewsPage from "./pages/NewsPage"; // Thêm phần mở rộng .jsx để chắc chắn
 
 // 1. THÊM CÁC IMPORT MỚI
 import ProfilePage from "./pages/ProfilePage";
@@ -79,7 +80,7 @@ function App() {
           <Route path="/privacy" element={<ComingSoon />} />
           <Route path="/shipping" element={<ComingSoon />} />
           <Route path="/warranty" element={<ComingSoon />} />
-          <Route path="/news" element={<ComingSoon />} />
+          <Route path="/news" element={<NewsPage />} />
           {/* === KHU VỰC ADMIN (ĐÃ THÊM ROUTE USERS) === */}
           <Route path="/admin" element={<AdminRoute />}>
             <Route index element={<AdminDashboardPage />} />
