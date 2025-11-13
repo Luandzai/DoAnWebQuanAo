@@ -23,7 +23,7 @@ const handleContactRequest = async (req, res) => {
 
     // Cấu hình mail
     const mailOptions = {
-      from: `"${hoTen}" <${process.env.GMAIL_USER}>`, // Hiển thị tên người gửi
+      from: `"${hoTen}" <${process.env.EMAIL_USER}>`, // Hiển thị tên người gửi
       to: process.env.SHOP_EMAIL, // Email của shop bạn
       subject: `[Liên Hệ] Thư mới từ ${hoTen}`, // Tiêu đề email
       html: emailHtml,
