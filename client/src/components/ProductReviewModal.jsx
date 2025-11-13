@@ -88,7 +88,7 @@ const ProductReviewModal = ({ show, onHide, product, onReviewSubmitted }) => {
             setExistingVideoURL(data.VideoURL);
           }
           // Nếu data = null (chưa có), form vẫn rỗng
-        } catch (err) {
+        } catch {
           setError("Không thể tải đánh giá cũ.");
         } finally {
           setLoading(false);

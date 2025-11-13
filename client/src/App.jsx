@@ -13,7 +13,7 @@ import ProductListPage from "./pages/ProductListPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
 import AuthPage from "./pages/AuthPage";
-import ComingSoon from "./pages/ComingSoon";
+import ContactPage from "./pages/ContactPage"; // 1. Import ContactPage
 import CheckoutPage from "./pages/CheckoutPage";
 
 // 1. THÊM CÁC IMPORT MỚI
@@ -36,6 +36,7 @@ import AdminReturnListPage from "./pages/AdminReturnListPage";
 import AdminVoucherListPage from "./pages/AdminVoucherListPage"; // Đã import
 import AdminReviewListPage from "./pages/AdminReviewListPage";
 
+import ComingSoon from "./pages/ComingSoon"; // Di chuyển xuống dưới cho gọn
 function App() {
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -50,7 +51,6 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/auth" element={<AuthPage />} />
-
           {/* === ROUTE KHÔI PHỤC MẬT KHẨU === */}
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route
@@ -58,7 +58,6 @@ function App() {
             element={<ResetPasswordPage />}
           />
           {/* ======================= */}
-
           {/* 2. KHỐI ROUTE LỒNG NHAU CHO PROFILE */}
           <Route path="/profile" element={<ProfilePage />}>
             <Route index element={<ProfileUpdate />} /> {/* Mặc định */}
@@ -67,21 +66,20 @@ function App() {
             <Route path="vouchers" element={<UserVouchers />} />
             <Route path="returns" element={<ReturnListPage />} />
           </Route>
-
           {/* Các trang phụ */}
           <Route
             path="/profile/return-request/:orderId"
             element={<ReturnRequestPage />}
           />
+          <Route path="/contact" element={<ContactPage />} />{" "}
+          {/* 2. Cập nhật route */}
           <Route path="/about" element={<ComingSoon />} />
           <Route path="/services" element={<ComingSoon />} />
-          <Route path="/contact" element={<ComingSoon />} />
           <Route path="/faq" element={<ComingSoon />} />
           <Route path="/privacy" element={<ComingSoon />} />
           <Route path="/shipping" element={<ComingSoon />} />
           <Route path="/warranty" element={<ComingSoon />} />
           <Route path="/news" element={<ComingSoon />} />
-
           {/* === KHU VỰC ADMIN (ĐÃ THÊM ROUTE USERS) === */}
           <Route path="/admin" element={<AdminRoute />}>
             <Route index element={<AdminDashboardPage />} />

@@ -5,9 +5,7 @@ require("dotenv").config();
 const sendEmail = async (options) => {
   // 1. Tạo transporter (dịch vụ sẽ gửi email)
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
+    service: "gmail", // Sử dụng service của Gmail để cấu hình đơn giản hơn
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
