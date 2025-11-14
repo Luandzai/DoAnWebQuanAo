@@ -61,8 +61,8 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { user, api } = useContext(AuthContext);
   const {
-    cartItems,
-    clearCart,
+    checkoutItems, // <-- SỬ DỤNG STATE MỚI
+    fetchCart, // <-- SỬ DỤNG fetchCart thay cho clearCart
     loading: cartLoading,
   } = useContext(CartContext);
 
@@ -141,7 +141,7 @@ const CheckoutPage = () => {
     // 4. Tải Voucher của User
     const fetchMyApplicableVouchers = async () => {
       // Chỉ tải nếu đã đăng nhập và giỏ hàng có sản phẩm
-      if (!user || cartItems.length === 0) {
+      if (!user || checkoutItems.length === 0) {
         setMyVouchersLoading(false);
         return;
       }
@@ -149,7 +149,8 @@ const CheckoutPage = () => {
         setMyVouchersLoading(true);
         // Gọi API mới, gửi kèm cartItems để backend lọc
         const { data } = await api.post("/user/my-applicable-vouchers", {
-          cartItems: cartItems,
+          // Gửi checkoutItems thay vì cartItems
+          cartItems: checkoutItems,
         });
         setMyVouchers(data || []);
       } catch (err) {
@@ -163,7 +164,7 @@ const CheckoutPage = () => {
     fetchShippingOptions();
     fetchProvinces();
     fetchMyApplicableVouchers();
-  }, [user, api, cartItems]); // Thêm cartItems vào dependency array
+  }, [user, api, checkoutItems]); // Thay cartItems bằng checkoutItems
 
   // (useEffect Tải Quận/Huyện - giữ nguyên)
   useEffect(() => {
@@ -225,7 +226,7 @@ const CheckoutPage = () => {
   }, [selectedDistrictId, api, districts]);
 
   // (Tính toán Tạm tính)
-  const subtotal = cartItems.reduce(
+  const subtotal = checkoutItems.reduce(
     (acc, item) => acc + item.SoLuong * parseFloat(item.GiaBan),
     0
   );
@@ -318,12 +319,12 @@ const CheckoutPage = () => {
         shippingInfo: shippingInfo,
         paymentMethodId: paymentMethod,
         notes: notes,
-        cartItems: cartItems,
+        cartItems: checkoutItems, // Gửi các item đã chọn
         PhuongThucID: selectedShipping.PhuongThucID,
         MaKhuyenMai: selectedVoucherCode || null, // Gửi mã đã chọn từ dropdown
       });
 
-      clearCart();
+      fetchCart(); // Tải lại giỏ hàng để loại bỏ các sản phẩm đã mua
       setShowSuccessModal(true);
     } catch (err) {
       setError(err.response?.data?.message || "Đặt hàng thất bại.");
@@ -351,7 +352,7 @@ const CheckoutPage = () => {
               variant="flush"
               style={{ maxHeight: "400px", overflowY: "auto" }}
             >
-              {cartItems.map((item) => (
+              {checkoutItems.map((item) => (
                 <ListGroup.Item key={item.PhienBanID}>
                   <Row className="align-items-center">
                     <Col xs={3}>
@@ -603,7 +604,7 @@ const CheckoutPage = () => {
               variant="primary"
               size="lg"
               onClick={placeOrderHandler}
-              disabled={loading || cartItems.length === 0}
+              disabled={loading || checkoutItems.length === 0}
             >
               {loading ? (
                 <Spinner as="span" animation="border" size="sm" />

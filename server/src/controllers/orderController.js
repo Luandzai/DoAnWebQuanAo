@@ -144,9 +144,15 @@ exports.createOrder = async (req, res) => {
       'INSERT INTO ThanhToan (DonHangID, MethodID, SoTienThanhToan, TrangThai) VALUES (?, ?, ?, "PENDING")',
       [newDonHangID, paymentMethodId, TongThanhToan]
     );
-    await connection.query("DELETE FROM ChiTietGioHang WHERE GioHangID = ?", [
-      NguoiDungID,
-    ]);
+    // === SỬA LỖI: CHỈ XÓA NHỮNG SẢN PHẨM ĐÃ ĐẶT HÀNG KHỎI GIỎ HÀNG ===
+    const orderedPhienBanIDs = cartItems.map((item) => item.PhienBanID);
+    if (orderedPhienBanIDs.length > 0) {
+      await connection.query(
+        "DELETE FROM ChiTietGioHang WHERE GioHangID = ? AND PhienBanID IN (?)",
+        [NguoiDungID, orderedPhienBanIDs]
+      );
+    }
+    // =================================================================
 
     await connection.commit();
     res

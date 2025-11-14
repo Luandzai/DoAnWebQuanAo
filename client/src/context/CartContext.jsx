@@ -8,6 +8,7 @@ const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [checkoutItems, setCheckoutItems] = useState([]); // <-- STATE MỚI
   const [loading, setLoading] = useState(true);
   const { api, user } = useContext(AuthContext);
 
@@ -53,8 +54,8 @@ export const CartProvider = ({ children }) => {
     try {
       await api.put("/cart", { PhienBanID, SoLuong });
       fetchCart();
-    } catch {
-      toast.error("Lỗi khi cập nhật giỏ hàng");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Lỗi khi cập nhật giỏ hàng");
     }
   };
 
@@ -69,8 +70,15 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Hàm mới để chỉ định các mặt hàng sẽ thanh toán
+  const selectItemsForCheckout = (items) => {
+    setCheckoutItems(items);
+  };
+
+  // Sửa lại: Chỉ xóa các item đã thanh toán khỏi state, hoặc fetch lại
   const clearCart = () => {
-    setCartItems([]);
+    // Thay vì xóa hết, ta sẽ fetch lại giỏ hàng sau khi đặt hàng thành công
+    fetchCart();
   };
 
   return (
@@ -78,6 +86,8 @@ export const CartProvider = ({ children }) => {
       value={{
         cartItems,
         loading,
+        checkoutItems, // <-- EXPORT STATE MỚI
+        selectItemsForCheckout, // <-- EXPORT HÀM MỚI
         fetchCart,
         addToCart,
         updateCartQuantity,

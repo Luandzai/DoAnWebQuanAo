@@ -100,7 +100,20 @@ exports.updateQuantity = async (req, res) => {
       return exports.removeFromCart(req, res);
     }
 
-    // (Nên kiểm tra tồn kho ở đây)
+    // === THÊM LOGIC KIỂM TRA TỒN KHO ===
+    const [variant] = await pool.query(
+      "SELECT SoLuongTonKho FROM PhienBanSanPham WHERE PhienBanID = ?",
+      [PhienBanID]
+    );
+    if (variant.length === 0) {
+      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
+    }
+    if (variant[0].SoLuongTonKho < SoLuong) {
+      return res.status(400).json({
+        message: `Số lượng tồn kho không đủ (chỉ còn ${variant[0].SoLuongTonKho} sản phẩm)`,
+      });
+    }
+    // =====================================
 
     // Cập nhật (SET) số lượng mới
     await pool.query(
