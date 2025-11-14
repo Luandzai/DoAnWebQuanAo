@@ -1,4 +1,4 @@
-// client/src/components/Header.jsx (Bản đầy đủ, đã thêm Badge)
+// client/src/components/Header.jsx (Phiên bản cuối cùng sửa lỗi NavLink Active)
 
 import React, { useContext, useState } from "react";
 import {
@@ -10,19 +10,47 @@ import {
   Button,
   NavDropdown,
   Badge,
-} from "react-bootstrap"; // 1. Import Badge
-import { Link, useNavigate } from "react-router-dom";
+} from "react-bootstrap";
+import { Link, useNavigate, NavLink, useLocation } from "react-router-dom"; // Thêm useLocation
 import { Telephone, Search, Person, Cart } from "react-bootstrap-icons";
 import "./Header.css";
 import AuthContext from "../context/AuthContext";
-import CartContext from "../context/CartContext"; // 2. IMPORT CART CONTEXT
+import CartContext from "../context/CartContext";
+
+// Danh sách các danh mục để dễ dàng lặp và quản lý
+const CATEGORIES = [
+  { name: "TẤT CẢ SẢN PHẨM", category: "tat-ca", path: "/products" },
+  { name: "ĐỒ NAM", category: "do-nam" },
+  { name: "ĐỒ NỮ", category: "do-nu" },
+  { name: "ĐỒ THỂ THAO", category: "do-the-thao" },
+  { name: "ĐỒ DA", category: "do-da" },
+  { name: "PHỤ KIỆN", category: "phu-kien" },
+];
+
+// Hàm kiểm tra category active: Sẽ dùng useLocation để kiểm tra URL hiện tại
+const isCategoryActive = (category, location) => {
+  if (location.pathname !== "/products") return false;
+
+  const searchParams = new URLSearchParams(location.search);
+  const currentCategory = searchParams.get("category");
+
+  // Kiểm tra "TẤT CẢ SẢN PHẨM"
+  if (category === "tat-ca") {
+    // Active chỉ khi path là /products VÀ KHÔNG có query category
+    return !currentCategory;
+  }
+
+  // Kiểm tra các category cụ thể
+  return currentCategory === category;
+};
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
-  const { cartItems } = useContext(CartContext); // 3. LẤY 'cartItems'
+  const { cartItems } = useContext(CartContext);
 
   const [keyword, setKeyword] = useState("");
   const navigate = useNavigate();
+  const location = useLocation(); // Lấy đối tượng location hiện tại
 
   const searchHandler = (e) => {
     e.preventDefault();
@@ -34,7 +62,14 @@ const Header = () => {
     }
   };
 
-  // 4. Tính số lượng (theo ID sản phẩm)
+  const handleCategoryClick = (category) => {
+    if (category === "tat-ca") {
+      navigate("/products");
+    } else {
+      navigate(`/products?category=${category}`);
+    }
+  };
+
   const cartItemCount = cartItems.length;
 
   return (
@@ -64,28 +99,28 @@ const Header = () => {
           <Navbar.Collapse id="main-navbar-nav">
             {/* Các link điều hướng (Căn giữa) */}
             <Nav className="mx-auto nav-links">
-              <Nav.Link as={Link} to="/products">
-                TẤT CẢ SẢN PHẨM
-              </Nav.Link>
-              <Nav.Link as={Link} to="/products?category=do-nam">
-                ĐỒ NAM
-              </Nav.Link>
-              <Nav.Link as={Link} to="/products?category=do-nu">
-                ĐỒ NỮ
-              </Nav.Link>
-              <Nav.Link as={Link} to="/products?category=do-the-thao">
-                ĐỒ THỂ THAO
-              </Nav.Link>
-              <Nav.Link as={Link} to="/products?category=do-da">
-                ĐỒ DA
-              </Nav.Link>
-              <Nav.Link as={Link} to="/products?category=phu-kien">
-                PHỤ KIỆN
-              </Nav.Link>
-              <Nav.Link as={Link} to="/news">
+              {/* Sử dụng map để tạo NavLink cho danh mục */}
+              {CATEGORIES.map((item) => (
+                <Nav.Link
+                  key={item.category}
+                  // Chỉ sử dụng NavLink cho các link không có query param,
+                  // Ở đây ta dùng Nav.Link thường và tự thêm class 'active'
+                  as="div" // Dùng div thay vì NavLink để tránh lỗi active
+                  onClick={() => handleCategoryClick(item.category)}
+                  className={`nav-link ${
+                    isCategoryActive(item.category, location) ? "active" : ""
+                  }`}
+                  style={{ cursor: "pointer" }} // Thêm cursor để người dùng biết là có thể click
+                >
+                  {item.name}
+                </Nav.Link>
+              ))}
+
+              {/* Các link không có query param giữ nguyên */}
+              <Nav.Link as={NavLink} to="/news">
                 TIN TỨC
               </Nav.Link>
-              <Nav.Link as={Link} to="/contact">
+              <Nav.Link as={NavLink} to="/contact">
                 LIÊN HỆ
               </Nav.Link>
             </Nav>
@@ -140,7 +175,7 @@ const Header = () => {
                 </Nav.Link>
               )}
 
-              {/* 5. CẬP NHẬT ICON GIỎ HÀNG */}
+              {/* CẬP NHẬT ICON GIỎ HÀNG */}
               <Nav.Link
                 as={Link}
                 to="/cart"

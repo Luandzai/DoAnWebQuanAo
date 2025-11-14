@@ -32,6 +32,14 @@
   color: #0d6efd; /* Màu xanh khi hover */
 }
 
+/* === THÊM CSS CHO NAVLINK ACTIVE === */
+.nav-links .nav-link.active {
+  color: #0d6efd; /* Màu xanh dương */
+  position: relative;
+  border-bottom: 2px solid #0d6efd; /* Gạch chân */
+  padding-bottom: 4px; /* Thêm khoảng đệm để gạch chân không quá sát */
+}
+
 /* 4. Ô tìm kiếm */
 .search-form {
   min-width: 200px;
