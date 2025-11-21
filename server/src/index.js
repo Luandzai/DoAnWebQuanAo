@@ -1,3 +1,4 @@
+// server/src/index.js
 require("dotenv").config(); // Nạp biến môi trường từ file .env
 const express = require("express");
 const cors = require("cors");
@@ -19,7 +20,8 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const attributeRoutes = require("./routes/attributeRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const adminOrderRoutes = require("./routes/adminOrderRoutes");
-const contactRoutes = require("./routes/contactRoutes"); // Import contact routes
+const contactRoutes = require("./routes/contactRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,7 +49,8 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/returns", returnsRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/attributes", attributeRoutes);
-app.use("/api/contact", contactRoutes); // Sử dụng contact routes
+app.use("/api/contact", contactRoutes); // <-- THÊM DÒNG NÀY
+app.use("/api/payment", paymentRoutes);
 // Admin routes
 app.use("/api/admin/orders", adminOrderRoutes); // Phải đặt trước /api/admin
 app.use("/api/admin", adminRoutes);

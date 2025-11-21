@@ -1,5 +1,8 @@
-// server/src/controllers/orderController.js (ĐÃ SỬA LỖI getMyOrders)
+// server/src/controllers/orderController.js
 const pool = require("../config/db");
+// 1. IMPORT TIỆN ÍCH VNPAY VÀ MOMO
+const { createPaymentUrl } = require("../utils/vnpay");
+const { createPaymentRequest } = require("../utils/momo"); // <-- THÊM DÒNG NÀY
 
 // (Hàm createOrder giữ nguyên)
 exports.createOrder = async (req, res) => {
@@ -8,7 +11,7 @@ exports.createOrder = async (req, res) => {
     const NguoiDungID = req.user.NguoiDungID;
     const {
       shippingInfo,
-      paymentMethodId,
+      paymentMethodId, // ID 701 (COD), 702 (VNPAY), 703 (MOMO)
       notes,
       cartItems,
       MaKhuyenMai,
@@ -118,8 +121,14 @@ exports.createOrder = async (req, res) => {
     }
     const TongThanhToan = TongTienHang + PhiVanChuyen - GiamGia;
 
+    // 2. LOGIC TRẠNG THÁI BAN ĐẦU (SỬA LẠI DÒNG NÀY)
+    const isOnlinePayment =
+      paymentMethodId == "702" || paymentMethodId == "703";
+    const initialTrangThai = isOnlinePayment ? "CHUA_THANH_TOAN" : "DANG_XU_LY";
+    // ===============================================
+
     const [orderResult] = await connection.query(
-      'INSERT INTO DonHang (NguoiDungID, DiaChiGiaoHangID, MaKhuyenMai, PhuongThucID, TongTienHang, PhiVanChuyen, TongThanhToan, TrangThai, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?, "DANG_XU_LY", ?)',
+      "INSERT INTO DonHang (NguoiDungID, DiaChiGiaoHangID, MaKhuyenMai, PhuongThucID, TongTienHang, PhiVanChuyen, TongThanhToan, TrangThai, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         NguoiDungID,
         newDiaChiID,
@@ -128,6 +137,7 @@ exports.createOrder = async (req, res) => {
         TongTienHang,
         PhiVanChuyen,
         TongThanhToan,
+        initialTrangThai, // <-- SỬ DỤNG TRẠNG THÁI MỚI
         notes,
       ]
     );
@@ -155,9 +165,47 @@ exports.createOrder = async (req, res) => {
     // =================================================================
 
     await connection.commit();
-    res
-      .status(201)
-      .json({ message: "Đặt hàng thành công!", DonHangID: newDonHangID });
+
+    // 3. LOGIC TRẢ VỀ URL (THÊM MOMO)
+    if (paymentMethodId == "702") {
+      // Nếu là VNPAY
+      const ipAddr =
+        req.headers["x-forwarded-for"] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
+      const paymentUrl = createPaymentUrl(
+        newDonHangID,
+        TongThanhToan,
+        ipAddr,
+        `Thanh toan don hang ${newDonHangID}`
+      );
+
+      res.status(201).json({
+        message: "Đơn hàng đã được tạo, đang chuyển hướng...",
+        DonHangID: newDonHangID,
+        paymentUrl: paymentUrl, // <-- Trả về URL
+      });
+    } else if (paymentMethodId == "703") {
+      // Nếu là MOMO
+      const momoResponse = await createPaymentRequest(
+        newDonHangID,
+        TongThanhToan,
+        `Thanh toan don hang ${newDonHangID}`
+      );
+
+      res.status(201).json({
+        message: "Đơn hàng đã được tạo, đang chuyển hướng...",
+        DonHangID: newDonHangID,
+        paymentUrl: momoResponse.payUrl, // <-- Trả về payUrl của MoMo
+      });
+    } else {
+      // Nếu là COD
+      res
+        .status(201)
+        .json({ message: "Đặt hàng thành công!", DonHangID: newDonHangID });
+    }
   } catch (error) {
     await connection.rollback();
     console.error("Lỗi khi đặt hàng:", error);
@@ -169,10 +217,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// @desc    Xem danh sách đơn hàng của tôi
-// @route   GET /api/orders
-// @access  Private
-// === HÀM ĐÃ ĐƯỢC SỬA LỖI ===
+// (Hàm getMyOrders giữ nguyên)
 exports.getMyOrders = async (req, res) => {
   try {
     const NguoiDungID = req.user.NguoiDungID;
@@ -289,8 +334,14 @@ exports.cancelOrder = async (req, res) => {
     );
     if (orderRows.length === 0) throw new Error("Không tìm thấy đơn hàng.");
     const order = orderRows[0];
-    if (order.TrangThai !== "DANG_XU_LY") {
-      throw new Error("Chỉ có thể hủy đơn hàng ở trạng thái 'Đang xử lý'.");
+    // SỬA: Cho phép hủy cả CHUA_THANH_TOAN
+    if (
+      order.TrangThai !== "DANG_XU_LY" &&
+      order.TrangThai !== "CHUA_THANH_TOAN"
+    ) {
+      throw new Error(
+        "Chỉ có thể hủy đơn hàng ở trạng thái 'Đang xử lý' hoặc 'Chưa thanh toán'."
+      );
     }
     await connection.query(
       "UPDATE DonHang SET TrangThai = 'DA_HUY' WHERE DonHangID = ?",
@@ -311,6 +362,7 @@ exports.cancelOrder = async (req, res) => {
   }
 };
 
+// ... (Các hàm Admin giữ nguyên) ...
 // @desc    Admin: Lấy TẤT CẢ đơn hàng (có phân trang)
 // @route   GET /api/admin/orders
 // @access  Private (Admin)

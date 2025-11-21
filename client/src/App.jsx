@@ -36,6 +36,7 @@ import AdminUserListPage from "./pages/AdminUserListPage"; // Đã import
 import AdminReturnListPage from "./pages/AdminReturnListPage";
 import AdminVoucherListPage from "./pages/AdminVoucherListPage"; // Đã import
 import AdminReviewListPage from "./pages/AdminReviewListPage";
+import PaymentResultPage from "./pages/PaymentResultPage"; // <-- DÒNG BỊ ĐỎ LÀ DÒNG NÀY
 
 import ComingSoon from "./pages/ComingSoon"; // Di chuyển xuống dưới cho gọn
 function App() {
@@ -58,6 +59,8 @@ function App() {
             path="/reset-password/:token"
             element={<ResetPasswordPage />}
           />
+          {/* === ROUTE KẾT QUẢ THANH TOÁN === */}
+          <Route path="/payment/result" element={<PaymentResultPage />} />
           {/* ======================= */}
           {/* 2. KHỐI ROUTE LỒNG NHAU CHO PROFILE */}
           <Route path="/profile" element={<ProfilePage />}>

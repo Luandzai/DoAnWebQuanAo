@@ -294,7 +294,7 @@ const CheckoutPage = () => {
 
   // (Hàm applyVoucherHandler ĐÃ BỊ XÓA, không cần nữa)
 
-  // Hàm ĐẶT HÀNG (CẬP NHẬT)
+  // === SỬA ĐỔI HÀM ĐẶT HÀNG ===
   const placeOrderHandler = async () => {
     setLoading(true);
     setError("");
@@ -315,7 +315,8 @@ const CheckoutPage = () => {
     }
 
     try {
-      await api.post("/orders", {
+      // 1. Gọi API
+      const response = await api.post("/orders", {
         shippingInfo: shippingInfo,
         paymentMethodId: paymentMethod,
         notes: notes,
@@ -324,14 +325,24 @@ const CheckoutPage = () => {
         MaKhuyenMai: selectedVoucherCode || null, // Gửi mã đã chọn từ dropdown
       });
 
-      fetchCart(); // Tải lại giỏ hàng để loại bỏ các sản phẩm đã mua
-      setShowSuccessModal(true);
+      const { data } = response;
+
+      // 2. Kiểm tra phản hồi
+      if (data.paymentUrl) {
+        // 2a. Nếu là VNPAY -> Chuyển hướng
+        window.location.href = data.paymentUrl;
+      } else {
+        // 2b. Nếu là COD -> Hiển thị Modal Success
+        fetchCart(); // Tải lại giỏ hàng để loại bỏ các sản phẩm đã mua
+        setShowSuccessModal(true);
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Đặt hàng thất bại.");
     } finally {
       setLoading(false);
     }
   };
+  // ============================
 
   if (cartLoading) {
     return (
