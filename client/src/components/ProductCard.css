@@ -1,0 +1,94 @@
+/* client/src/components/ProductCard.css */
+
+/* 1. Vỏ bọc cho ảnh (Wrapper) - Giữ nguyên */
+.product-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* Đây là mấu chốt: Tạo tỷ lệ 1:1 (vuông) */
+  overflow: hidden; /* Ẩn phần ảnh thừa */
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 2. Ảnh bên trong - Giữ nguyên */
+.product-card-image-wrapper .card-img-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Đây là mấu chốt: Tự cắt ảnh vừa khung */
+  transition: transform 0.3s ease;
+}
+
+.product-card-image-wrapper:hover .card-img-top {
+  transform: scale(1.05);
+}
+
+/* 3. Nút Wishlist (Tùy chỉnh lại 1 chút) */
+.product-card-wishlist-btn {
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  border-radius: 50%;
+}
+
+/* === CÁC STYLE MỚI CHO GIAO DIỆN V2 === */
+
+/* 4. Toàn bộ Card V2 */
+.product-card-v2 .card-body {
+  padding: 0.75rem; /* Giảm padding 1 chút */
+}
+.product-card-v2 .card-title {
+  margin-bottom: 0.25rem; /* Giảm margin dưới title */
+}
+
+/* 5. Tiêu đề (Cho phép 1 dòng) */
+.product-title {
+  font-size: 0.9rem; /* Giảm cỡ chữ 1 chút */
+  font-weight: 500;
+  color: #333;
+  /* Cắt chữ nếu quá 1 dòng */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 6. Hàng chứa huy hiệu */
+.product-badges-row {
+  margin-bottom: 0.5rem;
+  display: flex;
+  gap: 5px;
+}
+.badge-new,
+.badge-voucher {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.badge-new {
+  border: 1px solid #0d6efd;
+  color: #0d6efd;
+}
+.badge-voucher {
+  border: 1px solid #ffc107;
+  color: #ffc107;
+}
+
+/* 7. Hàng chứa Giá và Icon Giỏ hàng */
+.product-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.product-price-old-v2 {
+  text-decoration: line-through;
+  font-size: 0.9rem;
+}
+.product-cart-icon {
+  color: #333;
+  padding: 0.25rem;
+}
+.product-cart-icon:hover {
+  color: #0d6efd;
+}

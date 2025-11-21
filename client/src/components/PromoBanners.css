@@ -1,0 +1,52 @@
+/* client/src/components/PromoBanners.css */
+
+.promo-banner-large,
+.promo-banner-small {
+  display: block;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden; /* Đảm bảo bo góc */
+  background-size: cover;
+  background-position: center;
+  text-decoration: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.promo-banner-large:hover,
+.promo-banner-small:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.promo-banner-large {
+  min-height: 430px; /* Chiều cao banner lớn */
+}
+
+.promo-banner-small {
+  min-height: 200px; /* Chiều cao banner nhỏ */
+}
+
+/* Lớp phủ mờ để chữ dễ đọc */
+.promo-banner-large::before,
+.promo-banner-small::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+}
+
+.promo-content {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 2;
+}

@@ -1,0 +1,29 @@
+/* client/src/components/VoucherSlider.css */
+
+.voucher-swiper-container {
+  padding: 0 5px; /* Thêm padding để nút không bị dính */
+}
+
+/* Tùy chỉnh nút Next/Prev của Swiper */
+.voucher-swiper-container .swiper-button-next,
+.voucher-swiper-container .swiper-button-prev {
+  color: #dc3545; /* Màu đỏ */
+  width: 20px;
+  height: 20px;
+  top: 50%; /* Căn giữa dọc */
+  transform: translateY(-50%);
+}
+
+/* Thu nhỏ mũi tên */
+.voucher-swiper-container .swiper-button-next::after,
+.voucher-swiper-container .swiper-button-prev::after {
+  font-size: 20px !important;
+  font-weight: 900;
+}
+
+.voucher-swiper-container .swiper-button-prev {
+  left: -5px; /* Đẩy sát lề trái */
+}
+.voucher-swiper-container .swiper-button-next {
+  right: -5px; /* Đẩy sát lề phải */
+}
