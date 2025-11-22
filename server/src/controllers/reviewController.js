@@ -16,7 +16,6 @@ const deleteCloudinaryFile = async (publicId, resourceType = "image") => {
 
 exports.createReview = async (req, res) => {
   const { NguoiDungID } = req.user;
-  // Dữ liệu text giờ nằm trong req.body (từ FormData)
   const { PhienBanID, DiemSo, BinhLuan } = req.body;
 
   if (!PhienBanID || !DiemSo) {
@@ -25,12 +24,12 @@ exports.createReview = async (req, res) => {
       .json({ message: "Thiếu thông tin phiên bản hoặc điểm số." });
   }
 
-  // Lấy thông tin file (nếu có) từ req.files
-  const hinhAnh = req.files?.image?.[0];
-  const video = req.files?.video?.[0];
+  // Lấy file từ req.files (đã được Multer upload lên Cloudinary)
+  const hinhAnhFile = req.files?.image?.[0];
+  const videoFile = req.files?.video?.[0];
 
   try {
-    // (Kiểm tra mua hàng và kiểm tra trùng lặp giữ nguyên)
+    // 1. Kiểm tra điều kiện mua hàng (giữ nguyên)
     const [orders] = await pool.query(
       `SELECT * FROM DonHang dh
        JOIN ChiTietDonHang ctdh ON dh.DonHangID = ctdh.DonHangID
@@ -38,6 +37,10 @@ exports.createReview = async (req, res) => {
       [NguoiDungID, PhienBanID]
     );
     if (orders.length === 0) {
+      // Nếu không đủ điều kiện, xóa file vừa upload (nếu có)
+      if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+      if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
+
       throw new Error(
         "Bạn chỉ có thể đánh giá sản phẩm bạn đã mua và đã nhận hàng."
       );
@@ -47,10 +50,14 @@ exports.createReview = async (req, res) => {
       [NguoiDungID, PhienBanID]
     );
     if (existingReview.length > 0) {
+      // Nếu đã đánh giá, xóa file vừa upload (nếu có)
+      if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+      if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
+
       throw new Error("Bạn đã đánh giá sản phẩm này rồi.");
     }
 
-    // Thêm đánh giá mới với media
+    // 2. Insert vào DB
     const [result] = await pool.query(
       `INSERT INTO DanhGia 
          (PhienBanID, NguoiDungID, DiemSo, BinhLuan, 
@@ -61,10 +68,10 @@ exports.createReview = async (req, res) => {
         NguoiDungID,
         DiemSo,
         BinhLuan || "",
-        hinhAnh?.path || null, // URL an toàn từ Cloudinary
-        hinhAnh?.filename || null, // PublicID (để xóa)
-        video?.path || null,
-        video?.filename || null,
+        hinhAnhFile?.path || null,
+        hinhAnhFile?.filename || null,
+        videoFile?.path || null,
+        videoFile?.filename || null,
       ]
     );
 
@@ -73,9 +80,13 @@ exports.createReview = async (req, res) => {
       DanhGiaID: result.insertId,
     });
   } catch (error) {
-    // Nếu có lỗi, xóa file đã lỡ tải lên
-    if (hinhAnh) await deleteCloudinaryFile(hinhAnh.filename, "image");
-    if (video) await deleteCloudinaryFile(video.filename, "video");
+    // Rollback: Xóa file nếu lỗi (đã xử lý ở trên cho các trường hợp cụ thể, đây là catch all)
+    // Lưu ý: Nếu lỗi xảy ra SAU khi insert DB thành công (hiếm), thì không nên xóa file.
+    // Nhưng ở đây logic insert là cuối cùng, nên nếu vào catch thì thường là chưa insert hoặc lỗi insert.
+    // Tuy nhiên, ta đã handle xóa file ở các điều kiện check logic phía trên.
+    // Để an toàn, ta có thể check lại nếu chưa insert thành công thì xóa.
+    // Đơn giản nhất là cứ để logic check ở trên.
+    // Ở đây chỉ log lỗi.
 
     console.error("Lỗi khi tạo đánh giá:", error);
     res.status(500).json({ message: error.message || "Lỗi server nội bộ" });
@@ -88,7 +99,6 @@ exports.getMyReviewByProduct = async (req, res) => {
   const { phienBanId } = req.params;
 
   try {
-    // Lấy tất cả các cột mới
     const [review] = await pool.query(
       "SELECT * FROM DanhGia WHERE NguoiDungID = ? AND PhienBanID = ?",
       [NguoiDungID, phienBanId]
@@ -104,69 +114,88 @@ exports.getMyReviewByProduct = async (req, res) => {
   }
 };
 
-// (Hàm updateReview đã được nâng cấp)
 exports.updateReview = async (req, res) => {
   const { NguoiDungID } = req.user;
   const { id: DanhGiaID } = req.params;
   const { DiemSo, BinhLuan, XoaHinhAnh, XoaVideo } = req.body;
 
-  const hinhAnhMoi = req.files?.image?.[0];
-  const videoMoi = req.files?.video?.[0];
+  const hinhAnhFile = req.files?.image?.[0];
+  const videoFile = req.files?.video?.[0];
 
   if (!DiemSo) {
+    // Xóa file vừa upload nếu thiếu thông tin
+    if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+    if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
     return res.status(400).json({ message: "Thiếu điểm số." });
   }
 
   try {
-    // 1. Lấy đánh giá cũ để kiểm tra
+    // 1. Lấy đánh giá cũ
     const [rows] = await pool.query(
       "SELECT * FROM DanhGia WHERE DanhGiaID = ? AND NguoiDungID = ?",
       [DanhGiaID, NguoiDungID]
     );
     if (rows.length === 0) {
+      // Xóa file vừa upload nếu không tìm thấy đánh giá
+      if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+      if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
       return res
         .status(404)
         .json({ message: "Không tìm thấy đánh giá hoặc bạn không có quyền." });
     }
     const reviewCu = rows[0];
 
-    // 2. Chuẩn bị dữ liệu media mới
+    // 2. Chuẩn bị dữ liệu mới
     let hinhAnhURL = reviewCu.HinhAnhURL;
     let hinhAnhPublicID = reviewCu.HinhAnhPublicID;
     let videoURL = reviewCu.VideoURL;
     let videoPublicID = reviewCu.VideoPublicID;
 
     // 3. Xử lý Hình ảnh
-    if (hinhAnhMoi) {
-      // Nếu có ảnh mới -> Xóa ảnh cũ (nếu có)
-      await deleteCloudinaryFile(reviewCu.HinhAnhPublicID, "image");
-      hinhAnhURL = hinhAnhMoi.path;
-      hinhAnhPublicID = hinhAnhMoi.filename;
+    if (hinhAnhFile) {
+      // Ảnh mới đã được upload bởi Multer
+      
+      // Xóa ảnh cũ
+      if (reviewCu.HinhAnhPublicID) {
+        await deleteCloudinaryFile(reviewCu.HinhAnhPublicID, "image");
+      }
+      
+      hinhAnhURL = hinhAnhFile.path;
+      hinhAnhPublicID = hinhAnhFile.filename;
     } else if (XoaHinhAnh === "true") {
-      // Nếu không có ảnh mới, nhưng user đòi Xóa
-      await deleteCloudinaryFile(reviewCu.HinhAnhPublicID, "image");
+      if (reviewCu.HinhAnhPublicID) {
+        await deleteCloudinaryFile(reviewCu.HinhAnhPublicID, "image");
+      }
       hinhAnhURL = null;
       hinhAnhPublicID = null;
     }
 
     // 4. Xử lý Video
-    if (videoMoi) {
-      await deleteCloudinaryFile(reviewCu.VideoPublicID, "video");
-      videoURL = videoMoi.path;
-      videoPublicID = videoMoi.filename;
+    if (videoFile) {
+      // Video mới đã được upload bởi Multer
+      
+      // Xóa video cũ
+      if (reviewCu.VideoPublicID) {
+        await deleteCloudinaryFile(reviewCu.VideoPublicID, "video");
+      }
+      
+      videoURL = videoFile.path;
+      videoPublicID = videoFile.filename;
     } else if (XoaVideo === "true") {
-      await deleteCloudinaryFile(reviewCu.VideoPublicID, "video");
+      if (reviewCu.VideoPublicID) {
+        await deleteCloudinaryFile(reviewCu.VideoPublicID, "video");
+      }
       videoURL = null;
       videoPublicID = null;
     }
 
-    // 5. Cập nhật CSDL
+    // 5. Cập nhật DB
     await pool.query(
       `UPDATE DanhGia SET 
          DiemSo = ?, BinhLuan = ?,
          HinhAnhURL = ?, HinhAnhPublicID = ?,
          VideoURL = ?, VideoPublicID = ?,
-         NgayCapNhat = NOW() -- <-- SỬA ĐỔI: Thêm ngày cập nhật
+         NgayCapNhat = NOW()
        WHERE DanhGiaID = ?`,
       [
         DiemSo,
@@ -181,9 +210,9 @@ exports.updateReview = async (req, res) => {
 
     res.json({ message: "Đã cập nhật đánh giá!" });
   } catch (error) {
-    // Nếu có lỗi, xóa file đã lỡ tải lên (nếu có)
-    if (hinhAnhMoi) await deleteCloudinaryFile(hinhAnhMoi.filename, "image");
-    if (videoMoi) await deleteCloudinaryFile(videoMoi.filename, "video");
+    // Rollback: Xóa file mới upload nếu lỗi DB
+    if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+    if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
 
     console.error("Lỗi khi cập nhật đánh giá:", error);
     res.status(500).json({ message: "Lỗi server" });

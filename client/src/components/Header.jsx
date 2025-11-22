@@ -12,10 +12,11 @@ import {
   Badge,
 } from "react-bootstrap";
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom"; // Thêm useLocation
-import { Telephone, Search, Person, Cart } from "react-bootstrap-icons";
+import { Telephone, Search, Person, Cart, Heart } from "react-bootstrap-icons";
 import "./Header.css";
 import AuthContext from "../context/AuthContext";
 import CartContext from "../context/CartContext";
+import WishlistContext from "../context/WishlistContext";
 
 // Danh sách các danh mục để dễ dàng lặp và quản lý
 const CATEGORIES = [
@@ -32,7 +33,7 @@ const isCategoryActive = (category, location) => {
   if (location.pathname !== "/products") return false;
 
   const searchParams = new URLSearchParams(location.search);
-  const currentCategory = searchParams.get("category");
+  const currentCategory = searchParams.get("danhMuc");
 
   // Kiểm tra "TẤT CẢ SẢN PHẨM"
   if (category === "tat-ca") {
@@ -47,6 +48,7 @@ const isCategoryActive = (category, location) => {
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
   const { cartItems } = useContext(CartContext);
+  const { wishlist: wishlistItems } = useContext(WishlistContext);
 
   const [keyword, setKeyword] = useState("");
   const navigate = useNavigate();
@@ -66,12 +68,12 @@ const Header = () => {
     if (category === "tat-ca") {
       navigate("/products");
     } else {
-      navigate(`/products?category=${category}`);
+      navigate(`/products?danhMuc=${category}`);
     }
   };
 
-  const cartItemCount = cartItems.length;
-
+  const cartItemCount = cartItems?.length || 0;
+  const wishlistItemCount = wishlistItems?.length || 0;
   return (
     <header className="header-container shadow-sm">
       {/* Thanh Top-bar */}
@@ -85,7 +87,7 @@ const Header = () => {
       </div>
 
       {/* Thanh Navbar chính */}
-      <Navbar bg="white" variant="light" expand="lg" className="main-navbar">
+      <Navbar bg="white" variant="light" expand="xl" className="main-navbar">
         <Container fluid>
           {/* Logo */}
           <Navbar.Brand as={Link} to="/" className="fw-bold fs-4">
@@ -103,14 +105,12 @@ const Header = () => {
               {CATEGORIES.map((item) => (
                 <Nav.Link
                   key={item.category}
-                  // Chỉ sử dụng NavLink cho các link không có query param,
-                  // Ở đây ta dùng Nav.Link thường và tự thêm class 'active'
-                  as="div" // Dùng div thay vì NavLink để tránh lỗi active
+                  as="div"
                   onClick={() => handleCategoryClick(item.category)}
                   className={`nav-link ${
                     isCategoryActive(item.category, location) ? "active" : ""
                   }`}
-                  style={{ cursor: "pointer" }} // Thêm cursor để người dùng biết là có thể click
+                  style={{ cursor: "pointer" }}
                 >
                   {item.name}
                 </Nav.Link>
@@ -178,24 +178,38 @@ const Header = () => {
                 </Nav.Link>
               )}
 
-              {/* CẬP NHẬT ICON GIỎ HÀNG */}
+              {/* Wishlist Icon */}
+              <Nav.Link
+                as={Link}
+                to="/profile/wishlist"
+                className="nav-icon-link position-relative"
+              >
+                <Heart size={22} />
+                {user && wishlistItemCount > 0 && (
+                  <Badge
+                    pill
+                    bg="danger"
+                    className="position-absolute"
+                    style={{ top: "-5px", right: "-10px", fontSize: "0.7em" }}
+                  >
+                    {wishlistItemCount}
+                  </Badge>
+                )}
+              </Nav.Link>
+
+              {/* Cart Icon */}
               <Nav.Link
                 as={Link}
                 to="/cart"
                 className="nav-icon-link position-relative"
               >
                 <Cart size={22} />
-                {/* Chỉ hiển thị Badge nếu đã đăng nhập VÀ có hàng */}
                 {user && cartItemCount > 0 && (
                   <Badge
                     pill
                     bg="danger"
                     className="position-absolute"
-                    style={{
-                      top: "-5px",
-                      right: "-10px",
-                      fontSize: "0.7em",
-                    }}
+                    style={{ top: "-5px", right: "-10px", fontSize: "0.7em" }}
                   >
                     {cartItemCount}
                   </Badge>

@@ -1,0 +1,136 @@
+// client/src/components/ProductInfo.jsx
+import React, { useState } from 'react';
+import { Button, Badge, ButtonGroup, InputGroup, Form } from 'react-bootstrap';
+import StarRating from './StarRating';
+import VoucherSlider from './VoucherSlider';
+import SizeGuideModal from './SizeGuideModal';
+
+const ProductInfo = ({
+    product,
+    selectedVariant,
+    avgRating,
+    reviewCount,
+    totalSold,
+    availableAttributes,
+    selectedOptions,
+    onOptionSelect,
+    quantity,
+    onQuantityChange,
+    onAddToCart,
+    vouchers
+}) => {
+    const [showSizeModal, setShowSizeModal] = useState(false);
+
+    const formatCurrency = (amount) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount || 0);
+
+    const renderPrice = () => {
+        if (!selectedVariant) {
+            return <span className="product-price-new text-muted" style={{ fontSize: '1.5rem' }}>Vui lòng chọn thuộc tính</span>;
+        }
+        const hasDiscount = parseFloat(selectedVariant.GiaBan) < parseFloat(product.GiaGoc);
+        return (
+            <div className="product-price-wrapper">
+                <span className="product-price-new">
+                    {formatCurrency(selectedVariant.GiaBan)}
+                </span>
+                {hasDiscount && (
+                    <>
+                        <span className="product-price-old">{formatCurrency(product.GiaGoc)}</span>
+                        <span className="discount-badge">
+                            -{Math.round(((product.GiaGoc - selectedVariant.GiaBan) / product.GiaGoc) * 100)}%
+                        </span>
+                    </>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <>
+            <h1 className="product-detail-title">{product.TenSanPham}</h1>
+
+            <div className="product-meta-row">
+                <div className="product-rating-wrapper">
+                    <StarRating value={avgRating} />
+                    <span>({reviewCount} đánh giá)</span>
+                </div>
+                <div className="vr"></div>
+                <span>Đã bán {totalSold}</span>
+                <div className="vr"></div>
+                <span>
+                    Tồn kho: 
+                    {selectedVariant ? (
+                        <span className="text-success fw-bold ms-1">{selectedVariant.SoLuongTonKho}</span>
+                    ) : (
+                        <span className="text-danger fw-bold ms-1">--</span>
+                    )}
+                </span>
+            </div>
+
+            {renderPrice()}
+
+            {/* Vouchers */}
+            <div className="mb-4">
+                <VoucherSlider vouchers={vouchers} />
+            </div>
+
+            {/* Options */}
+            {availableAttributes.map((attr) => (
+                <div className="product-option-group" key={attr.name}>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <span className="product-option-label">{attr.name}: <span className="text-dark">{selectedOptions[attr.name]}</span></span>
+                        {attr.name.toLowerCase().includes('size') && (
+                            <span className="size-guide-link" onClick={() => setShowSizeModal(true)}>Bảng quy đổi kích cỡ</span>
+                        )}
+                    </div>
+                    
+                    <div className="option-chips-wrapper">
+                        {attr.values.map((value) => (
+                            <div
+                                key={value}
+                                className={`option-chip ${selectedOptions[attr.name] === value ? 'active' : ''}`}
+                                onClick={() => onOptionSelect(attr.name, value)}
+                            >
+                                {value}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ))}
+
+            {/* Quantity & Add to Cart */}
+            <div className="action-row">
+                <div className="quantity-selector-v2">
+                    <button 
+                        className="qty-btn" 
+                        onClick={() => onQuantityChange(-1)} 
+                        disabled={!selectedVariant || quantity <= 1}
+                    >-</button>
+                    <input 
+                        type="text" 
+                        className="qty-input" 
+                        value={quantity} 
+                        readOnly 
+                    />
+                    <button 
+                        className="qty-btn" 
+                        onClick={() => onQuantityChange(1)} 
+                        disabled={!selectedVariant || quantity >= selectedVariant.SoLuongTonKho}
+                    >+</button>
+                </div>
+
+                <button
+                    className="btn-add-cart-premium"
+                    disabled={!selectedVariant || selectedVariant.SoLuongTonKho === 0}
+                    onClick={onAddToCart}
+                >
+                    {selectedVariant && selectedVariant.SoLuongTonKho > 0 ? "Thêm vào giỏ hàng" : "Hết hàng"}
+                </button>
+            </div>
+
+            <SizeGuideModal show={showSizeModal} onHide={() => setShowSizeModal(false)} />
+        </>
+    );
+};
+
+export default ProductInfo;

@@ -46,7 +46,7 @@ function App() {
     <div className="d-flex flex-column min-vh-100">
       <Header />
 
-      <div className="flex-grow-1">
+      <main className="flex-grow-1 main-content">
         <Routes>
           {/* Trang chính */}
           <Route path="/" element={<HomePage />} />
@@ -103,7 +103,7 @@ function App() {
           </Route>
           {/* ========================================= */}
         </Routes>
-      </div>
+      </main>
 
       <Footer />
     </div>

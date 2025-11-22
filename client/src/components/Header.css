@@ -67,18 +67,64 @@
   color: #0d6efd;
 }
 
-/* Responsive cho mobile */
+/* Responsive */
+
+/* Large devices (lg) and down */
 @media (max-width: 991.98px) {
   .nav-links {
-    margin: 1rem 0; /* Thêm khoảng cách trên/dưới khi ở mobile */
+    margin: 1rem 0; 
   }
   .search-form {
     min-width: 100%;
     margin: 0.5rem 0;
   }
   .nav-icons {
-    flex-direction: row; /* Giữ các icon trên 1 hàng */
+    flex-direction: row; 
     justify-content: flex-start;
     margin-top: 0.5rem;
   }
+  .nav-links .nav-link {
+    padding: 0.5rem 0;
+    font-size: 1rem;
+  }
+}
+
+/* Medium devices (md) and down */
+@media (max-width: 767.98px) {
+    .main-navbar .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .nav-links .nav-link {
+        font-size: 0.95rem;
+    }
+
+    .top-bar {
+        font-size: 0.8rem;
+        text-align: center;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Small devices (sm) and down */
+@media (max-width: 575.98px) {
+    .header-container .navbar-brand {
+        font-size: 1.25rem; /* Giảm cỡ chữ logo */
+    }
+
+    .top-bar {
+        display: none; /* Ẩn top-bar trên màn hình quá nhỏ */
+    }
+
+    .nav-icons .nav-icon-link {
+        padding: 0.4rem;
+        font-size: 1rem;
+    }
+
+    .nav-icons .badge {
+        top: -2px !important;
+        right: -8px !important;
+        font-size: 0.6em !important;
+    }
 }

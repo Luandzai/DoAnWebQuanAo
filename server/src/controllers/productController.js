@@ -708,7 +708,7 @@ exports.getBestSellingProducts = async (req, res) => {
          AND sp.TrangThai = 'ACTIVE'
        GROUP BY sp.SanPhamID, sp.TenSanPham, sp.Slug, sp.GiaGoc
        ORDER BY totalSold DESC
-       LIMIT 16`
+       LIMIT 8`
     );
     res.json(products);
   } catch (error) {

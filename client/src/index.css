@@ -1,30 +1,60 @@
-/* client/src/index.css (Nội dung MỚI) */
-
-/*
-  CSS Reset cơ bản
-  Chúng ta xóa bỏ mọi giới hạn chiều rộng (max-width)
-  và căn giữa (margin: 0 auto)
-*/
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 body {
-  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* Đảm bảo body chiếm toàn bộ không gian */
+  margin: 0;
+}
+.main-content {
+  max-width: 1440px;
+  padding: 2rem;
   width: 100%;
-  overflow-x: hidden; /* Ngăn cuộn ngang */
+  margin-right: auto;
+  margin-left: auto;
 }
 
-#root {
-  /* Đảm bảo #root (nơi React render) cũng chiếm 100% */
-  width: 100%;
+/* Responsive adjustments */
+
+/* Extra extra large devices (xxl) */
+@media (max-width: 1400px) {
+  .main-content {
+    max-width: 1200px;
+  }
 }
 
-/* Tùy chỉnh nhỏ cho Link (tái sử dụng từ code cũ) */
-a {
-  text-decoration: none;
+/* Extra large devices (xl) */
+@media (max-width: 1200px) {
+  .main-content {
+    max-width: 992px;
+    padding: 1.5rem;
+  }
+}
+
+/* Large devices (lg) */
+@media (max-width: 992px) {
+  .main-content {
+    max-width: 768px;
+  }
+}
+
+/* Medium devices (md) */
+@media (max-width: 768px) {
+  .main-content {
+    max-width: 576px;
+    padding: 1rem;
+  }
+}
+
+/* Small devices (sm) */
+@media (max-width: 576px) {
+  .main-content {
+    padding: 0.5rem;
+  }
 }
