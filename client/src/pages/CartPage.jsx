@@ -143,7 +143,7 @@ const CartPage = () => {
                           {item.ThuocTinh}
                         </p>
                       </Col>
-                      <Col md={1}>
+                      <Col md={2}>
                         <strong>
                           {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
                         </strong>
@@ -175,7 +175,7 @@ const CartPage = () => {
                           </Button>
                         </InputGroup>
                       </Col>
-                      <Col md={2} className="text-end">
+                      <Col md={1} className="text-end">
                         <Button
                           variant="danger"
                           size="sm"

@@ -1,29 +1,76 @@
 /* client/src/components/VoucherSlider.css */
 
 .voucher-swiper-container {
-  padding: 0 5px; /* Thêm padding để nút không bị dính */
+  padding: 0 30px; /* Tăng padding để có chỗ cho nút */
+  overflow: hidden; /* Ngăn voucher tràn ra ngoài */
+  position: relative;
+  border: 1px solid #dc3545; /* Border đỏ mỏng */
+  border-radius: 4px; /* Bo góc nhẹ */
+  padding: 5px;
 }
 
-/* Tùy chỉnh nút Next/Prev của Swiper */
+/* Đảm bảo slides không chồng lên nhau */
+.voucher-swiper-container .swiper-wrapper {
+  position: relative;
+}
+
+.voucher-swiper-container .swiper-slide {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.voucher-swiper-container .swiper-slide-active {
+  opacity: 1;
+  z-index: 1;
+}
+
+/* Voucher section - thụt nội dung vào để không bị mũi tên đè */
+.voucher-section {
+  padding: 10px 35px; /* Padding trái phải để tránh mũi tên */
+  min-height: 80px; /* Đảm bảo có chiều cao tối thiểu */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Căn giữa theo chiều dọc */
+}
+
+/* Tùy chỉnh nút Next/Prev của Swiper - Phong cách tối giản */
 .voucher-swiper-container .swiper-button-next,
 .voucher-swiper-container .swiper-button-prev {
-  color: #dc3545; /* Màu đỏ */
-  width: 20px;
-  height: 20px;
-  top: 50%; /* Căn giữa dọc */
-  transform: translateY(-50%);
+  color: #333; /* Màu xám đậm */
+  background: transparent;
+  width: 30px;
+  height: 30px;
+  top: 50%;
+  margin-top: -15px; /* Căn giữa chính xác (height / 2) */
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  z-index: 10; /* Đảm bảo nút luôn ở trên */
 }
 
-/* Thu nhỏ mũi tên */
+/* Hover effect - Đơn giản và tinh tế */
+.voucher-swiper-container .swiper-button-next:hover,
+.voucher-swiper-container .swiper-button-prev:hover {
+  opacity: 1;
+  color: #dc3545; /* Đỏ khi hover */
+  background: rgba(220, 53, 69, 0.05); /* Nền đỏ nhạt khi hover */
+}
+
+/* Kích thước mũi tên */
 .voucher-swiper-container .swiper-button-next::after,
 .voucher-swiper-container .swiper-button-prev::after {
-  font-size: 20px !important;
-  font-weight: 900;
+  font-size: 18px !important;
+  font-weight: 700;
 }
 
 .voucher-swiper-container .swiper-button-prev {
-  left: -5px; /* Đẩy sát lề trái */
+  left: 0;
 }
 .voucher-swiper-container .swiper-button-next {
-  right: -5px; /* Đẩy sát lề phải */
+  right: 0;
+}
+
+/* Disabled state */
+.voucher-swiper-container .swiper-button-disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
 }

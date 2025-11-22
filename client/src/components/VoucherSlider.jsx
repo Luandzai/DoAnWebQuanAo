@@ -19,11 +19,19 @@ const VoucherSlider = ({
   onVoucherClick,
   onApply,
   appliedVoucher,
+  onClaimVoucher,
 }) => {
   // 3. Nếu không có voucher thì không hiển thị gì cả
   if (!vouchers || vouchers.length === 0) {
     return null; // (Hoặc bạn có thể hiển thị 1 thông báo nhỏ)
   }
+
+  const handleClaimClick = (e, maKhuyenMai) => {
+    e.stopPropagation(); // Prevent triggering parent div's onClick
+    if (onClaimVoucher) {
+      onClaimVoucher(maKhuyenMai);
+    }
+  };
 
   return (
     <Swiper
@@ -47,7 +55,12 @@ const VoucherSlider = ({
           >
             <div className="d-flex justify-content-between align-items-center">
               <span className="fw-bold">Voucher và khuyến mãi</span>
-              <Badge pill className="btn-apply-voucher">
+              <Badge 
+                pill 
+                className="btn-apply-voucher"
+                onClick={(e) => handleClaimClick(e, voucher.MaKhuyenMai)}
+                style={{ cursor: 'pointer' }}
+              >
                 Nhận
               </Badge>
             </div>

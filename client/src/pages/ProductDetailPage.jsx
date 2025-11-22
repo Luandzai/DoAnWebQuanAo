@@ -30,6 +30,7 @@ const ProductDetailPage = () => {
         handleQuantityChange,
         setCurrentImageIndex,
         handleAddToCart,
+        handleClaimVoucher,
     } = useProductDetail(slug);
 
     if (loading) {
@@ -82,6 +83,7 @@ const ProductDetailPage = () => {
                         onQuantityChange={handleQuantityChange}
                         onAddToCart={handleAddToCart}
                         vouchers={vouchers}
+                        onClaimVoucher={handleClaimVoucher}
                     />
                 </Col>
             </Row>

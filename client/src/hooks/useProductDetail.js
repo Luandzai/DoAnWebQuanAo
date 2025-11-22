@@ -22,6 +22,9 @@ export const useProductDetail = (slug) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [selectedImage, setSelectedImage] = useState('');
 
+    // Voucher claiming state
+    const [claimingVoucher, setClaimingVoucher] = useState(false);
+
     // Contexts
     const { api, user } = useContext(AuthContext);
     const { addToCart } = useContext(CartContext);
@@ -141,6 +144,29 @@ export const useProductDetail = (slug) => {
             toast.warn("Vui lòng chọn đầy đủ các thuộc tính");
         }
     };
+
+    const handleClaimVoucher = async (maKhuyenMai) => {
+        if (!user) {
+            toast.error("Vui lòng đăng nhập để nhận voucher");
+            return;
+        }
+
+        setClaimingVoucher(true);
+        try {
+            const response = await api.post('/vouchers/collect', { MaKhuyenMai: maKhuyenMai });
+            toast.success(response.data.message || "Đã lưu voucher!");
+            // Optionally refetch vouchers to update UI
+            if (product?.SanPhamID) {
+                const voucherResponse = await api.get(`/vouchers/product/${product.SanPhamID}`);
+                setVouchers(voucherResponse.data);
+            }
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || "Không thể nhận voucher";
+            toast.error(errorMsg);
+        } finally {
+            setClaimingVoucher(false);
+        }
+    };
     
     // Memoized derived values
     const avgRating = useMemo(() => {
@@ -172,5 +198,7 @@ export const useProductDetail = (slug) => {
         handleQuantityChange,
         setCurrentImageIndex,
         handleAddToCart,
+        handleClaimVoucher,
+        claimingVoucher,
     };
 };

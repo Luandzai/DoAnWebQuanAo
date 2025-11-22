@@ -17,7 +17,8 @@ const ProductInfo = ({
     quantity,
     onQuantityChange,
     onAddToCart,
-    vouchers
+    vouchers,
+    onClaimVoucher
 }) => {
     const [showSizeModal, setShowSizeModal] = useState(false);
 
@@ -71,7 +72,7 @@ const ProductInfo = ({
 
             {/* Vouchers */}
             <div className="mb-4">
-                <VoucherSlider vouchers={vouchers} />
+                <VoucherSlider vouchers={vouchers} onClaimVoucher={onClaimVoucher} />
             </div>
 
             {/* Options */}
