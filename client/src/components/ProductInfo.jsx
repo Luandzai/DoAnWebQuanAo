@@ -1,9 +1,11 @@
 // client/src/components/ProductInfo.jsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Button, Badge, ButtonGroup, InputGroup, Form } from 'react-bootstrap';
+import { Heart, HeartFill } from 'react-bootstrap-icons';
 import StarRating from './StarRating';
 import VoucherSlider from './VoucherSlider';
 import SizeGuideModal from './SizeGuideModal';
+import WishlistContext from '../context/WishlistContext';
 
 const ProductInfo = ({
     product,
@@ -21,6 +23,19 @@ const ProductInfo = ({
     onClaimVoucher
 }) => {
     const [showSizeModal, setShowSizeModal] = useState(false);
+    const { wishlist, addWishlist, removeWishlist, isFavorited } = useContext(WishlistContext);
+    
+    // Check if product is in wishlist
+    const isInWishlist = isFavorited(product.SanPhamID);
+    
+    // Handle wishlist toggle
+    const handleWishlistToggle = () => {
+        if (isInWishlist) {
+            removeWishlist(product.SanPhamID);
+        } else {
+            addWishlist(product.SanPhamID);
+        }
+    };
 
     const formatCurrency = (amount) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount || 0);
 
@@ -126,6 +141,19 @@ const ProductInfo = ({
                     onClick={onAddToCart}
                 >
                     {selectedVariant && selectedVariant.SoLuongTonKho > 0 ? "Thêm vào giỏ hàng" : "Hết hàng"}
+                </button>
+                
+                {/* Wishlist Button */}
+                <button
+                    className="btn-wishlist-premium"
+                    onClick={handleWishlistToggle}
+                    title={isInWishlist ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+                >
+                    {isInWishlist ? (
+                        <HeartFill size={24} className="text-danger" />
+                    ) : (
+                        <Heart size={24} />
+                    )}
                 </button>
             </div>
 

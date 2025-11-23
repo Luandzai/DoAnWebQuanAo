@@ -17,6 +17,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import CartContext from "../context/CartContext";
 import { X } from "react-bootstrap-icons";
+import "./CartPage.css"; // Import CSS responsive
 
 const CartPage = () => {
   const {
@@ -119,9 +120,79 @@ const CartPage = () => {
                 {cartItems.map((item) => (
                   <ListGroup.Item
                     key={item.PhienBanID}
-                    className="mb-3 p-3 shadow-sm"
+                    className="mb-3 p-2 p-md-3 shadow-sm position-relative"
                   >
-                    <Row className="align-items-center">
+                    {/* Mobile Layout */}
+                    <div className="d-md-none">
+                      {/* Checkbox and Delete Button */}
+                      <div className="d-flex align-items-start mb-2">
+                        <Form.Check
+                          type="checkbox"
+                          checked={selectedItems.includes(item.PhienBanID)}
+                          onChange={() => handleSelectItem(item.PhienBanID)}
+                          className="me-2"
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="ms-auto"
+                          onClick={() => removeFromCart(item.PhienBanID)}
+                          style={{ padding: '0.25rem 0.5rem' }}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                      
+                      {/* Image and Info Row */}
+                      <div className="d-flex mb-2">
+                        <div className="cart-item-image-col me-2">
+                          <Image
+                            src={item.HinhAnh}
+                            alt={item.TenSanPham}
+                            fluid
+                            rounded
+                          />
+                        </div>
+                        <div className="cart-item-info-col flex-grow-1">
+                          <h6 className="cart-item-title mb-1">{item.TenSanPham}</h6>
+                          <p className="cart-item-attributes text-muted small mb-1">
+                            {item.ThuocTinh}
+                          </p>
+                          <strong className="cart-item-price text-danger">
+                            {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
+                          </strong>
+                        </div>
+                      </div>
+                      
+                      {/* Quantity Controls */}
+                      <div className="d-flex justify-content-center">
+                        <InputGroup size="sm" className="cart-quantity-group">
+                          <Button
+                            variant="outline-secondary"
+                            className="cart-quantity-btn"
+                            onClick={() => handleQuantityChange(item, item.SoLuong - 1)}
+                          >
+                            -
+                          </Button>
+                          <Form.Control
+                            type="text"
+                            value={item.SoLuong}
+                            readOnly
+                            className="text-center cart-quantity-input"
+                          />
+                          <Button
+                            variant="outline-secondary"
+                            className="cart-quantity-btn"
+                            onClick={() => handleQuantityChange(item, item.SoLuong + 1)}
+                          >
+                            +
+                          </Button>
+                        </InputGroup>
+                      </div>
+                    </div>
+                    
+                    {/* Desktop/Tablet Layout */}
+                    <Row className="align-items-center d-none d-md-flex">
                       <Col xs="auto">
                         <Form.Check
                           type="checkbox"
@@ -149,13 +220,10 @@ const CartPage = () => {
                         </strong>
                       </Col>
                       <Col md={2}>
-                        {/* Bộ chọn số lượng */}
-                        <InputGroup size="sm" style={{ maxWidth: "100px" }}>
+                        <InputGroup size="sm" style={{ maxWidth: "120px" }}>
                           <Button
                             variant="outline-secondary"
-                            onClick={() =>
-                              handleQuantityChange(item, item.SoLuong - 1)
-                            }
+                            onClick={() => handleQuantityChange(item, item.SoLuong - 1)}
                           >
                             -
                           </Button>
@@ -167,9 +235,7 @@ const CartPage = () => {
                           />
                           <Button
                             variant="outline-secondary"
-                            onClick={() =>
-                              handleQuantityChange(item, item.SoLuong + 1)
-                            }
+                            onClick={() => handleQuantityChange(item, item.SoLuong + 1)}
                           >
                             +
                           </Button>

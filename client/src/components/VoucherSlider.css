@@ -74,3 +74,56 @@
   opacity: 0.2;
   cursor: not-allowed;
 }
+
+/* ===== RESPONSIVE STYLES ===== */
+
+/* Tablet: Smaller arrows and reduced padding */
+@media (max-width: 768px) {
+  .voucher-swiper-container .swiper-button-next,
+  .voucher-swiper-container .swiper-button-prev {
+    width: 24px;
+    height: 24px;
+    margin-top: -12px;
+  }
+  
+  .voucher-swiper-container .swiper-button-next::after,
+  .voucher-swiper-container .swiper-button-prev::after {
+    font-size: 14px !important;
+  }
+  
+  .voucher-section {
+    padding: 8px 28px;
+    min-height: 70px;
+  }
+  
+  .voucher-swiper-container {
+    padding: 4px;
+  }
+}
+
+/* Mobile: Hide arrows, use swipe only */
+@media (max-width: 576px) {
+  .voucher-swiper-container .swiper-button-next,
+  .voucher-swiper-container .swiper-button-prev {
+    display: none;
+  }
+  
+  .voucher-section {
+    padding: 8px 15px;
+    min-height: 60px;
+    font-size: 0.9rem;
+  }
+  
+  .voucher-swiper-container {
+    padding: 0 10px;
+  }
+}
+
+/* Extra small mobile */
+@media (max-width: 375px) {
+  .voucher-section {
+    padding: 6px 12px;
+    min-height: 55px;
+    font-size: 0.85rem;
+  }
+}

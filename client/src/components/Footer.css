@@ -43,3 +43,57 @@
 .footer-links .nav-link:hover {
   color: #ffffff; /* Màu trắng khi hover */
 }
+
+/* ===== RESPONSIVE STYLES ===== */
+
+/* Tablet and below: Adjust spacing */
+@media (max-width: 992px) {
+  .footer-container {
+    font-size: 0.875rem;
+  }
+  
+  .footer-text.large-text {
+    padding-right: 10px;
+  }
+}
+
+/* Mobile: Stack columns and reduce spacing */
+@media (max-width: 768px) {
+  .footer-container .row > div {
+    margin-bottom: 2rem;
+  }
+  
+  .footer-text.large-text {
+    text-align: left;
+    padding-right: 0;
+  }
+  
+  .contact-list {
+    font-size: 0.9rem;
+  }
+  
+  .footer-links .nav-link {
+    padding: 0.25rem 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* Small mobile: Further reduce spacing */
+@media (max-width: 576px) {
+  .footer-container {
+    font-size: 0.85rem;
+    padding: 2rem 1rem;
+  }
+  
+  .footer-text.large-text {
+    font-size: 0.85rem;
+  }
+  
+  .contact-list {
+    font-size: 0.85rem;
+  }
+  
+  .contact-list li {
+    margin-bottom: 0.4rem;
+  }
+}

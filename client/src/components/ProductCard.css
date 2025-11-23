@@ -95,3 +95,86 @@
 .product-cart-icon:hover {
   color: #0d6efd;
 }
+
+/* ===== RESPONSIVE STYLES ===== */
+
+/* Tablet: Adjust spacing and font sizes */
+@media (max-width: 992px) {
+  .product-card-v2 .card-body {
+    padding: 0.6rem;
+  }
+  
+  .product-title {
+    font-size: 0.875rem;
+  }
+  
+  .product-price-row {
+    font-size: 0.95rem;
+  }
+  
+  .product-badges-row {
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* Mobile: Larger touch targets and adjusted spacing */
+@media (max-width: 576px) {
+  .product-card-v2 .card-body {
+    padding: 0.5rem;
+  }
+  
+  .product-title {
+    font-size: 0.85rem;
+  }
+  
+  /* Larger wishlist button for easier tapping */
+  .product-card-wishlist-btn {
+    width: 36px;
+    height: 36px;
+    top: 8px;
+    right: 8px;
+  }
+  
+  /* Larger cart icon for easier tapping */
+  .product-cart-icon {
+    padding: 0.4rem;
+    font-size: 1.1rem;
+  }
+  
+  /* Tighter badge spacing */
+  .product-badges-row {
+    gap: 3px;
+    margin-bottom: 0.35rem;
+    min-height: 18px;
+  }
+  
+  .badge-new,
+  .badge-voucher {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+  }
+  
+  /* Adjust price row */
+  .product-price-row {
+    font-size: 0.9rem;
+  }
+  
+  .product-price-old-v2 {
+    font-size: 0.85rem;
+  }
+}
+
+/* Extra small mobile: Further optimizations */
+@media (max-width: 375px) {
+  .product-card-v2 .card-body {
+    padding: 0.4rem;
+  }
+  
+  .product-title {
+    font-size: 0.8rem;
+  }
+  
+  .product-price-row {
+    font-size: 0.85rem;
+  }
+}

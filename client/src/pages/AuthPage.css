@@ -77,3 +77,40 @@
     display: block; /* Hiển thị lại ảnh trên màn hình md trở lên */
   }
 }
+
+/* ===== ADDITIONAL RESPONSIVE STYLES ===== */
+
+/* Mobile: Optimize form layout */
+@media (max-width: 768px) {
+  .auth-page-wrapper {
+    padding: 2rem 1rem;
+    min-height: calc(100vh - 100px);
+  }
+  
+  .auth-card-container {
+    box-shadow: none;
+  }
+  
+  .auth-form-content {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* Small mobile: Further optimizations */
+@media (max-width: 576px) {
+  .auth-page-wrapper {
+    padding: 1.5rem 0.5rem;
+  }
+  
+  .auth-form-content {
+    padding: 1.5rem 1rem;
+  }
+  
+  .auth-logo {
+    max-width: 150px;
+  }
+  
+  .auth-toggle-link {
+    font-size: 0.85rem;
+  }
+}

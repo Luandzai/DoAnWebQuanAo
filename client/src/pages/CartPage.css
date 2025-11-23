@@ -1,0 +1,124 @@
+/* client/src/pages/CartPage.css */
+
+/* ===== CART PAGE RESPONSIVE STYLES ===== */
+
+/* Mobile: Stack cart items vertically */
+@media (max-width: 767.98px) {
+  /* Make cart items stack better on mobile */
+  .cart-item-row {
+    position: relative;
+  }
+  
+  /* Image and product info on same row */
+  .cart-item-image-col {
+    flex: 0 0 auto;
+    width: 80px;
+  }
+  
+  .cart-item-info-col {
+    flex: 1 1 auto;
+    padding-left: 0.75rem;
+  }
+  
+  /* Price, quantity, and delete button stack below */
+  .cart-item-actions-row {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+  }
+  
+  /* Quantity selector */
+  .cart-quantity-group {
+    max-width: 120px;
+  }
+  
+  /* Delete button */
+  .cart-delete-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
+/* Small mobile: Further optimizations */
+@media (max-width: 575.98px) {
+  /* Reduce image size */
+  .cart-item-image-col {
+    width: 70px;
+  }
+  
+  /* Product title smaller */
+  .cart-item-title {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+  
+  /* Product attributes smaller */
+  .cart-item-attributes {
+    font-size: 0.8rem;
+  }
+  
+  /* Price display */
+  .cart-item-price {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  /* Quantity controls */
+  .cart-quantity-group {
+    max-width: 110px;
+  }
+  
+  .cart-quantity-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 1rem;
+  }
+  
+  .cart-quantity-input {
+    width: 46px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Extra small mobile (iPhone SE) */
+@media (max-width: 374.98px) {
+  .cart-item-image-col {
+    width: 60px;
+  }
+  
+  .cart-item-title {
+    font-size: 0.85rem;
+  }
+  
+  .cart-item-price {
+    font-size: 0.95rem;
+  }
+  
+  .cart-quantity-group {
+    max-width: 100px;
+  }
+  
+  .cart-quantity-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+  
+  .cart-quantity-input {
+    width: 44px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Tablet: Optimize layout */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .cart-item-title {
+    font-size: 1rem;
+  }
+  
+  .cart-item-price {
+    font-size: 1.1rem;
+  }
+}

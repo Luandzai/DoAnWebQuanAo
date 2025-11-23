@@ -71,3 +71,55 @@
   font-size: 1.8rem; /* Kích thước icon */
   color: #6c757d;
 }
+
+/* ===== RESPONSIVE STYLES ===== */
+
+/* Tablet: Adjust card layout */
+@media (max-width: 768px) {
+  .payment-method-card {
+    padding: 0.875rem;
+  }
+  
+  .payment-method-info strong {
+    font-size: 0.95rem;
+  }
+  
+  .payment-method-logos {
+    font-size: 1.6rem;
+  }
+}
+
+/* Mobile: Stack payment method content */
+@media (max-width: 576px) {
+  .payment-method-card {
+    padding: 0.75rem;
+    flex-wrap: wrap;
+  }
+  
+  .payment-method-info strong {
+    font-size: 0.9rem;
+  }
+  
+  .payment-method-info small {
+    font-size: 0.75rem;
+  }
+  
+  .payment-method-logos {
+    font-size: 1.5rem;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .payment-radio {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.75rem;
+  }
+  
+  .payment-radio::after {
+    width: 10px;
+    height: 10px;
+  }
+}
