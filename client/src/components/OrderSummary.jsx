@@ -77,9 +77,16 @@ const OrderSummary = ({
                 <strong>- {discountAmount.toLocaleString("vi-VN")} ₫</strong>
               </ListGroup.Item>
             )}
-            <ListGroup.Item className="d-flex justify-content-between fs-5">
-              <strong>Tổng cộng:</strong>
-              <strong className="text-danger">{total.toLocaleString("vi-VN")} ₫</strong>
+            <ListGroup.Item className="fs-5">
+              <div className="text-end mb-2">
+                <span className="text-muted fst-italic small">Hóa đơn này đã bao gồm thuế theo luật hiện hành</span>
+              </div>
+            </ListGroup.Item>
+            <ListGroup.Item className="fs-5">
+              <div className="d-flex justify-content-between align-items-center">
+                <strong>Tổng cộng:</strong>
+                <strong className="text-danger">{total.toLocaleString("vi-VN")} ₫</strong>
+              </div>
             </ListGroup.Item>
           </ListGroup>
         </Card.Body>
