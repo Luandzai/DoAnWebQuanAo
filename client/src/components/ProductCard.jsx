@@ -78,16 +78,20 @@ const ProductCard = ({ product }) => {
   return (
     // 1. SỬA LẠI CARD (ĐƠN GIẢN HƠN)
     <Card className="my-3 rounded shadow-sm product-card-v2">
-      {/* Badge Giảm Giá */}
-      {showOldPrice && discountPercent > 0 && (
-        <Badge
-          bg="danger"
-          className="position-absolute"
-          style={{ top: "10px", left: "10px", zIndex: 1 }}
-        >
-          - {discountPercent}%
-        </Badge>
-      )}
+      {/* Badges Container - Giảm Giá, Hàng Mới, Voucher */}
+      <div className="product-badges-container">
+        {showOldPrice && discountPercent > 0 && (
+          <Badge bg="danger" className="discount-badge">
+            - {discountPercent}%
+          </Badge>
+        )}
+        {/* Chỉ hiển thị nếu IsNew = 1 (true) */}
+        {product.IsNew == 1 && <span className="badge-new">Hàng Mới</span>}
+        {/* Chỉ hiển thị nếu HasVoucher = 1 (true) */}
+        {product.HasVoucher == 1 && (
+          <span className="badge-voucher">Voucher</span>
+        )}
+      </div>
 
       {/* NÚT TRÁI TIM */}
       <Button
@@ -117,17 +121,6 @@ const ProductCard = ({ product }) => {
             {product.TenSanPham}
           </Card.Title>
         </Link>
-
-        {/* === SỬA ĐỔI: HIỂN THỊ BADGE ĐỘNG === */}
-        <div className="product-badges-row">
-          {/* Chỉ hiển thị nếu IsNew = 1 (true) */}
-          {product.IsNew == 1 && <span className="badge-new">Hàng Mới</span>}
-          {/* Chỉ hiển thị nếu HasVoucher = 1 (true) */}
-          {product.HasVoucher == 1 && (
-            <span className="badge-voucher">Voucher</span>
-          )}
-        </div>
-        {/* ================================== */}
 
         {/* HÀNG GIÁ VÀ GIỎ HÀNG */}
         <div className="product-price-row">

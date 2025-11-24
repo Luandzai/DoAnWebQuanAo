@@ -53,29 +53,42 @@
   text-overflow: ellipsis;
 }
 
-/* 6. Hàng chứa huy hiệu */
-.product-badges-row {
-  margin-bottom: 0.5rem;
+/* 6. Container chứa tất cả badges ở góc trên bên trái */
+.product-badges-container {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
   display: flex;
   gap: 5px;
-  min-height: 20px; /* Giữ chỗ để tránh nhảy layout nếu không có badge */
+  flex-wrap: wrap;
+  max-width: calc(100% - 60px); /* Để tránh đè lên nút wishlist */
 }
+
+/* Badge giảm giá */
+.discount-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Badge Hàng Mới và Voucher */
 .badge-new,
 .badge-voucher {
   font-size: 0.7rem;
-  font-weight: 500;
-  padding: 2px 6px;
+  font-weight: 600;
+  padding: 3px 8px;
   border-radius: 4px;
+  border: none;
+  color: white;
 }
 .badge-new {
-  border: 1px solid #0d6efd;
-  color: #0d6efd;
-  background-color: rgba(13, 110, 253, 0.05);
+  background-color: #0d6efd;
 }
 .badge-voucher {
-  border: 1px solid #ffc107;
-  color: #d39e00;
-  background-color: rgba(255, 193, 7, 0.05);
+  background-color: #ffc107;
+  color: #000;
 }
 
 /* 7. Hàng chứa Giá và Icon Giỏ hàng */
@@ -142,10 +155,16 @@
   }
   
   /* Tighter badge spacing */
-  .product-badges-row {
+  .product-badges-container {
     gap: 3px;
-    margin-bottom: 0.35rem;
-    min-height: 18px;
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 50px);
+  }
+  
+  .discount-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
   }
   
   .badge-new,
