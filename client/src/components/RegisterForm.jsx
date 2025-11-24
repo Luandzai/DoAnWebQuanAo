@@ -9,7 +9,7 @@ const api = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-const RegisterForm = () => {
+const RegisterForm = ({ onRegisterSuccess }) => {
   const [hoTen, setHoTen] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,8 +47,15 @@ const RegisterForm = () => {
       setLoading(false);
       setMessage({
         type: "success",
-        text: "Đăng ký thành công! Vui lòng đăng nhập.",
+        text: "Đăng ký thành công! Đang chuyển về trang đăng nhập...",
       });
+      
+      // Chuyển về trang đăng nhập sau 1.5 giây
+      setTimeout(() => {
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
+      }, 1500);
     } catch (error) {
       setLoading(false);
       // 4. Bắt lỗi từ back-end

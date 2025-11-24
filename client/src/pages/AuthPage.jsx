@@ -110,7 +110,7 @@ const AuthPage = () => {
                   ) : (
                     <>
                       <h3 className="text-center mb-3 fw-bold">Đăng Ký</h3>
-                      <RegisterForm />
+                      <RegisterForm onRegisterSuccess={() => setIsLoginView(true)} />
                     </>
                   )}
 
