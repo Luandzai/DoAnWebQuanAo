@@ -54,6 +54,7 @@ const AdminProductModal = ({
   const [existingImages, setExistingImages] = useState([]); // Trạng thái lưu trữ ảnh hiện có
 
   const [deletedVariantIds, setDeletedVariantIds] = useState([]); // <-- MỚI: Theo dõi ID phiên bản bị xóa
+
   // 1. Tải dữ liệu cần thiết (Danh mục, Thuộc tính)
   useEffect(() => {
     const fetchData = async () => {
@@ -78,35 +79,44 @@ const AdminProductModal = ({
     fetchData();
   }, [api]);
 
-  // 2. Lọc Thuộc tính theo Danh mục khi DanhMucID thay đổi (Logic phân loại Áo/Giày/Phụ kiện)
+  // 2. Lọc Thuộc tính theo Danh mục
+  // YÊU CẦU MỚI: Bỏ gợi ý sẵn, để người dùng tự chọn.
   useEffect(() => {
-    const categoryID = parseInt(formData.DanhMucID);
-    if (categoryID) {
-      let attributeIdsToInclude = [];
-      // Dựa trên CSDL bạn cung cấp:
-      const isShoe = categoryID === 431;
-      const isAccessory = categoryID === 436;
-      const isApparel = categoryID >= 406 && categoryID <= 428;
+    // Khi đổi danh mục, reset lại danh sách thuộc tính đã chọn và options
+    setRelatedAttributes([]);
+    setSelectedOptions({}); 
+  }, [formData.DanhMucID]);
 
-      if (isShoe) {
-        attributeIdsToInclude.push(303); // Kích Cỡ Giày
-      } else if (isAccessory) {
-        attributeIdsToInclude.push(304); // Kích Cỡ Thắt Lưng
-      } else if (isApparel) {
-        attributeIdsToInclude.push(301, 302); // Kích Cỡ S, M, L và Màu Sắc
-      } else {
-        attributeIdsToInclude.push(305); // Kích Cỡ Chung (Freesize)
-      }
-
-      const filtered = allAttributes.filter((attr) =>
-        attributeIdsToInclude.includes(attr.ThuocTinhID)
-      );
-      setRelatedAttributes(filtered);
-    } else {
-      setRelatedAttributes([]);
+  // --- MỚI: Hàm thêm thuộc tính thủ công ---
+  const handleAddManualAttribute = (attributeId) => {
+    const attrToAdd = allAttributes.find(
+      (a) => a.ThuocTinhID === parseInt(attributeId)
+    );
+    if (
+      attrToAdd &&
+      !relatedAttributes.some((a) => a.ThuocTinhID === attrToAdd.ThuocTinhID)
+    ) {
+      setRelatedAttributes((prev) => [...prev, attrToAdd]);
     }
-    setSelectedOptions({}); // Reset options khi đổi danh mục
-  }, [formData.DanhMucID, allAttributes]);
+  };
+
+  // --- MỚI: Hàm xóa thuộc tính khỏi danh sách ---
+  const handleRemoveAttribute = (attributeId) => {
+    setRelatedAttributes((prev) =>
+      prev.filter((attr) => attr.ThuocTinhID !== attributeId)
+    );
+    // Xóa lựa chọn tương ứng trong selectedOptions nếu có
+    const attrToRemove = relatedAttributes.find(
+      (a) => a.ThuocTinhID === attributeId
+    );
+    if (attrToRemove) {
+      setSelectedOptions((prev) => {
+        const newOptions = { ...prev };
+        delete newOptions[attrToRemove.TenThuocTinh];
+        return newOptions;
+      });
+    }
+  };
 
   // 3. Thiết lập dữ liệu khi mở modal (Chế độ CREATE)
   useEffect(() => {
@@ -518,15 +528,64 @@ const AdminProductModal = ({
             <Col md={7}>
               <h5>Quản lý Phiên bản (Variants)</h5>
               <Card body className="mb-3 bg-light">
+                {/* MỚI: Dropdown thêm thuộc tính tùy chọn */}
+                {formData.DanhMucID && (
+                  <Row className="mb-3">
+                    <Col md={12}>
+                      <Form.Label className="text-muted small">
+                        Thêm thuộc tính tùy chọn (nếu cần):
+                      </Form.Label>
+                      <Form.Select
+                        size="sm"
+                        onChange={(e) => {
+                          if (e.target.value)
+                            handleAddManualAttribute(e.target.value);
+                          e.target.value = ""; // Reset sau khi chọn
+                        }}
+                      >
+                        <option value="">+ Chọn thuộc tính để thêm...</option>
+                        {allAttributes
+                          .filter(
+                            (attr) =>
+                              !relatedAttributes.some(
+                                (ra) => ra.ThuocTinhID === attr.ThuocTinhID
+                              )
+                          )
+                          .map((attr) => (
+                            <option
+                              key={attr.ThuocTinhID}
+                              value={attr.ThuocTinhID}
+                            >
+                              {attr.TenThuocTinh}
+                            </option>
+                          ))}
+                      </Form.Select>
+                    </Col>
+                  </Row>
+                )}
+
                 <Row>
                   {relatedAttributes.map(
                     (
                       attr // Lọc theo Danh mục đã chọn
                     ) => (
                       <Col md={4} key={attr.ThuocTinhID} className="mb-3">
-                        <Form.Label className="fw-bold">
-                          {attr.TenThuocTinh}
-                        </Form.Label>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <Form.Label className="fw-bold mb-0">
+                            {attr.TenThuocTinh}
+                          </Form.Label>
+                          <Button
+                            variant="link"
+                            className="text-danger p-0 text-decoration-none"
+                            size="sm"
+                            onClick={() =>
+                              handleRemoveAttribute(attr.ThuocTinhID)
+                            }
+                            title="Bỏ thuộc tính này"
+                          >
+                            <XCircleFill size={14} />
+                          </Button>
+                        </div>
                         <Form.Select
                           value={selectedOptions[attr.TenThuocTinh] || ""}
                           onChange={(e) =>

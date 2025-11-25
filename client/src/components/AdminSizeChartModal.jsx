@@ -6,9 +6,14 @@ import { toast } from "react-toastify";
 
 const AdminSizeChartModal = ({ show, onHide, category }) => {
   const { api } = useContext(AuthContext);
-  const [content, setContent] = useState("");
+  // data structure: { headers: ["Size", "Dài", "Rộng"], rows: [ ["S", "60", "40"], ["M", "62", "42"] ] }
+  const [tableData, setTableData] = useState({ headers: [], rows: [] });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [useHtmlMode, setUseHtmlMode] = useState(false); // Fallback for legacy or advanced users
+  const [htmlContent, setHtmlContent] = useState("");
+  const [isFreesize, setIsFreesize] = useState(false);
+  const [freesizeContent, setFreesizeContent] = useState("");
 
   // Load dữ liệu cũ khi mở modal
   useEffect(() => {
@@ -17,8 +22,38 @@ const AdminSizeChartModal = ({ show, onHide, category }) => {
         setLoading(true);
         try {
           const { data } = await api.get(`/sizecharts/${category.DanhMucID}`);
-          // Nếu có data thì set, nếu chưa có thì để mẫu bảng HTML mặc định
-          setContent(data.MoTa || getDefaultTemplate());
+          const rawData = data.MoTa;
+
+          if (rawData) {
+            try {
+              // Try to parse as JSON
+              const parsed = JSON.parse(rawData);
+              
+              if (parsed.type === "freesize") {
+                setIsFreesize(true);
+                setFreesizeContent(parsed.content || "Sản phẩm này là Freesize, phù hợp với mọi kích cỡ.");
+                setUseHtmlMode(false);
+              } else if (parsed && Array.isArray(parsed.headers) && Array.isArray(parsed.rows)) {
+                setTableData(parsed);
+                setUseHtmlMode(false);
+                setIsFreesize(false);
+              } else {
+                // Valid JSON but not our schema, or just a string that looks like JSON?
+                // Treat as HTML/String if schema doesn't match
+                setHtmlContent(rawData);
+                setUseHtmlMode(true);
+                setIsFreesize(false);
+              }
+            } catch (e) {
+              // Not JSON, treat as HTML
+              setHtmlContent(rawData);
+              setUseHtmlMode(true);
+              setIsFreesize(false);
+            }
+          } else {
+            // New, load default template
+            loadDefaultTemplate();
+          }
         } catch (error) {
           console.error(error);
           toast.error("Lỗi tải bảng size");
@@ -30,12 +65,74 @@ const AdminSizeChartModal = ({ show, onHide, category }) => {
     }
   }, [show, category, api]);
 
+  const loadDefaultTemplate = () => {
+    setTableData({
+      headers: ["Size", "Chiều cao (cm)", "Cân nặng (kg)"],
+      rows: [
+        ["S", "150 - 160", "45 - 55"],
+        ["M", "160 - 170", "55 - 65"],
+        ["L", "170 - 175", "65 - 75"],
+        ["XL", "175 - 180", "75 - 85"],
+      ],
+    });
+    setUseHtmlMode(false);
+    setIsFreesize(false);
+    setFreesizeContent("Sản phẩm này là Freesize, phù hợp với mọi kích cỡ.");
+  };
+
+  const handleHeaderChange = (index, value) => {
+    const newHeaders = [...tableData.headers];
+    newHeaders[index] = value;
+    setTableData({ ...tableData, headers: newHeaders });
+  };
+
+  const handleRowChange = (rowIndex, colIndex, value) => {
+    const newRows = [...tableData.rows];
+    newRows[rowIndex][colIndex] = value;
+    setTableData({ ...tableData, rows: newRows });
+  };
+
+  const addColumn = () => {
+    const newHeaders = [...tableData.headers, "New Column"];
+    const newRows = tableData.rows.map((row) => [...row, ""]);
+    setTableData({ headers: newHeaders, rows: newRows });
+  };
+
+  const removeColumn = (index) => {
+    if (tableData.headers.length <= 1) return;
+    const newHeaders = tableData.headers.filter((_, i) => i !== index);
+    const newRows = tableData.rows.map((row) => row.filter((_, i) => i !== index));
+    setTableData({ headers: newHeaders, rows: newRows });
+  };
+
+  const addRow = () => {
+    const newRow = new Array(tableData.headers.length).fill("");
+    setTableData({ ...tableData, rows: [...tableData.rows, newRow] });
+  };
+
+  const removeRow = (index) => {
+    const newRows = tableData.rows.filter((_, i) => i !== index);
+    setTableData({ ...tableData, rows: newRows });
+  };
+
   const handleSubmit = async () => {
     setSaving(true);
     try {
+      let payload = "";
+      if (isFreesize) {
+        payload = JSON.stringify({
+          type: "freesize",
+          content: freesizeContent
+        });
+      } else if (useHtmlMode) {
+        payload = htmlContent;
+      } else {
+        payload = JSON.stringify(tableData);
+      }
+
       await api.post("/sizecharts", {
         DanhMucID: category.DanhMucID,
-        MoTa: content,
+        MoTa: payload,
       });
       toast.success("Lưu bảng size thành công!");
       onHide();
@@ -46,27 +143,8 @@ const AdminSizeChartModal = ({ show, onHide, category }) => {
     }
   };
 
-  // Template mặc định để Admin đỡ phải gõ code HTML từ đầu
-  const getDefaultTemplate = () => {
-    return `<table class="table table-bordered table-sm">
-  <thead>
-    <tr>
-      <th>Size</th>
-      <th>Chiều cao (cm)</th>
-      <th>Cân nặng (kg)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>S</td><td>150 - 160</td><td>45 - 55</td></tr>
-    <tr><td>M</td><td>160 - 170</td><td>55 - 65</td></tr>
-    <tr><td>L</td><td>170 - 175</td><td>65 - 75</td></tr>
-    <tr><td>XL</td><td>175 - 180</td><td>75 - 85</td></tr>
-  </tbody>
-</table>`;
-  };
-
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered>
+    <Modal show={show} onHide={onHide} size="xl" centered>
       <Modal.Header closeButton>
         <Modal.Title>
           Cấu hình Bảng Size cho: <strong>{category?.TenDanhMuc}</strong>
@@ -79,25 +157,127 @@ const AdminSizeChartModal = ({ show, onHide, category }) => {
           </div>
         ) : (
           <>
-            <Alert variant="info" className="small">
-              Bạn có thể nhập mã HTML để tạo bảng (Table). Dùng class{" "}
-              <code>table table-bordered</code> của Bootstrap để đẹp hơn.
-            </Alert>
-            <Form.Group className="mb-3">
-              <Form.Label>Nội dung (HTML)</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={10}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
-              />
-            </Form.Group>
-            <h6>Xem trước:</h6>
-            <div
-              className="border p-3 rounded bg-light"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
+            <div className="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
+              <div className="d-flex gap-3">
+                <Form.Check
+                  type="switch"
+                  id="freesize-mode-switch"
+                  label="Sản phẩm Freesize / Một cỡ"
+                  checked={isFreesize}
+                  onChange={(e) => setIsFreesize(e.target.checked)}
+                />
+                {!isFreesize && (
+                  <Form.Check
+                    type="switch"
+                    id="html-mode-switch"
+                    label="Chế độ HTML (Legacy)"
+                    checked={useHtmlMode}
+                    onChange={(e) => setUseHtmlMode(e.target.checked)}
+                  />
+                )}
+              </div>
+              
+              {!useHtmlMode && !isFreesize && (
+                <div>
+                  <Button variant="outline-secondary" size="sm" onClick={loadDefaultTemplate} className="me-2">
+                    Reset Mặc định
+                  </Button>
+                  <Button variant="outline-primary" size="sm" onClick={addColumn}>
+                    + Thêm Cột
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {isFreesize ? (
+               <Form.Group className="mb-3">
+               <Form.Label>Thông báo hiển thị cho khách hàng</Form.Label>
+               <Form.Control
+                 as="textarea"
+                 rows={3}
+                 value={freesizeContent}
+                 onChange={(e) => setFreesizeContent(e.target.value)}
+                 placeholder="Ví dụ: Sản phẩm này là Freesize, phù hợp với người dưới 60kg."
+               />
+               <Alert variant="info" className="mt-2 small">
+                 Khi chọn chế độ này, bảng size sẽ không hiển thị. Thay vào đó, khách hàng sẽ thấy thông báo trên.
+               </Alert>
+             </Form.Group>
+            ) : useHtmlMode ? (
+              <Form.Group className="mb-3">
+                <Form.Label>Nội dung (HTML)</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={10}
+                  value={htmlContent}
+                  onChange={(e) => setHtmlContent(e.target.value)}
+                  style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
+                />
+                <div className="mt-2 p-2 border bg-light">
+                  <small>Preview:</small>
+                  <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                </div>
+              </Form.Group>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-bordered table-hover align-middle">
+                  <thead className="table-light">
+                    <tr>
+                      {tableData.headers.map((header, index) => (
+                        <th key={index} style={{ minWidth: "180px" }}>
+                          <div className="d-flex gap-2 align-items-center">
+                            <Form.Control
+                              type="text"
+                              value={header}
+                              onChange={(e) => handleHeaderChange(index, e.target.value)}
+                              className="fw-bold"
+                            />
+                            <Button
+                              variant="outline-danger"
+                              onClick={() => removeColumn(index)}
+                              tabIndex="-1"
+                              title="Xóa cột"
+                              style={{ height: "38px", width: "38px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            >
+                              &times;
+                            </Button>
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableData.rows.map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {row.map((cell, colIndex) => (
+                          <td key={colIndex}>
+                            <Form.Control
+                              type="text"
+                              value={cell}
+                              onChange={(e) => handleRowChange(rowIndex, colIndex, e.target.value)}
+                            />
+                          </td>
+                        ))}
+                        <td style={{ width: "50px" }}>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => removeRow(rowIndex)}
+                            tabIndex="-1"
+                            title="Xóa dòng"
+                          >
+                            &times;
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <Button variant="outline-success" size="sm" onClick={addRow}>
+                  + Thêm Dòng
+                </Button>
+              </div>
+            )}
           </>
         )}
       </Modal.Body>
