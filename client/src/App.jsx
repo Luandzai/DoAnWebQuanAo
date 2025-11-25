@@ -36,12 +36,9 @@ import AdminUserListPage from "./pages/AdminUserListPage"; // Đã import
 import AdminReturnListPage from "./pages/AdminReturnListPage";
 import AdminVoucherListPage from "./pages/AdminVoucherListPage"; // Đã import
 import AdminReviewListPage from "./pages/AdminReviewListPage";
+import Chatbot from './components/Chatbot';
 
-<<<<<<< Updated upstream
-=======
-import ComingSoon from "./pages/ComingSoon"; // Di chuyển xuống dưới cho gọn
-import NewsPage from "./components/NewsPage";
->>>>>>> Stashed changes
+
 function App() {
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -56,12 +53,9 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/auth" element={<AuthPage />} />
-<<<<<<< Updated upstream
           <Route path="/contact" element={<ContactForm />} />
 
-=======
-          <Route path="/news" element={<NewsPage />} />
->>>>>>> Stashed changes
+
           {/* === ROUTE KHÔI PHỤC MẬT KHẨU === */}
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route
@@ -91,12 +85,7 @@ function App() {
           <Route path="/privacy" element={<ComingSoon />} />
           <Route path="/shipping" element={<ComingSoon />} />
           <Route path="/warranty" element={<ComingSoon />} />
-<<<<<<< Updated upstream
-          <Route path="/news" element={<ComingSoon />} />
 
-=======
-          <Route path="/news" element={<NewsPage />} />
->>>>>>> Stashed changes
           {/* === KHU VỰC ADMIN (ĐÃ THÊM ROUTE USERS) === */}
           <Route path="/admin" element={<AdminRoute />}>
             <Route index element={<AdminDashboardPage />} />
@@ -116,6 +105,7 @@ function App() {
       </div>
 
       <Footer />
+      <Chatbot />
     </div>
   );
 }
