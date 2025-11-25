@@ -60,7 +60,7 @@ const ProductGrid = ({ products, loading, error, pagination, onPageChange }) => 
         <>
             <Row>
                 {products.map((product) => (
-                    <Col key={product.SanPhamID} sm={6} lg={4} className="mb-4">
+                    <Col key={product.SanPhamID} xs={6} sm={6} lg={4} className="mb-4">
                         <ProductCard product={product} />
                     </Col>
                 ))}
