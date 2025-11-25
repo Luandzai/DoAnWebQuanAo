@@ -1,10 +1,12 @@
 // server/src/index.js
-require("dotenv").config(); // Nạp biến môi trường từ file .env
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
+require("./config/db");
 
-const axios = require("axios"); 
-require("./config/db"); // Import để chạy kết nối DB
+// Import services
+const { searchProductsForAI } = require("./services/chatService"); // <--- IMPORT MỚI
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
@@ -24,74 +26,98 @@ const adminRoutes = require("./routes/adminRoutes");
 const adminOrderRoutes = require("./routes/adminOrderRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
-const tryOnRoutes = require("./routes/tryOnRoutes"); // Import route mới
+const tryOnRoutes = require("./routes/tryOnRoutes");
+const sizeChartRoutes = require("./routes/sizeChartRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Kích hoạt CORS (Cross-Origin Resource Sharing)
+
 app.use(cors());
-// Giúp server đọc được dữ liệu JSON từ request
 app.use(express.json());
 
-// --- API CHATBOT (Groq - Llama 3) ---
-app.post('/api/chat', async (req, res) => {
-    const { message } = req.body;
+// --- API CHATBOT (Groq - Llama 3 + RAG) ---
+app.post("/api/chat", async (req, res) => {
+  const { message, history } = req.body;
 
-    if (!message) {
-        return res.status(400).json({ reply: "Vui lòng nhập tin nhắn." });
-    }
+  if (!message) {
+    return res.status(400).json({ reply: "Vui lòng nhập tin nhắn." });
+  }
 
-    const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
+  const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
-    const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+  try {
+    // 1. TÌM KIẾM SẢN PHẨM TRONG DB DỰA TRÊN TIN NHẮN
+    // (Bước RAG: Retrieval - Truy xuất dữ liệu)
+    const productContext = await searchProductsForAI(message);
+
+    // 2. Xử lý lịch sử chat (Lấy 10 tin gần nhất)
+    const contextHistory = Array.isArray(history) ? history.slice(-10) : [];
+
+    // 3. Tạo System Prompt thông minh hơn
+    const systemPrompt = `
+Bạn là Stylist ảo của shop thời trang "Blank Canvas".
+Nhiệm vụ: Tư vấn thời trang và hỗ trợ tìm kiếm sản phẩm cho khách hàng.
+
+QUAN TRỌNG - DỮ LIỆU KHO HÀNG THỰC TẾ:
+${
+  productContext
+    ? productContext
+    : "Hiện tại không tìm thấy sản phẩm nào khớp chính xác trong kho với từ khóa của khách. Hãy tư vấn chung chung hoặc gợi ý khách xem danh mục khác."
+}
+
+Nguyên tắc trả lời:
+1. Dựa vào "DỮ LIỆU KHO HÀNG THỰC TẾ" ở trên để trả lời. Nếu có sản phẩm khớp, hãy giới thiệu Tên và Giá.
+2. Nếu sản phẩm "Hết hàng", hãy báo khách biết.
+3. Phong cách: Ngắn gọn, trẻ trung, thân thiện, dùng emoji 😊✨.
+4. Nếu khách hỏi thứ không liên quan đến thời trang/shop, hãy từ chối lịch sự.
+5. KHÔNG được bịa ra sản phẩm không có trong danh sách trên.
+        `;
 
     const payload = {
-        model: "llama-3.3-70b-versatile", // 🔥 Model rẻ & tốt. Có thể đổi thành llama3-70b
-        messages: [
-            {
-                role: "system",
-                content: `
-Bạn là Stylist ảo của shop "Blank Canvas".
-Hãy tư vấn thời trang cho khách:
-- Ngắn gọn, trẻ trung, có emoji.
-- Nếu câu hỏi không liên quan thời trang → từ chối lịch sự.
-                `
-            },
-            {
-                role: "user",
-                content: message
-            }
-        ],
-        temperature: 0.7
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        // Chèn lịch sử chat
+        ...contextHistory,
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+      temperature: 0.5, // Giảm nhiệt độ để AI bám sát dữ liệu thật hơn, bớt "chém gió"
+      max_tokens: 500,
     };
 
-    try {
-        const response = await axios.post(apiUrl, payload, {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
-            }
-        });
+    const response = await axios.post(apiUrl, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
 
-        const reply =
-            response.data?.choices?.[0]?.message?.content ||
-            "Mình chưa nghĩ ra câu trả lời phù hợp 😅";
+    const reply =
+      response.data?.choices?.[0]?.message?.content ||
+      "Mình chưa nghĩ ra câu trả lời phù hợp 😅";
 
-        res.json({ reply });
-
-    } catch (error) {
-        console.error("❌ Lỗi API Groq:", error.response?.data || error.message);
-        res.status(500).json({ reply: "Stylist đang bận, thử lại sau nha 😅" });
-    }
+    res.json({ reply });
+  } catch (error) {
+    console.error("❌ Lỗi API Chatbot:", error.response?.data || error.message);
+    res
+      .status(500)
+      .json({ reply: "Stylist đang bận kiểm tra kho, thử lại sau nha 😅" });
+  }
 });
-
 
 // Một route API test
 app.get("/api", (req, res) => {
   res.json({ message: "Chào mừng bạn đến với API bán quần áo!" });
 });
 
-// Sử dụng auth routes
+// Sử dụng routes
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
@@ -105,11 +131,13 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/returns", returnsRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/attributes", attributeRoutes);
-app.use("/api/contact", contactRoutes); // <-- THÊM DÒNG NÀY
+app.use("/api/contact", contactRoutes);
 app.use("/api/payment", paymentRoutes);
-app.use("/api/try-on", tryOnRoutes); // Sử dụng route mới
+app.use("/api/try-on", tryOnRoutes);
+app.use("/api/sizecharts", sizeChartRoutes);
+
 // Admin routes
-app.use("/api/admin/orders", adminOrderRoutes); // Phải đặt trước /api/admin
+app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/returns", returnsRoutes);
 

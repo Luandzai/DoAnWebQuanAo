@@ -1,37 +1,56 @@
 // client/src/components/SizeGuideModal.jsx
-import React from 'react';
-import { Modal, Table } from 'react-bootstrap';
+import React, { useState, useEffect, useContext } from "react";
+import { Modal, Spinner, Alert } from "react-bootstrap";
+import AuthContext from "../context/AuthContext";
 
-const SizeGuideModal = ({ show, onHide }) => {
-    return (
-        <Modal show={show} onHide={onHide} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Hướng dẫn chọn size</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <p>Sử dụng bảng dưới đây để chọn size phù hợp nhất với bạn:</p>
-                <Table striped bordered hover size="sm" responsive>
-                    <thead>
-                        <tr>
-                            <th>Size</th>
-                            <th>Chiều cao (cm)</th>
-                            <th>Cân nặng (kg)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>S</td><td>150 - 160</td><td>45 - 55</td></tr>
-                        <tr><td>M</td><td>160 - 170</td><td>55 - 65</td></tr>
-                        <tr><td>L</td><td>170 - 175</td><td>65 - 75</td></tr>
-                        <tr><td>XL</td><td>175 - 180</td><td>75 - 85</td></tr>
-                        <tr><td>XXL</td><td>180+</td><td>85+</td></tr>
-                    </tbody>
-                </Table>
-                <p className="text-muted small">
-                    Lưu ý: Bảng size chỉ mang tính chất tham khảo. Kích thước có thể thay đổi tùy theo form dáng của bạn.
-                </p>
-            </Modal.Body>
-        </Modal>
-    );
+const SizeGuideModal = ({ show, onHide, categoryId }) => {
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { api } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (show && categoryId) {
+      const fetchSizeChart = async () => {
+        setLoading(true);
+        setContent(null);
+        try {
+          const { data } = await api.get(`/sizecharts/${categoryId}`);
+          setContent(data.MoTa);
+        } catch (error) {
+          console.error("Lỗi tải size chart:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchSizeChart();
+    }
+  }, [show, categoryId, api]);
+
+  return (
+    <Modal show={show} onHide={onHide} centered size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>Hướng dẫn chọn size</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {loading ? (
+          <div className="text-center py-4">
+            <Spinner animation="border" />
+          </div>
+        ) : content ? (
+          <div dangerouslySetInnerHTML={{ __html: content }} />
+        ) : (
+          <Alert variant="warning">
+            Chưa có hướng dẫn chọn size cụ thể cho sản phẩm này.
+            <br />
+            Vui lòng tham khảo bảng size chung hoặc liên hệ CSKH.
+          </Alert>
+        )}
+        <p className="text-muted small mt-3">
+          * Số đo có thể chênh lệch 1-2cm tùy thuộc vào độ co giãn của vải.
+        </p>
+      </Modal.Body>
+    </Modal>
+  );
 };
 
 export default SizeGuideModal;

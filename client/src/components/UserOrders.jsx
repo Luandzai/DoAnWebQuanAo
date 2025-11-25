@@ -1,4 +1,4 @@
-// client/src/components/UserOrders.jsx (ĐÃ NÂNG CẤP ĐÁNH GIÁ)
+// client/src/components/UserOrders.jsx (HOÀN CHỈNH: ĐÃ THÊM MÃ VẬN ĐƠN CHO KHÁCH)
 
 import React, { useState, useEffect, useContext } from "react";
 import {
@@ -8,7 +8,7 @@ import {
   ListGroup,
   Image,
   Button,
-  Modal, // <--- Đã có
+  Modal,
   Row,
   Col,
   Badge,
@@ -16,7 +16,7 @@ import {
 import AuthContext from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
-import ProductReviewModal from "./ProductReviewModal"; // <-- 1. IMPORT MODAL MỚI
+import ProductReviewModal from "./ProductReviewModal";
 
 const UserOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -32,18 +32,15 @@ const UserOrders = () => {
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(null);
 
-  // === 2. THÊM STATE MỚI CHO REVIEW MODAL ===
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [productToReview, setProductToReview] = useState(null);
-  // ===========================================
 
-  // Hàm tải dữ liệu (sẽ gọi API đã nâng cấp)
+  // Hàm tải dữ liệu
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     try {
       const { data } = await api.get("/orders");
-      // 'data.items' giờ đã chứa { ..., DaDanhGia: 1 }
       setOrders(data);
     } catch (err) {
       setError("Không thể tải danh sách đơn hàng.");
@@ -64,6 +61,7 @@ const UserOrders = () => {
       setSelectedOrder(data);
     } catch (err) {
       console.error(err);
+      toast.error("Không thể tải chi tiết đơn hàng");
     } finally {
       setDetailLoading(false);
     }
@@ -79,7 +77,6 @@ const UserOrders = () => {
     setOrderToCancel(null);
   };
 
-  // Hàm Hủy đơn
   const confirmCancel = async () => {
     if (!orderToCancel) return;
     setCancellingOrder(orderToCancel);
@@ -94,23 +91,19 @@ const UserOrders = () => {
     }
   };
 
-  // === 3. HÀM MỚI: MỞ MODAL ĐÁNH GIÁ ===
   const handleShowReviewModal = (product) => {
     setProductToReview(product);
     setShowReviewModal(true);
   };
 
-  // Hàm đóng modal
   const handleCloseReviewModal = () => {
     setShowReviewModal(false);
     setProductToReview(null);
   };
 
-  // Hàm chạy sau khi gửi review (để tải lại cờ 'DaDanhGia')
   const handleReviewSubmitted = () => {
-    fetchOrders(); // Tải lại toàn bộ danh sách đơn hàng
+    fetchOrders();
   };
-  // ======================================
 
   if (loading) {
     return (
@@ -134,24 +127,26 @@ const UserOrders = () => {
           {orders.map((order) => {
             let badgeBg = "secondary";
             if (order.TrangThai === "DANG_XU_LY") badgeBg = "info";
+            if (order.TrangThai === "DANG_GIAO") badgeBg = "warning"; // Thêm màu cho Đang giao
             if (order.TrangThai === "DA_GIAO") badgeBg = "success";
             if (order.TrangThai === "DA_HUY") badgeBg = "danger";
 
             return (
               <ListGroup.Item key={order.DonHangID} className="p-0 mb-3">
                 <Card className="shadow-sm">
-                  <Card.Header className="d-flex justify-content-between">
-                    <span>Mã ĐH: ORD_{order.DonHangID}</span>
+                  <Card.Header className="d-flex justify-content-between align-items-center">
+                    <span className="fw-bold">
+                      Mã ĐH: ORD_{order.DonHangID}
+                    </span>
                     <Badge bg={badgeBg}>{order.TrangThai}</Badge>
                   </Card.Header>
                   <Card.Body>
-                    {/* === PHẦN MỚI THÊM: HIỂN THỊ SẢN PHẨM === */}
                     <ListGroup variant="flush" className="mb-3">
                       {order.items &&
                         order.items.map((item, index) => (
                           <ListGroup.Item
                             key={index}
-                            className="d-flex align-items-center p-2"
+                            className="d-flex align-items-center p-2 border-0"
                           >
                             <Image
                               src={item.HinhAnh}
@@ -160,7 +155,7 @@ const UserOrders = () => {
                                 height: "60px",
                                 objectFit: "cover",
                               }}
-                              className="me-3"
+                              className="me-3 rounded"
                             />
                             <div className="flex-grow-1">
                               <small className="fw-bold d-block">
@@ -174,52 +169,53 @@ const UserOrders = () => {
                               </small>
                             </div>
 
-                            {/* === 4. THÊM NÚT ĐÁNH GIÁ === */}
                             {order.TrangThai === "DA_GIAO" && (
                               <Button
                                 variant={
                                   item.DaDanhGia
-                                    ? "outline-success" // Đã đánh giá
-                                    : "outline-primary" // Chưa đánh giá
+                                    ? "outline-success"
+                                    : "outline-primary"
                                 }
                                 size="sm"
                                 onClick={() => handleShowReviewModal(item)}
                               >
                                 {item.DaDanhGia
-                                  ? "Xem/Sửa Đánh giá"
+                                  ? "Xem Đánh giá"
                                   : "Viết Đánh giá"}
                               </Button>
                             )}
-                            {/* ========================== */}
                           </ListGroup.Item>
                         ))}
                     </ListGroup>
-                    {/* ======================================= */}
 
-                    <p>
-                      Ngày đặt:{" "}
-                      {new Date(order.NgayDatHang).toLocaleDateString("vi-VN")}
-                    </p>
-                    <h5 className="text-end">
-                      Thành tiền:
-                      <strong className="text-danger ms-2">
-                        {parseFloat(order.TongThanhToan).toLocaleString(
+                    <div className="d-flex justify-content-between align-items-center border-top pt-3">
+                      <small className="text-muted">
+                        Ngày đặt:{" "}
+                        {new Date(order.NgayDatHang).toLocaleDateString(
                           "vi-VN"
-                        )}{" "}
-                        ₫
-                      </strong>
-                    </h5>
+                        )}
+                      </small>
+                      <h5 className="mb-0">
+                        <span className="fs-6 text-muted me-2">
+                          Thành tiền:
+                        </span>
+                        <strong className="text-danger">
+                          {parseFloat(order.TongThanhToan).toLocaleString(
+                            "vi-VN"
+                          )}{" "}
+                          ₫
+                        </strong>
+                      </h5>
+                    </div>
                   </Card.Body>
-                  <Card.Footer className="text-end">
-                    {/* Chỉ hiển thị nút khi đã giao */}
+                  <Card.Footer className="text-end bg-white">
                     {order.TrangThai === "DA_GIAO" && (
                       <Button
                         as={Link}
                         to={`/profile/return-request/${order.DonHangID}`}
-                        variant="outline-info"
+                        variant="outline-secondary"
                         size="sm"
                         className="me-2"
-                        // 1. Vô hiệu hóa nếu 'DaYeuCauTraHang' là 1 (true)
                         disabled={order.DaYeuCauTraHang == 1}
                         title={
                           order.DaYeuCauTraHang == 1
@@ -227,9 +223,8 @@ const UserOrders = () => {
                             : "Yêu cầu đổi/trả"
                         }
                       >
-                        {/* 2. Đổi chữ nếu đã yêu cầu */}
                         {order.DaYeuCauTraHang == 1
-                          ? "Đã yêu cầu"
+                          ? "Đã yêu cầu Đổi/Trả"
                           : "Yêu cầu Đổi/Trả"}
                       </Button>
                     )}
@@ -239,7 +234,8 @@ const UserOrders = () => {
                       className="me-2"
                       onClick={() => handleCancelOrder(order.DonHangID)}
                       disabled={
-                        order.TrangThai !== "DANG_XU_LY" ||
+                        (order.TrangThai !== "DANG_XU_LY" &&
+                          order.TrangThai !== "CHUA_THANH_TOAN") ||
                         cancellingOrder === order.DonHangID
                       }
                     >
@@ -264,8 +260,7 @@ const UserOrders = () => {
         </ListGroup>
       )}
 
-      {/* MODAL CHI TIẾT */}
-      {/* (Giữ nguyên không đổi) */}
+      {/* MODAL CHI TIẾT ĐƠN HÀNG (USER) */}
       <Modal
         show={showDetailModal}
         onHide={handleCloseDetailModal}
@@ -277,13 +272,15 @@ const UserOrders = () => {
         </Modal.Header>
         <Modal.Body>
           {detailLoading ? (
-            <div className="text-center">
+            <div className="text-center py-4">
               <Spinner animation="border" />
             </div>
           ) : selectedOrder ? (
             <Row>
-              <Col md={6}>
-                <h5>Thông tin người nhận</h5>
+              <Col md={6} className="mb-3">
+                <h6 className="fw-bold border-bottom pb-2">
+                  Thông tin nhận hàng
+                </h6>
                 <p className="mb-1">
                   <strong>Tên:</strong> {selectedOrder.TenNguoiNhan}
                 </p>
@@ -300,14 +297,41 @@ const UserOrders = () => {
                   <strong>Thanh toán:</strong>{" "}
                   {selectedOrder.TenPhuongThucThanhToan}
                 </p>
+
+                {/* === PHẦN MỚI: HIỂN THỊ MÃ VẬN ĐƠN === */}
+                {selectedOrder.MaTheoDoi && (
+                  <div className="mt-3 p-3 bg-light rounded border border-info">
+                    <h6 className="text-primary fw-bold mb-2">
+                      🚚 Thông tin Vận chuyển
+                    </h6>
+                    <p className="mb-1 text-dark">
+                      <strong>Đơn vị:</strong> {selectedOrder.TenDonViVC}
+                    </p>
+                    <p className="mb-2 text-dark">
+                      <strong>Mã vận đơn:</strong>{" "}
+                      <span className="font-monospace bg-white px-1 border rounded">
+                        {selectedOrder.MaTheoDoi}
+                      </span>
+                    </p>
+                    <a
+                      href={`https://khachhang.ghn.vn/order/tracking?code=${selectedOrder.MaTheoDoi}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-sm btn-outline-primary"
+                    >
+                      Tra cứu hành trình &rarr;
+                    </a>
+                  </div>
+                )}
+                {/* ====================================== */}
               </Col>
               <Col md={6}>
-                <h5>Các sản phẩm</h5>
-                <ListGroup variant="flush">
+                <h6 className="fw-bold border-bottom pb-2">Sản phẩm</h6>
+                <ListGroup variant="flush" className="mb-3">
                   {selectedOrder.items.map((item) => (
                     <ListGroup.Item
                       key={item.PhienBanID}
-                      className="d-flex align-items-center"
+                      className="d-flex align-items-center px-0"
                     >
                       <Image
                         src={item.HinhAnh}
@@ -316,11 +340,16 @@ const UserOrders = () => {
                           height: "50px",
                           objectFit: "cover",
                         }}
-                        className="me-2"
+                        className="me-2 rounded border"
                       />
                       <div>
-                        <small className="fw-bold">{item.TenSanPham}</small>
-                        <small className="text-muted d-block">
+                        <small className="fw-bold d-block">
+                          {item.TenSanPham}
+                        </small>
+                        <small
+                          className="text-muted d-block"
+                          style={{ fontSize: "0.8em" }}
+                        >
                           {item.ThuocTinh}
                         </small>
                         <small className="text-muted">
@@ -331,24 +360,50 @@ const UserOrders = () => {
                     </ListGroup.Item>
                   ))}
                 </ListGroup>
-                <hr />
-                <h5 className="text-end">
-                  Tổng tiền:{" "}
-                  {parseFloat(selectedOrder.TongThanhToan).toLocaleString(
-                    "vi-VN"
-                  )}{" "}
-                  ₫
-                </h5>
+
+                <div className="bg-light p-3 rounded">
+                  <div className="d-flex justify-content-between mb-1">
+                    <span>Tổng tiền hàng:</span>
+                    <span>
+                      {parseFloat(selectedOrder.TongTienHang).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      ₫
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span>Phí vận chuyển:</span>
+                    <span>
+                      {parseFloat(selectedOrder.PhiVanChuyen).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      ₫
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-between border-top pt-2">
+                    <strong className="fs-5">Tổng thanh toán:</strong>
+                    <strong className="fs-5 text-danger">
+                      {parseFloat(selectedOrder.TongThanhToan).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      ₫
+                    </strong>
+                  </div>
+                </div>
               </Col>
             </Row>
           ) : (
-            <p>Không thể tải chi tiết.</p>
+            <p className="text-center">Không thể tải chi tiết.</p>
           )}
         </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseDetailModal}>
+            Đóng
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       {/* MODAL XÁC NHẬN HỦY */}
-      {/* (Giữ nguyên không đổi) */}
       <Modal show={showConfirmModal} onHide={handleCloseConfirmModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Xác nhận hủy đơn hàng</Modal.Title>
@@ -368,7 +423,6 @@ const UserOrders = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* === 5. THÊM MODAL MỚI VÀO RENDER === */}
       {productToReview && (
         <ProductReviewModal
           show={showReviewModal}
