@@ -2,6 +2,8 @@
 require("dotenv").config(); // Nạp biến môi trường từ file .env
 const express = require("express");
 const cors = require("cors");
+
+const axios = require("axios"); 
 require("./config/db"); // Import để chạy kết nối DB
 
 // Import routes
@@ -30,6 +32,59 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 // Giúp server đọc được dữ liệu JSON từ request
 app.use(express.json());
+
+// --- API CHATBOT (Groq - Llama 3) ---
+app.post('/api/chat', async (req, res) => {
+    const { message } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ reply: "Vui lòng nhập tin nhắn." });
+    }
+
+    const apiKey = process.env.GROQ_API_KEY;
+
+    const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+
+    const payload = {
+        model: "llama-3.3-70b-versatile", // 🔥 Model rẻ & tốt. Có thể đổi thành llama3-70b
+        messages: [
+            {
+                role: "system",
+                content: `
+Bạn là Stylist ảo của shop "Blank Canvas".
+Hãy tư vấn thời trang cho khách:
+- Ngắn gọn, trẻ trung, có emoji.
+- Nếu câu hỏi không liên quan thời trang → từ chối lịch sự.
+                `
+            },
+            {
+                role: "user",
+                content: message
+            }
+        ],
+        temperature: 0.7
+    };
+
+    try {
+        const response = await axios.post(apiUrl, payload, {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            }
+        });
+
+        const reply =
+            response.data?.choices?.[0]?.message?.content ||
+            "Mình chưa nghĩ ra câu trả lời phù hợp 😅";
+
+        res.json({ reply });
+
+    } catch (error) {
+        console.error("❌ Lỗi API Groq:", error.response?.data || error.message);
+        res.status(500).json({ reply: "Stylist đang bận, thử lại sau nha 😅" });
+    }
+});
+
 
 // Một route API test
 app.get("/api", (req, res) => {

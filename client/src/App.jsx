@@ -40,6 +40,7 @@ import AdminVoucherListPage from "./pages/AdminVoucherListPage"; // Đã import
 import AdminReviewListPage from "./pages/AdminReviewListPage";
 import PaymentResultPage from "./pages/PaymentResultPage"; // <-- DÒNG BỊ ĐỎ LÀ DÒNG NÀY
 
+import Chatbot from './components/Chatbot';
 import ComingSoon from "./pages/ComingSoon"; // Di chuyển xuống dưới cho gọn
 function App() {
   return (
@@ -106,6 +107,8 @@ function App() {
       </main>
 
       <Footer />
+      
+      <Chatbot />
     </div>
   );
 }
