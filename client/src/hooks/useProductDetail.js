@@ -70,9 +70,8 @@ export const useProductDetail = (slug) => {
         if (product?.PhienBan?.length > 0) {
             const attributesMap = new Map();
             product.PhienBan.forEach((variant) => {
-                if (variant.ThuocTinh) {
-                    variant.ThuocTinh.split(', ').forEach((attrString) => {
-                        const [name, value] = attrString.split(': ');
+                if (variant.options) {
+                    Object.entries(variant.options).forEach(([name, value]) => {
                         if (!attributesMap.has(name)) attributesMap.set(name, new Set());
                         attributesMap.get(name).add(value);
                     });
@@ -87,14 +86,9 @@ export const useProductDetail = (slug) => {
 
             // Set default options from the first variant
             const defaultVariant = product.PhienBan[0];
-            const defaultOptions = {};
-            if (defaultVariant.ThuocTinh) {
-                defaultVariant.ThuocTinh.split(', ').forEach(attrString => {
-                    const [name, value] = attrString.split(': ');
-                    defaultOptions[name] = value;
-                });
+            if (defaultVariant.options) {
+                setSelectedOptions(defaultVariant.options);
             }
-            setSelectedOptions(defaultOptions);
         }
     }, [product]);
 
@@ -102,10 +96,10 @@ export const useProductDetail = (slug) => {
     useEffect(() => {
         if (product && availableAttributes.length > 0 && Object.keys(selectedOptions).length > 0) {
             const newVariant = product.PhienBan.find((variant) => {
-                if (!variant.ThuocTinh) return false;
+                if (!variant.options) return false;
                 return availableAttributes.every((attr) => {
                     const selectedValue = selectedOptions[attr.name];
-                    return variant.ThuocTinh.includes(`${attr.name}: ${selectedValue}`);
+                    return variant.options[attr.name] === selectedValue;
                 });
             });
             setSelectedVariant(newVariant || null);
@@ -122,7 +116,37 @@ export const useProductDetail = (slug) => {
 
     // Handlers
     const handleOptionSelect = (name, value) => {
-        setSelectedOptions((prev) => ({ ...prev, [name]: value }));
+        // 1. Find all variants that have this specific option value
+        const compatibleVariants = product.PhienBan.filter(v => 
+            v.options && v.options[name] === value
+        );
+
+        if (compatibleVariants.length === 0) return;
+
+        // 2. Find the "best" variant among them
+        // We score them based on how many OTHER currently selected options they match
+        let bestVariant = compatibleVariants[0];
+        let maxMatchCount = -1;
+
+        compatibleVariants.forEach(variant => {
+            let matchCount = 0;
+            Object.entries(selectedOptions).forEach(([currentKey, currentValue]) => {
+                if (currentKey !== name && variant.options[currentKey] === currentValue) {
+                    matchCount++;
+                }
+            });
+
+            if (matchCount > maxMatchCount) {
+                maxMatchCount = matchCount;
+                bestVariant = variant;
+            }
+        });
+
+        // 3. Select that variant's options entirely
+        // This automatically clears incompatible keys (like "Kích Cỡ Chung" vs "Kích Cỡ")
+        if (bestVariant && bestVariant.options) {
+            setSelectedOptions(bestVariant.options);
+        }
     };
 
     const handleQuantityChange = (amount) => {

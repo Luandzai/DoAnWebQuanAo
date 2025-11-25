@@ -181,13 +181,11 @@ exports.getProductBySlug = async (req, res) => {
     const [variants] = await pool.query(
       `SELECT 
          pb.PhienBanID, pb.SKU, pb.GiaBan, pb.SoLuongTonKho,
-         (SELECT GROUP_CONCAT(CONCAT(tt.TenThuocTinh, ': ', gtt.GiaTri) SEPARATOR ', ')
-            FROM ChiTietPhienBan AS ctpb
-            JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-            JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
-            WHERE ctpb.PhienBanID = pb.PhienBanID
-           ) AS ThuocTinh
+         JSON_OBJECTAGG(tt.TenThuocTinh, gtt.GiaTri) AS options
        FROM PhienBanSanPham AS pb
+       JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
+       JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+       JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
        WHERE pb.SanPhamID = ? AND pb.SoLuongTonKho > 0
        GROUP BY pb.PhienBanID`,
       [product.SanPhamID]
