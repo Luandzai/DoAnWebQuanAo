@@ -3,6 +3,9 @@ import React from "react";
 import { Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import "./PromoBanners.css"; // Chúng ta sẽ tạo file này
+import CourtsideImage from "../assets/Courtside_Collection.jpg";
+import PhuKien from "../assets/PhuKien.jpg";
+import Sale from "../assets/GiamGiaCuoiTuan.jpg";
 
 const PromoBanners = () => {
   return (
@@ -13,8 +16,7 @@ const PromoBanners = () => {
           to="/products"
           className="promo-banner-large"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1516762689617-e1cff2b45dbf?fit=crop&w=800&q=80')",
+            backgroundImage: `url(${CourtsideImage})`,
           }}
         >
           <div className="promo-content">
@@ -30,11 +32,11 @@ const PromoBanners = () => {
         <Row>
           <Col md={12} className="mb-4">
             <Link
-              to="/products"
+              to="/products?danhMuc=phu-kien"
               className="promo-banner-small"
               style={{
                 backgroundImage:
-                  "url('https://images.unsplash.com/photo-1560769629-975ec94e6a86?fit=crop&w=800&q=80')",
+                  `url(${PhuKien})`,
               }}
             >
               <div className="promo-content">
@@ -49,7 +51,7 @@ const PromoBanners = () => {
               className="promo-banner-small"
               style={{
                 backgroundImage:
-                  "url('https://images.unsplash.com/photo-1593030103050-5b091809d068?fit=crop&w=800&q=80')",
+                  `url(${Sale})`,
               }}
             >
               <div className="promo-content">
