@@ -331,7 +331,7 @@ exports.cancelOrder = async (req, res) => {
       [DonHangID]
     );
     await connection.query(
-      "UPDATE ThanhToan SET TrangThai = 'CANCELLED' WHERE DonHangID = ?",
+      "UPDATE ThanhToan SET TrangThai = 'FAILED' WHERE DonHangID = ?",
       [DonHangID]
     );
     await connection.commit();

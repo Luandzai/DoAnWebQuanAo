@@ -3,62 +3,57 @@ import React, { useState, useRef, useEffect } from "react";
 import "./Chatbot.css";
 import { BiCommentDetail, BiSend, BiX } from "react-icons/bi";
 import axios from "axios";
+import { Link } from "react-router-dom"; // Import Link để chuyển trang
 
 const Chatbot = () => {
-  const [isOpen, setIsOpen] = useState(false); // Trạng thái mở/đóng cửa sổ chat
-  const [inputStr, setInputStr] = useState(""); // Nội dung ô nhập liệu
-  const [isLoading, setIsLoading] = useState(false); // Trạng thái AI đang trả lời
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputStr, setInputStr] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Danh sách tin nhắn ban đầu
+  // Thêm products vào cấu trúc tin nhắn
   const [messages, setMessages] = useState([
     {
       text: "Chào bạn! Mình là Stylist ảo của Blank Canvas. Bạn cần tư vấn chọn đồ gì hôm nay nhỉ? ✨",
       isBot: true,
+      products: [], // Mảng sản phẩm gợi ý
     },
   ]);
 
-  // Ref để tự động cuộn xuống tin nhắn mới nhất
   const messagesEndRef = useRef(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
   useEffect(scrollToBottom, [messages]);
 
-  // Hàm gửi tin nhắn
   const handleSend = async () => {
     if (!inputStr.trim()) return;
 
-    // 1. Lưu lại tin nhắn người dùng vừa nhập để hiển thị ngay
     const currentUserMessage = inputStr;
-    const userMsgObj = { text: currentUserMessage, isBot: false };
+    const userMsgObj = { text: currentUserMessage, isBot: false, products: [] };
 
-    // Cập nhật UI ngay lập tức
     setMessages((prev) => [...prev, userMsgObj]);
     setInputStr("");
     setIsLoading(true);
 
     try {
-      // 2. Chuẩn bị lịch sử chat để gửi lên Server
-      // Map danh sách messages hiện tại sang format chuẩn API (role: 'user' | 'assistant')
       const historyPayload = messages.map((msg) => ({
         role: msg.isBot ? "assistant" : "user",
         content: msg.text,
       }));
 
-      // LƯU Ý: 'historyPayload' ở đây CHƯA BAO GỒM tin nhắn mới nhất vừa nhập (currentUserMessage)
-      // vì state 'messages' cập nhật là bất đồng bộ (async).
-      // Tuy nhiên, Backend của chúng ta đã thiết kế để nhận:
-      // - history: Các tin nhắn CŨ
-      // - message: Tin nhắn MỚI NHẤT
-      // => Nên logic này là hoàn toàn chính xác.
-
+      // Gọi API
       const response = await axios.post("http://localhost:5000/api/chat", {
-        message: currentUserMessage, // Tin nhắn mới
-        history: historyPayload, // Lịch sử cũ
+        message: currentUserMessage,
+        history: historyPayload,
       });
 
-      // 3. Nhận phản hồi và hiển thị
-      const botMsg = { text: response.data.reply, isBot: true };
+      // Lấy text VÀ danh sách sản phẩm từ response
+      const botMsg = {
+        text: response.data.reply,
+        isBot: true,
+        products: response.data.suggestedProducts || [], // Lưu mảng sản phẩm
+      };
+
       setMessages((prev) => [...prev, botMsg]);
     } catch (error) {
       console.error("Lỗi gửi tin nhắn:", error);
@@ -72,21 +67,25 @@ const Chatbot = () => {
     }
   };
 
-  // Xử lý khi nhấn Enter
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !isLoading) handleSend();
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
   return (
     <>
-      {/* Nút tròn để mở chat */}
       {!isOpen && (
         <div className="chatbot-bubble" onClick={() => setIsOpen(true)}>
           <BiCommentDetail />
         </div>
       )}
 
-      {/* Cửa sổ chat */}
       {isOpen && (
         <div className="chatbot-window">
           <div className="chatbot-header">
@@ -102,16 +101,59 @@ const Chatbot = () => {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`message ${msg.isBot ? "bot" : "user"}`}
+                className={`message-container ${
+                  msg.isBot ? "bot-container" : "user-container"
+                }`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: msg.isBot ? "flex-start" : "flex-end",
+                }}
               >
-                {msg.text}
+                {/* 1. Tin nhắn Text */}
+                <div className={`message ${msg.isBot ? "bot" : "user"}`}>
+                  {msg.text}
+                </div>
+
+                {/* 2. RICH UI: Hiển thị danh sách sản phẩm (Nếu có) */}
+                {msg.isBot && msg.products && msg.products.length > 0 && (
+                  <div className="chat-product-list">
+                    {msg.products.map((p) => (
+                      <Link
+                        to={`/product/${p.Slug}`}
+                        key={p.SanPhamID}
+                        className="chat-product-card"
+                        onClick={() => setIsOpen(false)} // Đóng chat khi click xem
+                      >
+                        <img
+                          src={
+                            p.HinhAnh ||
+                            "https://placehold.co/150x150?text=No+Img"
+                          }
+                          alt={p.TenSanPham}
+                          className="chat-product-img"
+                        />
+                        <div className="chat-product-info">
+                          <div
+                            className="chat-product-name"
+                            title={p.TenSanPham}
+                          >
+                            {p.TenSanPham}
+                          </div>
+                          <div className="chat-product-price">
+                            {formatPrice(p.GiaTu)}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
-            {/* Hiệu ứng đang gõ */}
+
             {isLoading && (
-              <div className="typing">Stylist đang soạn tin...</div>
+              <div className="typing">Stylist đang tìm sản phẩm...</div>
             )}
-            {/* Phần tử ẩn để cuộn xuống đáy */}
             <div ref={messagesEndRef} />
           </div>
 

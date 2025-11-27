@@ -1,4 +1,4 @@
-// client/src/components/Header.jsx (Phiên bản cuối cùng sửa lỗi NavLink Active)
+// client/src/components/Header.jsx (Đã thêm ThemeToggle)
 
 import React, { useContext, useState } from "react";
 import {
@@ -11,14 +11,15 @@ import {
   NavDropdown,
   Badge,
 } from "react-bootstrap";
-import { Link, useNavigate, NavLink, useLocation } from "react-router-dom"; // Thêm useLocation
+import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
 import { Telephone, Search, Person, Cart, Heart } from "react-bootstrap-icons";
 import "./Header.css";
 import AuthContext from "../context/AuthContext";
 import CartContext from "../context/CartContext";
 import WishlistContext from "../context/WishlistContext";
+// 1. Import ThemeToggle
+import ThemeToggle from "./ThemeToggle";
 
-// Danh sách các danh mục để dễ dàng lặp và quản lý
 const CATEGORIES = [
   { name: "TẤT CẢ SẢN PHẨM", category: "tat-ca", path: "/products" },
   { name: "ĐỒ NAM", category: "do-nam" },
@@ -28,20 +29,13 @@ const CATEGORIES = [
   { name: "PHỤ KIỆN", category: "phu-kien" },
 ];
 
-// Hàm kiểm tra category active: Sẽ dùng useLocation để kiểm tra URL hiện tại
 const isCategoryActive = (category, location) => {
   if (location.pathname !== "/products") return false;
-
   const searchParams = new URLSearchParams(location.search);
   const currentCategory = searchParams.get("danhMuc");
-
-  // Kiểm tra "TẤT CẢ SẢN PHẨM"
   if (category === "tat-ca") {
-    // Active chỉ khi path là /products VÀ KHÔNG có query category
     return !currentCategory;
   }
-
-  // Kiểm tra các category cụ thể
   return currentCategory === category;
 };
 
@@ -52,7 +46,7 @@ const Header = () => {
 
   const [keyword, setKeyword] = useState("");
   const navigate = useNavigate();
-  const location = useLocation(); // Lấy đối tượng location hiện tại
+  const location = useLocation();
 
   const searchHandler = (e) => {
     e.preventDefault();
@@ -74,9 +68,9 @@ const Header = () => {
 
   const cartItemCount = cartItems?.length || 0;
   const wishlistItemCount = wishlistItems?.length || 0;
+
   return (
     <header className="header-container shadow-sm">
-      {/* Thanh Top-bar */}
       <div className="top-bar bg-dark text-white">
         <Container fluid className="d-flex justify-content-between">
           <span>
@@ -86,22 +80,16 @@ const Header = () => {
         </Container>
       </div>
 
-      {/* Thanh Navbar chính */}
-      <Navbar bg="white" variant="light" expand="xl" className="main-navbar">
+      <Navbar bg="body" variant="underline" expand="xl" className="main-navbar">
         <Container fluid>
-          {/* Logo */}
           <Navbar.Brand as={Link} to="/" className="fw-bold fs-4">
             BLANK CANVAS
           </Navbar.Brand>
 
-          {/* Nút Hamburger (Mobile) */}
           <Navbar.Toggle aria-controls="main-navbar-nav" />
 
-          {/* Nội dung Navbar */}
           <Navbar.Collapse id="main-navbar-nav">
-            {/* Các link điều hướng (Căn giữa) */}
             <Nav className="mx-auto nav-links">
-              {/* Sử dụng map để tạo NavLink cho danh mục */}
               {CATEGORIES.map((item) => (
                 <Nav.Link
                   key={item.category}
@@ -116,7 +104,6 @@ const Header = () => {
                 </Nav.Link>
               ))}
 
-              {/* Các link không có query param giữ nguyên */}
               <Nav.Link as={NavLink} to="/news">
                 TIN TỨC
               </Nav.Link>
@@ -128,11 +115,9 @@ const Header = () => {
               </Nav.Link>
             </Nav>
 
-            {/* Ô tìm kiếm và Icons (Căn phải) */}
-            <Nav className="align-items-center nav-icons">
-              {/* Form tìm kiếm */}
+            <Nav className="align-items-center nav-icons gap-2">
               <Form
-                className="d-flex me-3 search-form"
+                className="d-flex me-2 search-form"
                 onSubmit={searchHandler}
               >
                 <InputGroup size="sm">
@@ -153,7 +138,9 @@ const Header = () => {
                 </InputGroup>
               </Form>
 
-              {/* Icon Tài khoản */}
+              {/* 2. THÊM NÚT THEME TOGGLE TẠI ĐÂY */}
+              <ThemeToggle />
+
               {user ? (
                 <NavDropdown
                   title={`Xin chào, ${user.hoTen}`}
@@ -178,7 +165,6 @@ const Header = () => {
                 </Nav.Link>
               )}
 
-              {/* Wishlist Icon */}
               <Nav.Link
                 as={Link}
                 to="/profile/wishlist"
@@ -197,7 +183,6 @@ const Header = () => {
                 )}
               </Nav.Link>
 
-              {/* Cart Icon */}
               <Nav.Link
                 as={Link}
                 to="/cart"

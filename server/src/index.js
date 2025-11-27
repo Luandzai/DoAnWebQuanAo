@@ -6,7 +6,7 @@ const axios = require("axios");
 require("./config/db");
 
 // Import services
-const { searchProductsForAI } = require("./services/chatService"); // <--- IMPORT MỚI
+const { searchProductsForAI } = require("./services/chatService");
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
@@ -35,7 +35,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// --- API CHATBOT (Groq - Llama 3 + RAG) ---
+// --- API CHATBOT (Groq - Llama 3 + RAG + Rich UI) ---
 app.post("/api/chat", async (req, res) => {
   const { message, history } = req.body;
 
@@ -47,11 +47,10 @@ app.post("/api/chat", async (req, res) => {
   const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
   try {
-    // 1. TÌM KIẾM SẢN PHẨM TRONG DB DỰA TRÊN TIN NHẮN
-    // (Bước RAG: Retrieval - Truy xuất dữ liệu)
-    const productContext = await searchProductsForAI(message);
+    // 1. TÌM KIẾM SẢN PHẨM (Lấy cả Context Text và Mảng Sản Phẩm)
+    const { context, products } = await searchProductsForAI(message);
 
-    // 2. Xử lý lịch sử chat (Lấy 10 tin gần nhất)
+    // 2. Xử lý lịch sử chat
     const contextHistory = Array.isArray(history) ? history.slice(-10) : [];
 
     // 3. Tạo System Prompt thông minh hơn
@@ -61,8 +60,8 @@ Nhiệm vụ: Tư vấn thời trang và hỗ trợ tìm kiếm sản phẩm cho
 
 QUAN TRỌNG - DỮ LIỆU KHO HÀNG THỰC TẾ:
 ${
-  productContext
-    ? productContext
+  context
+    ? context
     : "Hiện tại không tìm thấy sản phẩm nào khớp chính xác trong kho với từ khóa của khách. Hãy tư vấn chung chung hoặc gợi ý khách xem danh mục khác."
 }
 
@@ -77,19 +76,12 @@ Nguyên tắc trả lời:
     const payload = {
       model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        // Chèn lịch sử chat
+        { role: "system", content: systemPrompt },
         ...contextHistory,
-        {
-          role: "user",
-          content: message,
-        },
+        { role: "user", content: message },
       ],
-      temperature: 0.5, // Giảm nhiệt độ để AI bám sát dữ liệu thật hơn, bớt "chém gió"
-      max_tokens: 500,
+      temperature: 0.5,
+      max_tokens: 300,
     };
 
     const response = await axios.post(apiUrl, payload, {
@@ -103,7 +95,11 @@ Nguyên tắc trả lời:
       response.data?.choices?.[0]?.message?.content ||
       "Mình chưa nghĩ ra câu trả lời phù hợp 😅";
 
-    res.json({ reply });
+    // 4. TRẢ VỀ JSON: Lời nhắn của AI + Danh sách sản phẩm (để Frontend hiển thị Card)
+    res.json({
+      reply,
+      suggestedProducts: products, // Mảng sản phẩm cho Rich UI
+    });
   } catch (error) {
     console.error("❌ Lỗi API Chatbot:", error.response?.data || error.message);
     res

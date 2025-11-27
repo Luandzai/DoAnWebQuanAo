@@ -2,17 +2,28 @@
 
 /* Global Variables for this page */
 :root {
+  /* Chế độ Sáng (Mặc định) */
   --pd-primary-color: #000;
   --pd-secondary-color: #6c757d;
   --pd-accent-color: #0d6efd;
   --pd-border-color: #e5e5e5;
   --pd-bg-light: #f8f9fa;
+  --pd-card-bg: #ffffff; /* Màu nền card */
   --pd-font-family: "Inter", sans-serif;
+}
+
+/* Chế độ Tối (Dark Mode) */
+[data-bs-theme="dark"] {
+  --pd-primary-color: #f8f9fa; /* Chữ trắng */
+  --pd-secondary-color: #adb5bd; /* Chữ xám sáng */
+  --pd-bg-light: #2b3035; /* Nền tối */
+  --pd-border-color: #495057;
+  --pd-card-bg: #212529; /* Nền card tối */
 }
 
 .product-detail-container {
   font-family: var(--pd-font-family);
-  color: #333;
+  color: var(--pd-primary-color); /* Sử dụng biến màu động */
 }
 
 /* =========================================
@@ -58,9 +69,11 @@
 }
 
 .thumbnail-image.active {
-  border-color: var(--pd-primary-color);
+  border-color: var(
+    --pd-accent-color
+  ); /* Dùng màu accent thay vì primary để nổi bật */
   opacity: 1;
-  box-shadow: 0 0 0 1px var(--pd-primary-color);
+  box-shadow: 0 0 0 1px var(--pd-accent-color);
 }
 
 /* Main Image */
@@ -69,7 +82,7 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  background-color: #fff;
+  background-color: var(--pd-card-bg); /* Nền ảnh động */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
@@ -152,6 +165,7 @@
   line-height: 1.3;
   margin-bottom: 0.75rem;
   letter-spacing: -0.5px;
+  color: var(--pd-primary-color);
 }
 
 .product-meta-row {
@@ -179,14 +193,14 @@
 .product-price-new {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--pd-primary-color);
+  color: var(--pd-primary-color); /* Sử dụng biến động */
   letter-spacing: -1px;
 }
 
 .product-price-old {
   font-size: 1.2rem;
   text-decoration: line-through;
-  color: #999;
+  color: var(--pd-secondary-color);
   font-weight: 400;
 }
 
@@ -210,7 +224,12 @@
   font-size: 0.95rem;
   margin-bottom: 0.75rem;
   display: block;
-  color: #555;
+  color: var(--pd-secondary-color);
+}
+
+/* Sửa màu text span bên trong label */
+.product-option-label .text-dark {
+  color: var(--pd-primary-color) !important;
 }
 
 .option-chips-wrapper {
@@ -226,8 +245,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ddd;
-  background-color: #fff;
+  border: 1px solid var(--pd-border-color);
+  background-color: var(--pd-card-bg);
+  color: var(--pd-primary-color);
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
@@ -240,8 +260,10 @@
 }
 
 .option-chip.active {
-  background-color: var(--pd-primary-color);
-  color: #fff;
+  background-color: var(
+    --pd-primary-color
+  ); /* Màu chữ ở Light mode là Đen -> Nền đen */
+  color: var(--pd-card-bg); /* Chữ trắng/ngược lại */
   border-color: var(--pd-primary-color);
 }
 
@@ -256,23 +278,25 @@
 .quantity-selector-v2 {
   display: flex;
   align-items: center;
-  border: 1px solid #ddd;
+  border: 1px solid var(--pd-border-color);
   border-radius: 4px;
   overflow: hidden;
   height: 50px;
+  background-color: var(--pd-card-bg);
 }
 
 .qty-btn {
   width: 40px;
   height: 100%;
   border: none;
-  background: #fff;
+  background: var(--pd-card-bg);
+  color: var(--pd-primary-color);
   font-size: 1.2rem;
   cursor: pointer;
   transition: background 0.2s;
 }
 .qty-btn:hover:not(:disabled) {
-  background-color: #f0f0f0;
+  background-color: var(--pd-bg-light);
 }
 .qty-btn:disabled {
   opacity: 0.5;
@@ -287,13 +311,16 @@
   font-weight: 600;
   font-size: 1rem;
   outline: none;
-  background: #fff;
+  background: var(--pd-card-bg);
+  color: var(--pd-primary-color);
 }
 
 .btn-add-cart-premium {
   flex-grow: 1;
-  background-color: var(--pd-primary-color);
-  color: #fff;
+  background-color: var(
+    --pd-primary-color
+  ); /* Nút sẽ là Đen (Light) hoặc Trắng (Dark) */
+  color: var(--pd-card-bg); /* Chữ ngược lại */
   border: none;
   border-radius: 4px;
   font-weight: 600;
@@ -305,7 +332,7 @@
 }
 
 .btn-add-cart-premium:hover:not(:disabled) {
-  background-color: #333;
+  opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
@@ -319,7 +346,7 @@
 .btn-wishlist-premium {
   width: 50px;
   height: 50px;
-  background-color: #fff;
+  background-color: var(--pd-card-bg);
   border: 2px solid var(--pd-primary-color);
   border-radius: 4px;
   display: flex;
@@ -328,16 +355,18 @@
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
+  color: var(--pd-primary-color);
 }
 
 .btn-wishlist-premium:hover {
   background-color: var(--pd-primary-color);
+  color: var(--pd-card-bg);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-wishlist-premium:hover svg {
-  color: #fff !important;
+  color: inherit !important;
 }
 
 .btn-wishlist-premium:active {
@@ -346,7 +375,7 @@
 
 /* Size Guide Link */
 .size-guide-link {
-  color: #555;
+  color: var(--pd-secondary-color);
   text-decoration: underline;
   font-size: 0.9rem;
   cursor: pointer;
@@ -358,46 +387,48 @@
    3. Tabs & Reviews
    ========================================= */
 .product-tabs-premium .nav-tabs {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--pd-border-color);
 }
 
 .product-tabs-premium .nav-link {
   border: none;
-  color: #777;
+  color: var(--pd-secondary-color);
   font-weight: 600;
   padding: 1rem 1.5rem;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  background: transparent;
 }
 
 .product-tabs-premium .nav-link:hover {
-  color: #333;
+  color: var(--pd-primary-color);
 }
 
 .product-tabs-premium .nav-link.active {
   color: var(--pd-primary-color);
   border-bottom-color: var(--pd-primary-color);
+  background: transparent;
 }
 
-/* === SỬA LỖI 1: MÔ TẢ SẢN PHẨM XUỐNG DÒNG === */
 .product-description-content {
   font-size: 1rem;
   line-height: 1.8;
-  color: #444;
+  color: var(--pd-primary-color);
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 0;
-  /* Dòng này giúp text tự động xuống dòng khi gặp ký tự \n */
   white-space: pre-line;
 }
 
 /* Review Item */
 .review-card {
-  border: 1px solid #eee;
+  border: 1px solid var(--pd-bg-light); /* Dùng biến động */
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  background-color: #fff;
+  background-color: var(
+    --pd-card-bg
+  ); /* Dùng biến động để card không bị trắng toát */
 }
 
 .review-header {
@@ -409,51 +440,49 @@
 .review-user-name {
   font-weight: 700;
   font-size: 1rem;
+  color: var(--pd-primary-color);
 }
 
 .review-date {
   font-size: 0.85rem;
-  color: #888;
+  color: var(--pd-secondary-color);
 }
 
 .review-content {
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #333;
+  color: var(--pd-primary-color);
 }
 
 .review-media-grid {
   display: flex;
   gap: 10px;
   margin-top: 1rem;
-  flex-wrap: wrap; /* Cho phép xuống dòng nếu quá nhiều ảnh */
+  flex-wrap: wrap;
 }
 
-/* === SỬA LỖI 2: KÍCH THƯỚC MEDIA TRONG REVIEW === */
 .review-media-thumbnail {
-  width: 100px; /* Kích thước cố định vuông */
-  height: 100px; /* Kích thước cố định vuông */
+  width: 100px;
+  height: 100px;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #dee2e6;
-  position: relative; /* Để icon play nằm đè lên */
+  border: 1px solid var(--pd-border-color);
+  position: relative;
 }
 
 .review-media-thumbnail img,
 .review-media-thumbnail video {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Cắt ảnh/video vừa khung mà không méo */
+  object-fit: cover;
   display: block;
 }
 
-/* Style riêng cho Video Thumbnail */
 .video-thumbnail {
   background-color: #000;
 }
 
-/* Icon play đè lên video */
 .play-icon-overlay {
   position: absolute;
   top: 50%;
@@ -461,7 +490,7 @@
   transform: translate(-50%, -50%);
   font-size: 2rem;
   color: rgba(255, 255, 255, 0.8);
-  pointer-events: none; /* Để click xuyên qua vào div cha */
+  pointer-events: none;
 }
 
 .review-media-thumbnail:hover {
@@ -479,139 +508,110 @@
   margin-bottom: 2rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+  color: var(--pd-primary-color);
 }
 
 /* ===== ADDITIONAL RESPONSIVE STYLES ===== */
-
-/* Tablet: Reduce sizes */
+/* ... (Giữ nguyên phần responsive của bạn) ... */
 @media (max-width: 992px) {
   .product-detail-title {
     font-size: 1.5rem;
   }
-  
   .product-price-new {
     font-size: 2rem;
   }
-  
   .product-price-old {
     font-size: 1rem;
   }
-  
   .related-products-title {
     font-size: 1.5rem;
   }
-  
   .product-tabs-premium .nav-link {
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
   }
 }
 
-/* Mobile: Stack action row and optimize spacing */
 @media (max-width: 576px) {
   .product-detail-title {
     font-size: 1.25rem;
     margin-bottom: 0.5rem;
   }
-  
   .product-price-new {
     font-size: 1.75rem;
   }
-  
   .product-price-old {
     font-size: 0.9rem;
   }
-  
   .discount-badge {
     font-size: 0.75rem;
     padding: 3px 6px;
   }
-  
   .product-meta-row {
     font-size: 0.85rem;
     gap: 10px;
   }
-  
-  /* Keep action buttons in same row on mobile */
   .action-row {
     flex-direction: row;
     gap: 8px;
     margin-top: 1.5rem;
     flex-wrap: wrap;
   }
-  
   .quantity-selector-v2 {
     width: 100%;
     justify-content: center;
     margin-bottom: 8px;
   }
-  
   .btn-add-cart-premium {
     flex: 1;
     font-size: 0.95rem;
     height: 48px;
     min-width: 0;
   }
-  
-  /* Wishlist button on mobile - same height, fixed width */
   .btn-wishlist-premium {
     width: 48px;
     height: 48px;
     flex-shrink: 0;
   }
-  
-  /* Smaller option chips */
   .option-chip {
     min-width: 40px;
     height: 36px;
     padding: 0 12px;
     font-size: 0.9rem;
   }
-  
   .product-option-label {
     font-size: 0.9rem;
   }
-  
-  /* Tabs */
   .product-tabs-premium .nav-link {
     padding: 0.6rem 0.75rem;
     font-size: 0.85rem;
   }
-  
   .related-products-title {
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
   }
-  
-  /* Reviews */
   .review-card {
     padding: 1rem;
   }
-  
   .review-user-name {
     font-size: 0.9rem;
   }
-  
   .review-content {
     font-size: 0.9rem;
   }
-  
   .review-media-thumbnail {
     width: 80px;
     height: 80px;
   }
 }
 
-/* Extra small mobile */
 @media (max-width: 375px) {
   .product-detail-title {
     font-size: 1.1rem;
   }
-  
   .product-price-new {
     font-size: 1.5rem;
   }
-  
   .option-chip {
     min-width: 36px;
     height: 32px;

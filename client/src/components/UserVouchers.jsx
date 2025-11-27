@@ -4,23 +4,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
 import AuthContext from "../context/AuthContext";
 
-// Sao chép style từ trang chi tiết sản phẩm
-const voucherCardStyle = {
-  backgroundColor: "#fff9e0",
-  border: "1px solid #fff9e0",
-  borderRadius: "8px",
-  cursor: "pointer",
-};
-const voucherBadgeStyle = {
-  backgroundColor: "#dc3545",
-  color: "white",
-  fontWeight: 500,
-};
-const voucherCodeStyle = {
-  color: "#dc3545",
-  fontWeight: 700,
-};
-
 const UserVouchers = () => {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,32 +15,24 @@ const UserVouchers = () => {
       setLoading(true);
       setError(null);
       try {
-        // === SỬA LỖI Ở ĐÂY ===
-        // Gọi API mới (của riêng user) thay vì API public
         const { data } = await api.get("/user/my-vouchers");
         setVouchers(data);
       } catch (err) {
         setError("Không thể tải mã khuyến mãi của bạn.");
-        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchVouchers();
   }, [api]);
 
-  if (loading) {
+  if (loading)
     return (
       <div className="text-center">
         <Spinner animation="border" />
       </div>
     );
-  }
-
-  if (error) {
-    return <Alert variant="danger">{error}</Alert>;
-  }
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <>
@@ -68,24 +43,28 @@ const UserVouchers = () => {
         <Row>
           {vouchers.map((v) => (
             <Col md={6} key={v.MaKhuyenMai} className="mb-3">
-              <Card body style={voucherCardStyle}>
-                <div className="d-flex justify-content-between align-items-center">
+              {/* Sử dụng className thay vì style inline để dễ kiểm soát Dark Mode */}
+              <Card className="voucher-card shadow-sm h-100">
+                <Card.Body className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 className="mb-1" style={voucherCodeStyle}>
+                    <h5 className="mb-1 fw-bold text-danger">
                       {v.MaKhuyenMai}
                     </h5>
-                    <p className="mb-0 text-muted small">{v.TenKhuyenMai}</p>
+                    {/* Dùng class text-body để màu chữ tự đổi theo theme (đen/trắng) */}
+                    <p className="mb-0 small fw-bold text-body">
+                      {v.TenKhuyenMai}
+                    </p>
                     <p className="mb-0 text-muted small">
                       Hết hạn:{" "}
                       {new Date(v.NgayKetThuc).toLocaleDateString("vi-VN")}
                     </p>
                   </div>
-                  <Badge style={voucherBadgeStyle}>
+                  <Badge bg="danger" className="ms-2">
                     {v.LoaiGiamGia === "SOTIEN"
                       ? `${parseFloat(v.GiaTriGiam) / 1000}K`
                       : `${parseFloat(v.GiaTriGiam)}%`}
                   </Badge>
-                </div>
+                </Card.Body>
               </Card>
             </Col>
           ))}

@@ -1,21 +1,51 @@
 /* client/src/pages/ProfilePage.css */
 
+/* Global Variables for Profile Page */
+:root {
+  --profile-sidebar-bg: #f8f9fa;
+  --profile-card-bg: #ffffff;
+  --profile-text-color: #343a40;
+  --profile-border-color: #dee2e6;
+  --profile-link-hover: #e9ecef;
+}
+
+[data-bs-theme="dark"] {
+  --profile-sidebar-bg: #1f2327;
+  --profile-card-bg: #2b3035;
+  --profile-text-color: #e0e0e0;
+  --profile-border-color: #495057;
+  --profile-link-hover: #343a40;
+}
+
 .profile-sidebar {
-  background-color: #f8f9fa;
+  background-color: var(--profile-sidebar-bg);
   padding: 1.5rem;
   border-radius: 8px;
   height: 100%;
+  border: 1px solid var(--profile-border-color); /* Thêm viền để rõ hơn */
 }
 
 .profile-avatar {
   width: 80px;
   height: 80px;
   object-fit: cover;
-  border: 3px solid #dee2e6;
+  border: 3px solid var(--profile-border-color);
+  color: var(--profile-text-color); /* Màu icon avatar */
+}
+
+/* Tên User dưới Avatar */
+.profile-sidebar h5 {
+  color: var(--profile-text-color);
+}
+
+/* Email User dưới Avatar */
+.profile-sidebar small.text-muted {
+  color: var(--profile-text-color) !important; /* Override text-muted */
+  opacity: 0.7;
 }
 
 .profile-sidebar .nav-link {
-  color: #343a40;
+  color: var(--profile-text-color);
   font-weight: 500;
   padding: 0.75rem 1rem;
   border-radius: 5px;
@@ -23,37 +53,47 @@
   transition: all 0.2s ease;
 }
 
-/* Đây là class tự động của NavLink khi route được kích hoạt */
+/* Class tự động của NavLink khi active */
 .profile-sidebar .nav-link.active {
   background-color: #0d6efd;
   color: #ffffff;
 }
 
 .profile-sidebar .nav-link:not(.active):hover {
-  background-color: #e9ecef;
+  background-color: var(--profile-link-hover);
+  color: var(--profile-text-color);
 }
 
 .profile-content-card {
   padding: 2rem;
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: var(--profile-card-bg);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--profile-border-color);
+  color: var(--profile-text-color); /* Màu chữ chung cho content */
 }
 
-/* ===== RESPONSIVE STYLES ===== */
+/* Override các thẻ Heading và Label bên trong Card */
+.profile-content-card h1,
+.profile-content-card h2,
+.profile-content-card h3,
+.profile-content-card h4,
+.profile-content-card h5,
+.profile-content-card h6,
+.profile-content-card label.form-label {
+  color: var(--profile-text-color) !important;
+}
 
-/* Tablet and below: Stack sidebar */
+/* ===== RESPONSIVE STYLES (Giữ nguyên) ===== */
 @media (max-width: 992px) {
   .profile-sidebar {
     margin-bottom: 2rem;
   }
-  
   .profile-sidebar .nav {
     flex-direction: row;
     overflow-x: auto;
     white-space: nowrap;
   }
-  
   .profile-sidebar .nav-link {
     display: inline-block;
     padding: 0.75rem 1rem;
@@ -61,13 +101,11 @@
   }
 }
 
-/* Mobile: Horizontal scrollable tabs */
 @media (max-width: 576px) {
   .profile-sidebar .nav-link {
     padding: 0.6rem 0.875rem;
     font-size: 0.85rem;
   }
-  
   .profile-content-card {
     padding: 1.5rem 1rem;
   }
