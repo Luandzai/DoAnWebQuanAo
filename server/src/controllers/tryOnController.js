@@ -1,4 +1,7 @@
 const { Client } = require("@gradio/client");
+const axios = require("axios");
+const { cloudinary } = require("../config/cloudinary");
+const stream = require("stream");
 
 // 1. Global variable to hold the Gradio client connection
 let gradioApp;
@@ -112,8 +115,46 @@ const handleTryOn = async (req, res) => {
       }
 
       if (outputUrl) {
+        // Fix relative URLs from Gradio
+        if (outputUrl.startsWith("/")) {
+          outputUrl = "https://yisol-idm-vton.hf.space" + outputUrl;
+        }
+        
         console.log("Extracted Output URL:", outputUrl);
-        return res.json({ resultUrl: outputUrl });
+
+        // --- NEW LOGIC: Download and Upload to Cloudinary ---
+        try {
+          console.log("Downloading image from Gradio...");
+          const imageResponse = await axios.get(outputUrl, {
+            responseType: "arraybuffer",
+          });
+
+          console.log("Uploading to Cloudinary...");
+          const uploadResult = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+              {
+                folder: "tryon_results",
+                resource_type: "image",
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            );
+            const bufferStream = new stream.PassThrough();
+            bufferStream.end(imageResponse.data);
+            bufferStream.pipe(uploadStream);
+          });
+
+          console.log("Cloudinary Upload Success:", uploadResult.secure_url);
+          return res.json({ resultUrl: uploadResult.secure_url });
+
+        } catch (uploadError) {
+          console.error("Error persisting image to Cloudinary:", uploadError);
+          // Fallback: Return original URL if upload fails (though it might expire)
+          return res.json({ resultUrl: outputUrl });
+        }
+        // ----------------------------------------------------
       }
     }
 
