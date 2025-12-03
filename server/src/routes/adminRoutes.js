@@ -29,5 +29,5 @@ router.put("/users/:id/role", adminController.updateUserRole);
 router.get("/reviews", reviewController.getAllReviewsAdmin);
 // DELETE /api/admin/reviews/:id
 router.delete("/reviews/:id", reviewController.deleteReviewAdmin);
-
+router.put("/reviews/:id/reply", reviewController.replyToReview);
 module.exports = router;

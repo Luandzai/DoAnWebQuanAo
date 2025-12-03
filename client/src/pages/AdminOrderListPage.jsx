@@ -47,14 +47,13 @@ const AdminOrderListPage = () => {
     setShowConfirmModal(true);
   };
 
-  // === CẬP NHẬT HÀM NÀY ĐỂ NHẬN DỮ LIỆU TỪ MODAL ===
-  const confirmStatusUpdate = async (shippingData) => {
+  // === ĐÃ SỬA: BỎ THAM SỐ shippingData ===
+  const confirmStatusUpdate = async () => {
     if (!pendingStatusUpdate) return;
 
     await updateOrderStatus(
       pendingStatusUpdate.orderId,
-      pendingStatusUpdate.newStatus,
-      shippingData // Truyền dữ liệu vận chuyển vào hook
+      pendingStatusUpdate.newStatus
     );
 
     setShowConfirmModal(false);
@@ -121,7 +120,7 @@ const AdminOrderListPage = () => {
             : ""
         }
         isProcessing={!!updatingId}
-        targetStatus={pendingStatusUpdate?.newStatus} // <-- QUAN TRỌNG: Truyền trạng thái đích để hiện form
+        // targetStatus={pendingStatusUpdate?.newStatus} // KHÔNG CẦN TRUYỀN NỮA
       />
 
       {/* Order Detail Modal */}

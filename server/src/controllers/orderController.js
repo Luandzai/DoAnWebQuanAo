@@ -256,20 +256,18 @@ exports.getMyOrders = async (req, res) => {
   }
 };
 
-// @desc    Xem chi tiết đơn hàng (User) - Đã cập nhật VanChuyen
+// @desc    Xem chi tiết đơn hàng (User) - Đã BỎ VanChuyen
 exports.getOrderById = async (req, res) => {
   try {
     const NguoiDungID = req.user.NguoiDungID;
     const DonHangID = req.params.id;
     const [orderRows] = await pool.query(
       `SELECT dh.*, dc.TenNguoiNhan, dc.DienThoaiNhan, dc.DiaChiChiTiet, 
-              ptt.TenPhuongThuc AS TenPhuongThucThanhToan,
-              vc.MaTheoDoi, vc.TenDonViVC -- <--- LẤY THÊM THÔNG TIN VẬN CHUYỂN
+              ptt.TenPhuongThuc AS TenPhuongThucThanhToan
        FROM DonHang AS dh
        LEFT JOIN DiaChiGiaoHang AS dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
        LEFT JOIN ThanhToan AS tt ON dh.DonHangID = tt.DonHangID
        LEFT JOIN PaymentMethods AS ptt ON tt.MethodID = ptt.MethodID
-       LEFT JOIN VanChuyen vc ON dh.DonHangID = vc.DonHangID -- <--- JOIN BẢNG VANCHUYEN
        WHERE dh.DonHangID = ? AND dh.NguoiDungID = ?`,
       [DonHangID, NguoiDungID]
     );
@@ -330,10 +328,12 @@ exports.cancelOrder = async (req, res) => {
       "UPDATE DonHang SET TrangThai = 'DA_HUY' WHERE DonHangID = ?",
       [DonHangID]
     );
+
     await connection.query(
       "UPDATE ThanhToan SET TrangThai = 'FAILED' WHERE DonHangID = ?",
       [DonHangID]
     );
+
     await connection.commit();
     res.json({ message: "Đã hủy đơn hàng thành công!" });
   } catch (error) {
@@ -434,7 +434,7 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
-// @desc    Admin: Xem chi tiết đơn hàng - Đã cập nhật VanChuyen
+// @desc    Admin: Xem chi tiết đơn hàng - Đã BỎ VanChuyen
 exports.getAdminOrderDetail = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -446,15 +446,13 @@ exports.getAdminOrderDetail = async (req, res) => {
         dc.TenNguoiNhan, dc.DienThoaiNhan, dc.DiaChiChiTiet,
         ptvc.TenPhuongThuc,
         km.MaKhuyenMai, km.TenKhuyenMai, km.GiaTriGiam, km.LoaiGiamGia,
-        uc.HoTen AS NguoiCapNhatTen,
-        vc.MaTheoDoi, vc.TenDonViVC, vc.TrangThaiVC -- <--- THÊM CÁC TRƯỜNG VẬN CHUYỂN
+        uc.HoTen AS NguoiCapNhatTen
       FROM DonHang dh
       JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
       LEFT JOIN DiaChiGiaoHang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
       LEFT JOIN PhuongThucVanChuyen ptvc ON dh.PhuongThucID = ptvc.PhuongThucID
       LEFT JOIN KhuyenMai km ON dh.MaKhuyenMai = km.MaKhuyenMai
       LEFT JOIN NguoiDung uc ON dh.NguoiCapNhat = uc.NguoiDungID
-      LEFT JOIN VanChuyen vc ON dh.DonHangID = vc.DonHangID -- <--- JOIN BẢNG VANCHUYEN
       WHERE dh.DonHangID = ?`,
       [orderId]
     );
@@ -519,12 +517,12 @@ exports.getAdminOrderDetail = async (req, res) => {
   }
 };
 
-// @desc    Admin: Cập nhật trạng thái đơn hàng - Đã tích hợp VanChuyen
+// @desc    Admin: Cập nhật trạng thái đơn hàng - Đã BỎ VanChuyen
 exports.updateOrderStatus = async (req, res) => {
   let connection;
   try {
     const { id } = req.params;
-    const { trangThaiMoi, maVanDon, tenDonViVC } = req.body; // <--- NHẬN THÊM DỮ LIỆU VẬN CHUYỂN
+    const { trangThaiMoi } = req.body;
     const adminId = req.user?.NguoiDungID;
 
     if (!id || !trangThaiMoi || !adminId) {
@@ -554,20 +552,6 @@ exports.updateOrderStatus = async (req, res) => {
         "UPDATE DonHang SET TrangThai = ?, NguoiCapNhat = ?, NgayCapNhat = NOW() WHERE DonHangID = ?",
         [trangThaiMoi, adminId, id]
       );
-
-      // === LOGIC MỚI: LƯU VẬN CHUYỂN NẾU LÀ DANG_GIAO ===
-      if (trangThaiMoi === "DANG_GIAO" && maVanDon) {
-        await connection.query(
-          `INSERT INTO VanChuyen (DonHangID, TenDonViVC, MaTheoDoi, TrangThaiVC, NgayGiaoDuKien)
-           VALUES (?, ?, ?, 'DANG_GIAO', DATE_ADD(NOW(), INTERVAL 3 DAY))
-           ON DUPLICATE KEY UPDATE 
-             TenDonViVC = VALUES(TenDonViVC), 
-             MaTheoDoi = VALUES(MaTheoDoi),
-             TrangThaiVC = 'DANG_GIAO'`,
-          [id, tenDonViVC || "Giao Hàng Nhanh", maVanDon]
-        );
-      }
-      // ===================================================
 
       if (trangThaiMoi === "DA_HUY") {
         await connection.query(

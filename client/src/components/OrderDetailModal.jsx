@@ -118,28 +118,6 @@ const OrderDetailModal = ({ show, onHide, orderId }) => {
                       <p>
                         <strong>PT Vận chuyển:</strong> {order.TenPhuongThuc}
                       </p>
-                      {order.MaTheoDoi ? (
-                        <div
-                          className="alert alert-info p-2 mb-2"
-                          style={{ fontSize: "0.9rem" }}
-                        >
-                          <strong>{order.TenDonViVC}:</strong> {order.MaTheoDoi}
-                          <br />
-                          <a
-                            href={`https://khachhang.ghn.vn/order/tracking?code=${order.MaTheoDoi}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="small"
-                          >
-                            Tra cứu hành trình &rarr;
-                          </a>
-                        </div>
-                      ) : (
-                        <p className="text-muted mb-2 small font-italic">
-                          Chưa có mã vận đơn
-                        </p>
-                      )}
-
                       <p>
                         <strong>Voucher:</strong>{" "}
                         {order.TenKhuyenMai || "Không sử dụng"}

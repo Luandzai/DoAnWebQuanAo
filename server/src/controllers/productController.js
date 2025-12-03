@@ -195,6 +195,7 @@ exports.getProductBySlug = async (req, res) => {
       `SELECT 
          dg.DanhGiaID, dg.DiemSo, dg.BinhLuan, 
          dg.NgayTao, dg.NgayCapNhat,
+         dg.PhanHoi, dg.NgayPhanHoi, 
          dg.HinhAnhURL, dg.VideoURL,
          nd.HoTen,
          (SELECT GROUP_CONCAT(CONCAT(tt.TenThuocTinh, ': ', gtt.GiaTri) SEPARATOR ', ')

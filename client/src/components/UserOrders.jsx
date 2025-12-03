@@ -1,4 +1,4 @@
-// client/src/components/UserOrders.jsx (HOÀN CHỈNH: ĐÃ THÊM MÃ VẬN ĐƠN CHO KHÁCH)
+// client/src/components/UserOrders.jsx (ĐÃ BỎ HIỂN THỊ VẬN CHUYỂN)
 
 import React, { useState, useEffect, useContext } from "react";
 import {
@@ -127,7 +127,7 @@ const UserOrders = () => {
           {orders.map((order) => {
             let badgeBg = "secondary";
             if (order.TrangThai === "DANG_XU_LY") badgeBg = "info";
-            if (order.TrangThai === "DANG_GIAO") badgeBg = "warning"; // Thêm màu cho Đang giao
+            if (order.TrangThai === "DANG_GIAO") badgeBg = "warning";
             if (order.TrangThai === "DA_GIAO") badgeBg = "success";
             if (order.TrangThai === "DA_HUY") badgeBg = "danger";
 
@@ -298,32 +298,7 @@ const UserOrders = () => {
                   {selectedOrder.TenPhuongThucThanhToan}
                 </p>
 
-                {/* === PHẦN MỚI: HIỂN THỊ MÃ VẬN ĐƠN === */}
-                {selectedOrder.MaTheoDoi && (
-                  <div className="mt-3 p-3 bg-light rounded border border-info">
-                    <h6 className="text-primary fw-bold mb-2">
-                      🚚 Thông tin Vận chuyển
-                    </h6>
-                    <p className="mb-1 text-dark">
-                      <strong>Đơn vị:</strong> {selectedOrder.TenDonViVC}
-                    </p>
-                    <p className="mb-2 text-dark">
-                      <strong>Mã vận đơn:</strong>{" "}
-                      <span className="font-monospace bg-white px-1 border rounded">
-                        {selectedOrder.MaTheoDoi}
-                      </span>
-                    </p>
-                    <a
-                      href={`https://khachhang.ghn.vn/order/tracking?code=${selectedOrder.MaTheoDoi}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn btn-sm btn-outline-primary"
-                    >
-                      Tra cứu hành trình &rarr;
-                    </a>
-                  </div>
-                )}
-                {/* ====================================== */}
+                {/* Đã xóa phần hiển thị mã vận đơn */}
               </Col>
               <Col md={6}>
                 <h6 className="fw-bold border-bottom pb-2">Sản phẩm</h6>

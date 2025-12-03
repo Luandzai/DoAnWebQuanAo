@@ -38,7 +38,8 @@ exports.createReview = async (req, res) => {
     );
     if (orders.length === 0) {
       // Nếu không đủ điều kiện, xóa file vừa upload (nếu có)
-      if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+      if (hinhAnhFile)
+        await deleteCloudinaryFile(hinhAnhFile.filename, "image");
       if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
 
       throw new Error(
@@ -51,7 +52,8 @@ exports.createReview = async (req, res) => {
     );
     if (existingReview.length > 0) {
       // Nếu đã đánh giá, xóa file vừa upload (nếu có)
-      if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+      if (hinhAnhFile)
+        await deleteCloudinaryFile(hinhAnhFile.filename, "image");
       if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
 
       throw new Error("Bạn đã đánh giá sản phẩm này rồi.");
@@ -137,7 +139,8 @@ exports.updateReview = async (req, res) => {
     );
     if (rows.length === 0) {
       // Xóa file vừa upload nếu không tìm thấy đánh giá
-      if (hinhAnhFile) await deleteCloudinaryFile(hinhAnhFile.filename, "image");
+      if (hinhAnhFile)
+        await deleteCloudinaryFile(hinhAnhFile.filename, "image");
       if (videoFile) await deleteCloudinaryFile(videoFile.filename, "video");
       return res
         .status(404)
@@ -154,12 +157,12 @@ exports.updateReview = async (req, res) => {
     // 3. Xử lý Hình ảnh
     if (hinhAnhFile) {
       // Ảnh mới đã được upload bởi Multer
-      
+
       // Xóa ảnh cũ
       if (reviewCu.HinhAnhPublicID) {
         await deleteCloudinaryFile(reviewCu.HinhAnhPublicID, "image");
       }
-      
+
       hinhAnhURL = hinhAnhFile.path;
       hinhAnhPublicID = hinhAnhFile.filename;
     } else if (XoaHinhAnh === "true") {
@@ -173,12 +176,12 @@ exports.updateReview = async (req, res) => {
     // 4. Xử lý Video
     if (videoFile) {
       // Video mới đã được upload bởi Multer
-      
+
       // Xóa video cũ
       if (reviewCu.VideoPublicID) {
         await deleteCloudinaryFile(reviewCu.VideoPublicID, "video");
       }
-      
+
       videoURL = videoFile.path;
       videoPublicID = videoFile.filename;
     } else if (XoaVideo === "true") {
@@ -273,6 +276,7 @@ exports.getAllReviewsAdmin = async (req, res) => {
       `SELECT 
           dg.DanhGiaID, dg.DiemSo, dg.BinhLuan, dg.NgayTao,
           dg.HinhAnhURL, dg.VideoURL,
+          dg.PhanHoi, -- [MỚI THÊM] Quan trọng để check trạng thái
           sp.TenSanPham, sp.Slug,
           nd.HoTen AS TenNguoiDung
        FROM DanhGia dg
@@ -344,5 +348,36 @@ exports.deleteReviewAdmin = async (req, res) => {
     res.status(500).json({ message: error.message || "Lỗi server" });
   } finally {
     connection.release();
+  }
+};
+// @desc    Admin: Trả lời đánh giá
+// @route   PUT /api/admin/reviews/:id/reply
+// @access  Private (Admin)
+exports.replyToReview = async (req, res) => {
+  const { id: DanhGiaID } = req.params;
+  const { noiDung } = req.body;
+
+  if (!noiDung || !noiDung.trim()) {
+    return res
+      .status(400)
+      .json({ message: "Nội dung trả lời không được để trống." });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE DanhGia 
+       SET PhanHoi = ?, NgayPhanHoi = NOW() 
+       WHERE DanhGiaID = ?`,
+      [noiDung, DanhGiaID]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Không tìm thấy đánh giá." });
+    }
+
+    res.json({ message: "Đã gửi câu trả lời thành công!" });
+  } catch (error) {
+    console.error("Lỗi khi trả lời đánh giá:", error);
+    res.status(500).json({ message: "Lỗi server." });
   }
 };
