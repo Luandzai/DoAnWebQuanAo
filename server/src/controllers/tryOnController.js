@@ -99,14 +99,20 @@ const handleTryOn = async (req, res) => {
       throw lastError;
     }
 
-    if (
-      result &&
-      result.data &&
-      Array.isArray(result.data) &&
-      result.data.length > 0
-    ) {
-      const outputUrl = result.data[0].url;
+    console.log("Gradio Result Data:", JSON.stringify(result.data, null, 2));
+
+    if (result && result.data && result.data.length > 0) {
+      const output = result.data[0];
+      let outputUrl = null;
+
+      if (typeof output === "string") {
+        outputUrl = output;
+      } else if (output && output.url) {
+        outputUrl = output.url;
+      }
+
       if (outputUrl) {
+        console.log("Extracted Output URL:", outputUrl);
         return res.json({ resultUrl: outputUrl });
       }
     }
