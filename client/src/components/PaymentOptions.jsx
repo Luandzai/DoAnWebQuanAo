@@ -1,12 +1,7 @@
 // client/src/components/PaymentOptions.jsx
 import React from "react";
 import { Card, Form } from "react-bootstrap";
-import {
-  Bank,
-  CreditCard2FrontFill,
-  CashCoin,
-  Paypal,
-} from "react-bootstrap-icons";
+import { CreditCard2FrontFill, CashCoin, Paypal } from "react-bootstrap-icons";
 
 // Mảng layout cho PT Thanh toán
 const paymentCardOptions = [
@@ -27,13 +22,7 @@ const paymentCardOptions = [
     name: "Ví MoMo",
     description: "Thanh toán qua ví điện tử MoMo",
     icon: <Paypal />,
-  },
-  {
-    id: "704",
-    name: "Tài khoản ngân hàng",
-    description: "Chuyển khoản trực tiếp",
-    icon: <Bank />,
-  },
+  }
 ];
 
 const PaymentOptions = ({
