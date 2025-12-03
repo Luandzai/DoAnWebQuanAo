@@ -8,7 +8,7 @@ exports.getActiveVouchers = async (req, res) => {
   try {
     const [vouchers] = await pool.query(
       `SELECT MaKhuyenMai, TenKhuyenMai, NgayKetThuc, GiaTriGiam, LoaiGiamGia
-       FROM KhuyenMai
+       FROM khuyenmai
        WHERE NgayKetThuc > NOW() 
          AND NgayBatDau < NOW()
          AND TrangThai = 'ACTIVE'` // <<< ĐÃ THÊM ĐIỀU KIỆN TRẠNG THÁI
@@ -27,7 +27,7 @@ exports.getVouchersForProduct = async (req, res) => {
   const { sanPhamId } = req.params;
   try {
     const [productRows] = await pool.query(
-      "SELECT DanhMucID FROM SanPham WHERE SanPhamID = ?",
+      "SELECT DanhMucID FROM sanpham WHERE SanPhamID = ?",
       [sanPhamId]
     );
     if (productRows.length === 0) {
@@ -37,7 +37,7 @@ exports.getVouchersForProduct = async (req, res) => {
 
     const [vouchers] = await pool.query(
       `SELECT MaKhuyenMai, TenKhuyenMai, NgayKetThuc, GiaTriGiam, LoaiGiamGia
-       FROM KhuyenMai
+       FROM khuyenmai
        WHERE (SanPhamID = ? OR DanhMucID = ?)
          AND NgayKetThuc > NOW() 
          AND NgayBatDau < NOW()
@@ -66,7 +66,7 @@ exports.collectVoucher = async (req, res) => {
   try {
     // 1. Kiểm tra voucher có thật, còn hạn, còn số lượng VÀ ACTIVE
     const [vouchers] = await pool.query(
-      `SELECT * FROM KhuyenMai 
+      `SELECT * FROM khuyenmai 
        WHERE MaKhuyenMai = ? 
          AND NgayKetThuc > NOW() 
          AND SoLuongToiDa > 0 
@@ -119,7 +119,7 @@ exports.applyVoucher = async (req, res) => {
     // 1. Kiểm tra user có mã này, CHƯA SỬ DỤNG, VÀ VOUCHER CÒN ACTIVE
     const [myVoucher] = await pool.query(
       `SELECT km.* FROM NguoiDung_Voucher AS ndv
-       JOIN KhuyenMai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
+       JOIN khuyenmai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
        WHERE ndv.NguoiDungID = ? 
          AND ndv.MaKhuyenMai = ? 
          AND ndv.TrangThai = 'DA_NHAN'
@@ -181,9 +181,9 @@ exports.getAllVouchersAdmin = async (req, res) => {
                 km.*, 
                 dm.TenDanhMuc, 
                 sp.TenSanPham
-             FROM KhuyenMai km
-             LEFT JOIN DanhMuc dm ON km.DanhMucID = dm.DanhMucID
-             LEFT JOIN SanPham sp ON km.SanPhamID = sp.SanPhamID
+             FROM khuyenmai km
+             LEFT JOIN danhmuc dm ON km.DanhMucID = dm.DanhMucID
+             LEFT JOIN sanpham sp ON km.SanPhamID = sp.SanPhamID
              ORDER BY km.NgayKetThuc DESC`
     );
     res.json(vouchers);
@@ -223,7 +223,7 @@ exports.createVoucher = async (req, res) => {
     }
 
     const [existing] = await pool.query(
-      "SELECT MaKhuyenMai FROM KhuyenMai WHERE MaKhuyenMai = ?",
+      "SELECT MaKhuyenMai FROM khuyenmai WHERE MaKhuyenMai = ?",
       [MaKhuyenMai]
     );
     if (existing.length > 0) {
@@ -232,7 +232,7 @@ exports.createVoucher = async (req, res) => {
 
     await pool.query(
       // Thêm TrangThai, mặc định là ACTIVE
-      `INSERT INTO KhuyenMai 
+      `INSERT INTO khuyenmai 
              (MaKhuyenMai, TenKhuyenMai, LoaiGiamGia, GiaTriGiam, ApDungToiThieu, DanhMucID, SanPhamID, NgayBatDau, NgayKetThuc, SoLuongToiDa, TrangThai) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
       [
@@ -276,7 +276,7 @@ exports.updateVoucher = async (req, res) => {
     } = req.body;
 
     const [result] = await pool.query(
-      `UPDATE KhuyenMai SET 
+      `UPDATE khuyenmai SET 
                 TenKhuyenMai = ?, LoaiGiamGia = ?, GiaTriGiam = ?, ApDungToiThieu = ?, 
                 DanhMucID = ?, SanPhamID = ?, NgayBatDau = ?, NgayKetThuc = ?, SoLuongToiDa = ?,
                 TrangThai = ? 
@@ -317,7 +317,7 @@ exports.disableVoucher = async (req, res) => {
     const { maKhuyenMai } = req.params;
 
     const [result] = await pool.query(
-      "UPDATE KhuyenMai SET TrangThai = 'INACTIVE' WHERE MaKhuyenMai = ?",
+      "UPDATE khuyenmai SET TrangThai = 'INACTIVE' WHERE MaKhuyenMai = ?",
       [maKhuyenMai]
     );
 
@@ -343,7 +343,7 @@ exports.enableVoucher = async (req, res) => {
 
     // Kích hoạt lại (Đặt TrangThai = 'ACTIVE')
     const [result] = await pool.query(
-      "UPDATE KhuyenMai SET TrangThai = 'ACTIVE' WHERE MaKhuyenMai = ?",
+      "UPDATE khuyenmai SET TrangThai = 'ACTIVE' WHERE MaKhuyenMai = ?",
       [maKhuyenMai]
     );
 

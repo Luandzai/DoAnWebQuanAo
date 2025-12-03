@@ -15,7 +15,7 @@ exports.addWishlistItem = async (req, res) => {
   try {
     // 1. Tìm 1 PhienBanID bất kỳ của SanPhamID này
     const [variants] = await pool.query(
-      "SELECT PhienBanID FROM PhienBanSanPham WHERE SanPhamID = ? LIMIT 1",
+      "SELECT PhienBanID FROM phienbansanpham WHERE SanPhamID = ? LIMIT 1",
       [SanPhamID]
     );
 
@@ -51,7 +51,7 @@ exports.removeWishlistItem = async (req, res) => {
     // (Vì YeuThich lưu PhienBanID, nhưng chúng ta xóa theo SanPhamID)
     await pool.query(
       `DELETE yt FROM YeuThich AS yt
-       JOIN PhienBanSanPham AS pb ON yt.PhienBanID = pb.PhienBanID
+       JOIN phienbansanpham AS pb ON yt.PhienBanID = pb.PhienBanID
        WHERE yt.NguoiDungID = ? AND pb.SanPhamID = ?`,
       [NguoiDungID, sanPhamId]
     );

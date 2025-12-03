@@ -53,7 +53,7 @@ exports.vnpayIpn = async (req, res) => {
     try {
       // 1. Kiểm tra CSDL
       const [orders] = await connection.query(
-        "SELECT * FROM DonHang WHERE DonHangID = ?",
+        "SELECT * FROM donhang WHERE DonHangID = ?",
         [vnp_TxnRef]
       );
       if (orders.length === 0) {
@@ -70,7 +70,7 @@ exports.vnpayIpn = async (req, res) => {
       if (vnp_ResponseCode === "00") {
         // Cập nhật trạng thái đơn hàng -> DANG_XU_LY
         await connection.query(
-          "UPDATE DonHang SET TrangThai = ? WHERE DonHangID = ?",
+          "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
           ["DANG_XU_LY", vnp_TxnRef]
         );
         // Cập nhật trạng thái thanh toán -> SUCCESS
@@ -81,7 +81,7 @@ exports.vnpayIpn = async (req, res) => {
       } else {
         // Nếu thanh toán thất bại -> DA_HUY
         await connection.query(
-          "UPDATE DonHang SET TrangThai = ? WHERE DonHangID = ?",
+          "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
           ["DA_HUY", vnp_TxnRef]
         );
         await connection.query(
@@ -169,7 +169,7 @@ exports.momoIpn = async (req, res) => {
     const connection = await pool.getConnection();
     try {
       const [orders] = await connection.query(
-        "SELECT * FROM DonHang WHERE DonHangID = ?",
+        "SELECT * FROM donhang WHERE DonHangID = ?",
         [donHangID]
       );
       if (orders.length === 0) {
@@ -182,7 +182,7 @@ exports.momoIpn = async (req, res) => {
       if (resultCode === 0) {
         // Thành công
         await connection.query(
-          "UPDATE DonHang SET TrangThai = ? WHERE DonHangID = ?",
+          "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
           ["DANG_XU_LY", donHangID]
         );
         await connection.query(
@@ -192,7 +192,7 @@ exports.momoIpn = async (req, res) => {
       } else {
         // Thất bại
         await connection.query(
-          "UPDATE DonHang SET TrangThai = ? WHERE DonHangID = ?",
+          "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
           ["DA_HUY", donHangID]
         );
         await connection.query(

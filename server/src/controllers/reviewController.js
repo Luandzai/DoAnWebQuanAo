@@ -31,8 +31,8 @@ exports.createReview = async (req, res) => {
   try {
     // 1. Kiểm tra điều kiện mua hàng (giữ nguyên)
     const [orders] = await pool.query(
-      `SELECT * FROM DonHang dh
-       JOIN ChiTietDonHang ctdh ON dh.DonHangID = ctdh.DonHangID
+      `SELECT * FROM donhang dh
+       JOIN chitietdonhang ctdh ON dh.DonHangID = ctdh.DonHangID
        WHERE dh.NguoiDungID = ? AND ctdh.PhienBanID = ? AND dh.TrangThai = 'DA_GIAO'`,
       [NguoiDungID, PhienBanID]
     );
@@ -262,9 +262,9 @@ exports.getAllReviewsAdmin = async (req, res) => {
     const [countResult] = await pool.query(
       `SELECT COUNT(*) as total 
        FROM DanhGia dg
-       JOIN NguoiDung nd ON dg.NguoiDungID = nd.NguoiDungID
-       JOIN PhienBanSanPham pb ON dg.PhienBanID = pb.PhienBanID
-       JOIN SanPham sp ON pb.SanPhamID = sp.SanPhamID
+       JOIN nguoidung nd ON dg.NguoiDungID = nd.NguoiDungID
+       JOIN phienbansanpham pb ON dg.PhienBanID = pb.PhienBanID
+       JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
        ${whereClause}`,
       params
     );
@@ -280,9 +280,9 @@ exports.getAllReviewsAdmin = async (req, res) => {
           sp.TenSanPham, sp.Slug,
           nd.HoTen AS TenNguoiDung
        FROM DanhGia dg
-       JOIN NguoiDung nd ON dg.NguoiDungID = nd.NguoiDungID
-       JOIN PhienBanSanPham pb ON dg.PhienBanID = pb.PhienBanID
-       JOIN SanPham sp ON pb.SanPhamID = sp.SanPhamID
+       JOIN nguoidung nd ON dg.NguoiDungID = nd.NguoiDungID
+       JOIN phienbansanpham pb ON dg.PhienBanID = pb.PhienBanID
+       JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
        ${whereClause}
        ORDER BY dg.NgayTao DESC
        LIMIT ? OFFSET ?`,

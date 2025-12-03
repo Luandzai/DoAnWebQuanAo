@@ -22,14 +22,14 @@ exports.getCart = async (req, res) => {
          -- Lấy ảnh chính (LaAnhChinh) từ SanPhamID (sp.SanPhamID)
          -- thay vì tìm theo PhienBanID
          (SELECT HinhAnh.URL 
-          FROM HinhAnhSanPham AS HinhAnh 
+          FROM hinhanhsanpham AS HinhAnh 
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnh
           
        FROM ChiTietGioHang AS ct
        JOIN GioHang AS gh ON ct.GioHangID = gh.NguoiDungID
-       JOIN PhienBanSanPham AS pb ON ct.PhienBanID = pb.PhienBanID
-       JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
+       JOIN phienbansanpham AS pb ON ct.PhienBanID = pb.PhienBanID
+       JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
        WHERE gh.NguoiDungID = ?`,
       [NguoiDungID]
     );
@@ -55,7 +55,7 @@ exports.addToCart = async (req, res) => {
 
     // 1. Kiểm tra tồn kho
     const [variant] = await pool.query(
-      "SELECT SoLuongTonKho FROM PhienBanSanPham WHERE PhienBanID = ?",
+      "SELECT SoLuongTonKho FROM phienbansanpham WHERE PhienBanID = ?",
       [PhienBanID]
     );
     if (variant.length === 0) {
@@ -102,7 +102,7 @@ exports.updateQuantity = async (req, res) => {
 
     // === THÊM LOGIC KIỂM TRA TỒN KHO ===
     const [variant] = await pool.query(
-      "SELECT SoLuongTonKho FROM PhienBanSanPham WHERE PhienBanID = ?",
+      "SELECT SoLuongTonKho FROM phienbansanpham WHERE PhienBanID = ?",
       [PhienBanID]
     );
     if (variant.length === 0) {

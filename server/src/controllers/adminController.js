@@ -9,7 +9,7 @@ exports.getDashboardStats = async (req, res) => {
     // 1. DOANH SỐ THÁNG HIỆN TẠI (Đơn hàng đã giao)
     const [salesResult] = await pool.query(
       `SELECT SUM(TongThanhToan) AS totalSales 
-       FROM DonHang 
+       FROM donhang 
        WHERE TrangThai = 'DA_GIAO' 
          AND MONTH(NgayDatHang) = MONTH(NOW()) 
          AND YEAR(NgayDatHang) = YEAR(NOW())`
@@ -19,7 +19,7 @@ exports.getDashboardStats = async (req, res) => {
     // 2. SỐ LƯỢNG ĐƠN HÀNG MỚI (Trạng thái DANG_XU_LY)
     const [newOrdersResult] = await pool.query(
       `SELECT COUNT(*) AS newOrdersCount 
-       FROM DonHang 
+       FROM donhang 
        WHERE TrangThai = 'DANG_XU_LY'`
     );
     const newOrdersCount = newOrdersResult[0].newOrdersCount || 0;
@@ -28,7 +28,7 @@ exports.getDashboardStats = async (req, res) => {
     const LOW_STOCK_THRESHOLD = 10;
     const [lowStockResult] = await pool.query(
       `SELECT COUNT(*) AS lowStockCount 
-       FROM PhienBanSanPham 
+       FROM phienbansanpham 
        WHERE SoLuongTonKho <= ?`,
       [LOW_STOCK_THRESHOLD]
     );
@@ -36,15 +36,15 @@ exports.getDashboardStats = async (req, res) => {
 
     // 4. TỔNG SỐ NGƯỜI DÙNG
     const [totalUsersResult] = await pool.query(
-      `SELECT COUNT(*) AS totalUsersCount FROM NguoiDung WHERE VaiTro = 'KHACHHANG'`
+      `SELECT COUNT(*) AS totalUsersCount FROM nguoidung WHERE VaiTro = 'KHACHHANG'`
     );
     const totalUsersCount = totalUsersResult[0].totalUsersCount || 0;
 
     // 5. DANH SÁCH ĐƠN HÀNG MỚI (5 đơn gần nhất)
     const [latestOrders] = await pool.query(
       `SELECT dh.DonHangID, dh.NgayDatHang, dh.TongThanhToan, dh.TrangThai, nd.HoTen
-         FROM DonHang AS dh
-         JOIN NguoiDung AS nd ON dh.NguoiDungID = nd.NguoiDungID
+         FROM donhang AS dh
+         JOIN nguoidung AS nd ON dh.NguoiDungID = nd.NguoiDungID
          WHERE dh.TrangThai IN ('DANG_XU_LY', 'CHUA_THANH_TOAN') 
          ORDER BY dh.NgayDatHang DESC
          LIMIT 5`
@@ -57,10 +57,10 @@ exports.getDashboardStats = async (req, res) => {
          sp.Slug,
          SUM(ctdh.SoLuong) AS totalSold,
          SUM(ctdh.SoLuong * ctdh.GiaLucMua) AS totalRevenue
-       FROM ChiTietDonHang AS ctdh
-       JOIN PhienBanSanPham AS pb ON ctdh.PhienBanID = pb.PhienBanID
-       JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
-       JOIN DonHang AS dh ON ctdh.DonHangID = dh.DonHangID
+       FROM chitietdonhang AS ctdh
+       JOIN phienbansanpham AS pb ON ctdh.PhienBanID = pb.PhienBanID
+       JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
+       JOIN donhang AS dh ON ctdh.DonHangID = dh.DonHangID
        WHERE dh.TrangThai = 'DA_GIAO'
        GROUP BY sp.SanPhamID, sp.TenSanPham, sp.Slug
        ORDER BY totalSold DESC
@@ -70,8 +70,8 @@ exports.getDashboardStats = async (req, res) => {
     // 7. TOP 10 SẢN PHẨM TỒN KHO THẤP NHẤT
     const [lowStockProducts] = await pool.query(
       `SELECT sp.TenSanPham, sp.Slug, SUM(pb.SoLuongTonKho) as totalStock
-       FROM SanPham sp
-       JOIN PhienBanSanPham pb ON sp.SanPhamID = pb.SanPhamID
+       FROM sanpham sp
+       JOIN phienbansanpham pb ON sp.SanPhamID = pb.SanPhamID
        GROUP BY sp.SanPhamID, sp.TenSanPham, sp.Slug
        HAVING totalStock >= 0
        ORDER BY totalStock ASC
@@ -81,8 +81,8 @@ exports.getDashboardStats = async (req, res) => {
     // 8. KHÁCH HÀNG TIỀM NĂNG NHẤT (chi tiêu nhiều nhất)
     const [topCustomerResult] = await pool.query(
       `SELECT nd.HoTen, nd.Email, SUM(dh.TongThanhToan) as totalSpent
-       FROM DonHang dh
-       JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+       FROM donhang dh
+       JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
        WHERE dh.TrangThai = 'DA_GIAO'
        GROUP BY nd.NguoiDungID, nd.HoTen, nd.Email
        ORDER BY totalSpent DESC
@@ -164,7 +164,7 @@ exports.getAllUsers = async (req, res) => {
 
     // 1. Đếm tổng số người dùng
     const [countResult] = await pool.query(
-      `SELECT COUNT(*) as total FROM NguoiDung ${whereClause}`,
+      `SELECT COUNT(*) as total FROM nguoidung ${whereClause}`,
       params
     );
 
@@ -176,7 +176,7 @@ exports.getAllUsers = async (req, res) => {
       `SELECT 
         NguoiDungID, Email, LoaiXacThuc, HoTen, DienThoai, 
         VaiTro, TrangThai, NgayTao
-       FROM NguoiDung
+       FROM nguoidung
        ${whereClause}
        ORDER BY ${sortOrder}
        LIMIT ? OFFSET ?`,
@@ -226,7 +226,7 @@ exports.updateUserStatus = async (req, res) => {
 
     // 3. Cập nhật trạng thái trong DB
     const [result] = await pool.query(
-      `UPDATE NguoiDung SET TrangThai = ? WHERE NguoiDungID = ?`,
+      `UPDATE nguoidung SET TrangThai = ? WHERE NguoiDungID = ?`,
       [trangThaiMoi, NguoiDungID]
     );
 
@@ -267,7 +267,7 @@ exports.updateUserRole = async (req, res) => {
 
     // 3. Cập nhật vai trò trong DB
     const [result] = await pool.query(
-      `UPDATE NguoiDung SET VaiTro = ? WHERE NguoiDungID = ?`,
+      `UPDATE nguoidung SET VaiTro = ? WHERE NguoiDungID = ?`,
       [vaiTroMoi, NguoiDungID]
     );
 
@@ -297,8 +297,7 @@ exports.getMonthlySales = async (req, res) => {
       SELECT 
           MONTH(NgayDatHang) AS month,
           SUM(TongThanhToan) AS totalRevenue
-      FROM 
-          DonHang
+      FROM donhang
       WHERE 
           TrangThai = 'DA_GIAO' AND YEAR(NgayDatHang) = ?
       GROUP BY 

@@ -21,7 +21,7 @@ exports.register = async (req, res) => {
 
     // Kiểm tra xem email đã tồn tại chưa
     const [users] = await pool.query(
-      "SELECT * FROM NguoiDung WHERE Email = ?",
+      "SELECT * FROM nguoidung WHERE Email = ?",
       [Email]
     );
     if (users.length > 0) {
@@ -34,7 +34,7 @@ exports.register = async (req, res) => {
 
     // Lưu người dùng vào DB (dùng schema của bạn)
     const [result] = await pool.query(
-      "INSERT INTO NguoiDung (HoTen, Email, MatKhauHash, VaiTro) VALUES (?, ?, ?, ?)",
+      "INSERT INTO nguoidung (HoTen, Email, MatKhauHash, VaiTro) VALUES (?, ?, ?, ?)",
       [HoTen, Email, MatKhauHash, "KHACHHANG"]
     );
 
@@ -66,7 +66,7 @@ exports.login = async (req, res) => {
 
     // 2. Tìm người dùng trong DB
     const [users] = await pool.query(
-      "SELECT * FROM NguoiDung WHERE Email = ?",
+      "SELECT * FROM nguoidung WHERE Email = ?",
       [Email]
     );
     const user = users[0];
@@ -153,7 +153,7 @@ exports.googleLogin = async (req, res) => {
 
     // 2. Kiểm tra CSDL xem user này đã tồn tại chưa (bằng GoogleID)
     const [existingUser] = await pool.query(
-      "SELECT * FROM NguoiDung WHERE GoogleID = ?",
+      "SELECT * FROM nguoidung WHERE GoogleID = ?",
       [googleId]
     );
 
@@ -163,7 +163,7 @@ exports.googleLogin = async (req, res) => {
     if (!user) {
       // Kiểm tra xem email đã được dùng (cho tài khoản LOCAL) chưa
       const [emailCheck] = await pool.query(
-        "SELECT * FROM NguoiDung WHERE Email = ?",
+        "SELECT * FROM nguoidung WHERE Email = ?",
         [email]
       );
       if (emailCheck.length > 0) {
@@ -175,13 +175,13 @@ exports.googleLogin = async (req, res) => {
 
       // TẠO USER MỚI (Mặc định VaiTro là KHACHHANG, TrangThai là ACTIVE)
       const [newUser] = await pool.query(
-        "INSERT INTO NguoiDung (Email, GoogleID, HoTen, LoaiXacThuc, TrangThai) VALUES (?, ?, ?, 'GOOGLE', 'ACTIVE')",
+        "INSERT INTO nguoidung (Email, GoogleID, HoTen, LoaiXacThuc, TrangThai) VALUES (?, ?, ?, 'GOOGLE', 'ACTIVE')",
         [email, googleId, hoTen]
       );
 
       // Lấy lại user vừa tạo
       const [userRows] = await pool.query(
-        "SELECT * FROM NguoiDung WHERE NguoiDungID = ?",
+        "SELECT * FROM nguoidung WHERE NguoiDungID = ?",
         [newUser.insertId]
       );
       user = userRows[0];
@@ -241,7 +241,7 @@ exports.forgotPassword = async (req, res) => {
 
     // 1. Tìm user
     const [users] = await pool.query(
-      "SELECT * FROM NguoiDung WHERE Email = ? AND LoaiXacThuc = 'LOCAL'",
+      "SELECT * FROM nguoidung WHERE Email = ? AND LoaiXacThuc = 'LOCAL'",
       [email]
     );
     const user = users[0];
@@ -266,7 +266,7 @@ exports.forgotPassword = async (req, res) => {
 
     // 5. Lưu token HASHED vào CSDL
     await pool.query(
-      "UPDATE NguoiDung SET MatKhauResetToken = ?, MatKhauResetTokenExpires = ? WHERE NguoiDungID = ?",
+      "UPDATE nguoidung SET MatKhauResetToken = ?, MatKhauResetTokenExpires = ? WHERE NguoiDungID = ?",
       [hashedToken, expires, user.NguoiDungID]
     );
 
@@ -295,7 +295,7 @@ exports.forgotPassword = async (req, res) => {
     console.error("Lỗi khi quên mật khẩu:", error);
     // Xóa token nếu có lỗi
     await pool.query(
-      "UPDATE NguoiDung SET MatKhauResetToken = NULL, MatKhauResetTokenExpires = NULL WHERE Email = ?",
+      "UPDATE nguoidung SET MatKhauResetToken = NULL, MatKhauResetTokenExpires = NULL WHERE Email = ?",
       [req.body.email]
     );
     res.status(500).json({ message: "Lỗi server khi gửi email" });
@@ -313,7 +313,7 @@ exports.resetPassword = async (req, res) => {
 
     // 2. Tìm user bằng token HASHED và THỜI GIAN
     const [users] = await pool.query(
-      "SELECT * FROM NguoiDung WHERE MatKhauResetToken = ? AND MatKhauResetTokenExpires > NOW()",
+      "SELECT * FROM nguoidung WHERE MatKhauResetToken = ? AND MatKhauResetTokenExpires > NOW()",
       [hashedToken]
     );
     const user = users[0];
@@ -330,7 +330,7 @@ exports.resetPassword = async (req, res) => {
 
     // 4. Cập nhật mật khẩu VÀ xóa token
     await pool.query(
-      "UPDATE NguoiDung SET MatKhauHash = ?, MatKhauResetToken = NULL, MatKhauResetTokenExpires = NULL WHERE NguoiDungID = ?",
+      "UPDATE nguoidung SET MatKhauHash = ?, MatKhauResetToken = NULL, MatKhauResetTokenExpires = NULL WHERE NguoiDungID = ?",
       [MatKhauHash, user.NguoiDungID]
     );
 

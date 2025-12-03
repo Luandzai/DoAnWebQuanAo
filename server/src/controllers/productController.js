@@ -21,7 +21,7 @@ exports.getAllProducts = async (req, res) => {
     let baseSelect = `
       SELECT 
         sp.SanPhamID, sp.TenSanPham, sp.Slug, sp.GiaGoc, 
-        (SELECT HinhAnh.URL FROM HinhAnhSanPham AS HinhAnh 
+        (SELECT HinhAnh.URL FROM hinhanhsanpham AS HinhAnh 
          WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
          LIMIT 1) as HinhAnhChinh,
         MIN(pb.GiaBan) as GiaBan,
@@ -35,10 +35,10 @@ exports.getAllProducts = async (req, res) => {
     `;
 
     let fromJoin = `
-      FROM SanPham AS sp
-      LEFT JOIN DanhMuc AS dm_child ON sp.DanhMucID = dm_child.DanhMucID
-      LEFT JOIN DanhMuc AS dm_parent ON dm_child.DanhMucChaID = dm_parent.DanhMucID
-      LEFT JOIN PhienBanSanPham AS pb ON sp.SanPhamID = pb.SanPhamID
+      FROM sanpham AS sp
+      LEFT JOIN danhmuc AS dm_child ON sp.DanhMucID = dm_child.DanhMucID
+      LEFT JOIN danhmuc AS dm_parent ON dm_child.DanhMucChaID = dm_parent.DanhMucID
+      LEFT JOIN phienbansanpham AS pb ON sp.SanPhamID = pb.SanPhamID
       LEFT JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
       LEFT JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
       LEFT JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
@@ -160,13 +160,13 @@ exports.getProductBySlug = async (req, res) => {
          sp.*, 
          dm.Slug AS DanhMucSlug,
          (SELECT SUM(ctdh.SoLuong) 
-          FROM ChiTietDonHang AS ctdh
-          JOIN DonHang AS dh ON ctdh.DonHangID = dh.DonHangID
-          JOIN PhienBanSanPham AS pb ON ctdh.PhienBanID = pb.PhienBanID
+          FROM chitietdonhang AS ctdh
+          JOIN donhang AS dh ON ctdh.DonHangID = dh.DonHangID
+          JOIN phienbansanpham AS pb ON ctdh.PhienBanID = pb.PhienBanID
           WHERE pb.SanPhamID = sp.SanPhamID AND (dh.TrangThai = 'DA_GIAO' OR dh.TrangThai = 'DANG_XU_LY')
          ) AS TotalSold
-       FROM SanPham AS sp 
-       LEFT JOIN DanhMuc AS dm ON sp.DanhMucID = dm.DanhMucID
+       FROM sanpham AS sp 
+       LEFT JOIN danhmuc AS dm ON sp.DanhMucID = dm.DanhMucID
        WHERE sp.Slug = ? AND sp.TrangThai = 'ACTIVE'`,
       [slug]
     );
@@ -175,14 +175,14 @@ exports.getProductBySlug = async (req, res) => {
     }
     const product = productRows[0];
     const [images] = await pool.query(
-      "SELECT HinhAnhID, URL, MoTa FROM HinhAnhSanPham WHERE SanPhamID = ?",
+      "SELECT HinhAnhID, URL, MoTa FROM hinhanhsanpham WHERE SanPhamID = ?",
       [product.SanPhamID]
     );
     const [variants] = await pool.query(
       `SELECT 
          pb.PhienBanID, pb.SKU, pb.GiaBan, pb.SoLuongTonKho,
          JSON_OBJECTAGG(tt.TenThuocTinh, gtt.GiaTri) AS options
-       FROM PhienBanSanPham AS pb
+       FROM phienbansanpham AS pb
        JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
        JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
        JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
@@ -205,8 +205,8 @@ exports.getProductBySlug = async (req, res) => {
           WHERE ctpb.PhienBanID = dg.PhienBanID
          ) AS ThuocTinh
        FROM DanhGia AS dg
-       JOIN NguoiDung AS nd ON dg.NguoiDungID = nd.NguoiDungID
-       WHERE dg.PhienBanID IN (SELECT PhienBanID FROM PhienBanSanPham WHERE SanPhamID = ?)
+       JOIN nguoidung AS nd ON dg.NguoiDungID = nd.NguoiDungID
+       WHERE dg.PhienBanID IN (SELECT PhienBanID FROM phienbansanpham WHERE SanPhamID = ?)
        ORDER BY dg.NgayTao DESC`,
       [product.SanPhamID]
     );
@@ -270,7 +270,7 @@ exports.createProduct = async (req, res) => {
 
     // 3. INSERT SanPham
     const [spResult] = await connection.query(
-      `INSERT INTO SanPham (TenSanPham, Slug, MoTa, DanhMucID, GiaGoc, ThuongHieu, ChatLieu, TrangThai) 
+      `INSERT INTO sanpham (TenSanPham, Slug, MoTa, DanhMucID, GiaGoc, ThuongHieu, ChatLieu, TrangThai) 
        VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
       [
         TenSanPham,
@@ -288,7 +288,7 @@ exports.createProduct = async (req, res) => {
     for (let index = 0; index < req.files.length; index++) {
       const file = req.files[index];
       await connection.query(
-        `INSERT INTO HinhAnhSanPham (SanPhamID, URL, MoTa, LaAnhChinh, ViTri) 
+        `INSERT INTO hinhanhsanpham (SanPhamID, URL, MoTa, LaAnhChinh, ViTri) 
              VALUES (?, ?, ?, ?, ?)`,
         [newSanPhamID, file.path, file.originalname, index === 0 ? 1 : 0, index]
       );
@@ -298,7 +298,7 @@ exports.createProduct = async (req, res) => {
     for (const version of versions) {
       // 5a. INSERT PhienBanSanPham
       const [pbResult] = await connection.query(
-        `INSERT INTO PhienBanSanPham (SanPhamID, SKU, GiaBan, SoLuongTonKho) 
+        `INSERT INTO phienbansanpham (SanPhamID, SKU, GiaBan, SoLuongTonKho) 
              VALUES (?, ?, ?, ?)`,
         [newSanPhamID, version.sku, version.price, version.stock]
       );
@@ -360,7 +360,7 @@ exports.getAdminProductById = async (req, res) => {
 
     // 1. Lấy thông tin sản phẩm cơ bản
     const [productRows] = await pool.query(
-      `SELECT * FROM SanPham WHERE SanPhamID = ?`,
+      `SELECT * FROM sanpham WHERE SanPhamID = ?`,
       [id]
     );
     if (productRows.length === 0) {
@@ -370,7 +370,7 @@ exports.getAdminProductById = async (req, res) => {
 
     // 2. Lấy danh sách hình ảnh
     const [images] = await pool.query(
-      "SELECT HinhAnhID, URL, LaAnhChinh FROM HinhAnhSanPham WHERE SanPhamID = ? ORDER BY ViTri ASC",
+      "SELECT HinhAnhID, URL, LaAnhChinh FROM hinhanhsanpham WHERE SanPhamID = ? ORDER BY ViTri ASC",
       [id]
     );
 
@@ -379,7 +379,7 @@ exports.getAdminProductById = async (req, res) => {
       `SELECT
          pb.PhienBanID, pb.SKU, pb.GiaBan, pb.SoLuongTonKho,
          JSON_OBJECTAGG(tt.TenThuocTinh, gtt.GiaTri) AS options
-       FROM PhienBanSanPham AS pb
+       FROM phienbansanpham AS pb
        JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
        JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
        JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
@@ -448,7 +448,7 @@ exports.updateProduct = async (req, res) => {
     });
 
     await connection.query(
-      `UPDATE SanPham 
+      `UPDATE sanpham 
        SET TenSanPham = ?, Slug = ?, MoTa = ?, GiaGoc = ?, 
            ThuongHieu = ?, ChatLieu = ?, DanhMucID = ? 
        WHERE SanPhamID = ?`,
@@ -466,7 +466,7 @@ exports.updateProduct = async (req, res) => {
       }
       // Delete from DB
       await connection.query(
-        "DELETE FROM HinhAnhSanPham WHERE HinhAnhID IN (?)",
+        "DELETE FROM hinhanhsanpham WHERE HinhAnhID IN (?)",
         [imageIdsToDelete]
       );
     }
@@ -474,7 +474,7 @@ exports.updateProduct = async (req, res) => {
     // 3. Add new images if any
     if (req.files && req.files.length > 0) {
       const [existingImages] = await connection.query(
-        "SELECT COUNT(*) as count FROM HinhAnhSanPham WHERE SanPhamID = ?",
+        "SELECT COUNT(*) as count FROM hinhanhsanpham WHERE SanPhamID = ?",
         [id]
       );
 
@@ -483,7 +483,7 @@ exports.updateProduct = async (req, res) => {
       for (let index = 0; index < req.files.length; index++) {
         const file = req.files[index];
         await connection.query(
-          `INSERT INTO HinhAnhSanPham (SanPhamID, URL, MoTa, LaAnhChinh, ViTri) 
+          `INSERT INTO hinhanhsanpham (SanPhamID, URL, MoTa, LaAnhChinh, ViTri) 
            VALUES (?, ?, ?, ?, ?)`,
           [
             id,
@@ -503,7 +503,7 @@ exports.updateProduct = async (req, res) => {
         [deletedVariantIds]
       );
       await connection.query(
-        "DELETE FROM PhienBanSanPham WHERE PhienBanID IN (?)",
+        "DELETE FROM phienbansanpham WHERE PhienBanID IN (?)",
         [deletedVariantIds]
       );
     }
@@ -513,13 +513,13 @@ exports.updateProduct = async (req, res) => {
       if (version.PhienBanID) {
         // UPDATE existing variant
         await connection.query(
-          `UPDATE PhienBanSanPham SET SKU = ?, GiaBan = ?, SoLuongTonKho = ? WHERE PhienBanID = ?`,
+          `UPDATE phienbansanpham SET SKU = ?, GiaBan = ?, SoLuongTonKho = ? WHERE PhienBanID = ?`,
           [version.sku, version.price, version.stock, version.PhienBanID]
         );
       } else {
         // INSERT new variant
         const [pbResult] = await connection.query(
-          `INSERT INTO PhienBanSanPham (SanPhamID, SKU, GiaBan, SoLuongTonKho) VALUES (?, ?, ?, ?)`,
+          `INSERT INTO phienbansanpham (SanPhamID, SKU, GiaBan, SoLuongTonKho) VALUES (?, ?, ?, ?)`,
           [id, version.sku, version.price, version.stock]
         );
         const newPhienBanID = pbResult.insertId;
@@ -581,7 +581,7 @@ exports.deleteProduct = async (req, res) => {
 
     // 1. Check if product exists and get its current status
     const [product] = await connection.query(
-      "SELECT TrangThai FROM SanPham WHERE SanPhamID = ?",
+      "SELECT TrangThai FROM sanpham WHERE SanPhamID = ?",
       [id]
     );
 
@@ -599,8 +599,8 @@ exports.deleteProduct = async (req, res) => {
     // 3. Check if product has any orders
     const [orders] = await connection.query(
       `SELECT COUNT(*) as count 
-       FROM ChiTietDonHang ctdh 
-       JOIN PhienBanSanPham pb ON ctdh.PhienBanID = pb.PhienBanID 
+       FROM chitietdonhang ctdh 
+       JOIN phienbansanpham pb ON ctdh.PhienBanID = pb.PhienBanID 
        WHERE pb.SanPhamID = ?`,
       [id]
     );
@@ -608,25 +608,25 @@ exports.deleteProduct = async (req, res) => {
     // 4. If product has orders, just archive it
     if (orders[0].count > 0) {
       await connection.query(
-        "UPDATE SanPham SET TrangThai = 'ARCHIVED' WHERE SanPhamID = ?",
+        "UPDATE sanpham SET TrangThai = 'ARCHIVED' WHERE SanPhamID = ?",
         [id]
       );
     } else {
       // 5. If no orders, we can delete associated data
       // Get image URLs for Cloudinary cleanup
       const [images] = await connection.query(
-        "SELECT URL FROM HinhAnhSanPham WHERE SanPhamID = ?",
+        "SELECT URL FROM hinhanhsanpham WHERE SanPhamID = ?",
         [id]
       );
 
       // Delete from HinhAnhSanPham
-      await connection.query("DELETE FROM HinhAnhSanPham WHERE SanPhamID = ?", [
+      await connection.query("DELETE FROM hinhanhsanpham WHERE SanPhamID = ?", [
         id,
       ]);
 
       // Get variant IDs
       const [variants] = await connection.query(
-        "SELECT PhienBanID FROM PhienBanSanPham WHERE SanPhamID = ?",
+        "SELECT PhienBanID FROM phienbansanpham WHERE SanPhamID = ?",
         [id]
       );
       const variantIds = variants.map((v) => v.PhienBanID);
@@ -641,15 +641,15 @@ exports.deleteProduct = async (req, res) => {
 
       // Delete from PhienBanSanPham
       await connection.query(
-        "DELETE FROM PhienBanSanPham WHERE SanPhamID = ?",
+        "DELETE FROM phienbansanpham WHERE SanPhamID = ?",
         [id]
       );
 
       // Delete from KhuyenMai if any
-      await connection.query("DELETE FROM KhuyenMai WHERE SanPhamID = ?", [id]);
+      await connection.query("DELETE FROM khuyenmai WHERE SanPhamID = ?", [id]);
 
       // Finally delete the product
-      await connection.query("DELETE FROM SanPham WHERE SanPhamID = ?", [id]);
+      await connection.query("DELETE FROM sanpham WHERE SanPhamID = ?", [id]);
 
       // Clean up images from Cloudinary
       for (const image of images) {
@@ -683,10 +683,10 @@ exports.getBestSellingProducts = async (req, res) => {
          sp.TenSanPham, 
          sp.Slug, 
          sp.GiaGoc,
-         (SELECT HinhAnh.URL FROM HinhAnhSanPham AS HinhAnh 
+         (SELECT HinhAnh.URL FROM hinhanhsanpham AS HinhAnh 
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnhChinh,
-         (SELECT MIN(pb_inner.GiaBan) FROM PhienBanSanPham AS pb_inner 
+         (SELECT MIN(pb_inner.GiaBan) FROM phienbansanpham AS pb_inner 
           WHERE pb_inner.SanPhamID = sp.SanPhamID) as GiaBan,
          SUM(ctdh.SoLuong) AS totalSold,
          
@@ -699,10 +699,10 @@ exports.getBestSellingProducts = async (req, res) => {
          )) AS HasVoucher
          -- =======================
 
-       FROM ChiTietDonHang AS ctdh
-       JOIN DonHang AS dh ON ctdh.DonHangID = dh.DonHangID
-       JOIN PhienBanSanPham AS pb ON ctdh.PhienBanID = pb.PhienBanID
-       JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
+       FROM chitietdonhang AS ctdh
+       JOIN donhang AS dh ON ctdh.DonHangID = dh.DonHangID
+       JOIN phienbansanpham AS pb ON ctdh.PhienBanID = pb.PhienBanID
+       JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
        WHERE (dh.TrangThai = 'DA_GIAO' OR dh.TrangThai = 'DANG_XU_LY') 
          AND sp.TrangThai = 'ACTIVE'
        GROUP BY sp.SanPhamID, sp.TenSanPham, sp.Slug, sp.GiaGoc
@@ -724,11 +724,11 @@ exports.getNewestProducts = async (req, res) => {
          sp.Slug, 
          sp.GiaGoc, 
          (SELECT HinhAnh.URL 
-          FROM HinhAnhSanPham AS HinhAnh 
+          FROM hinhanhsanpham AS HinhAnh 
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnhChinh,
          (SELECT MIN(pb.GiaBan) 
-          FROM PhienBanSanPham AS pb 
+          FROM phienbansanpham AS pb 
           WHERE pb.SanPhamID = sp.SanPhamID) as GiaBan,
           
           -- === THÊM 2 CỜ BADGE ===
@@ -740,7 +740,7 @@ exports.getNewestProducts = async (req, res) => {
           )) AS HasVoucher
           -- =======================
 
-       FROM SanPham AS sp
+       FROM sanpham AS sp
        WHERE sp.TrangThai = 'ACTIVE'
        ORDER BY sp.NgayTao DESC
        LIMIT 16`
@@ -817,8 +817,8 @@ exports.getAdminProducts = async (req, res) => {
        SELECT COUNT(T.SanPhamID) AS total
        FROM (
           SELECT sp.SanPhamID
-          FROM SanPham sp
-          LEFT JOIN PhienBanSanPham pb ON sp.SanPhamID = pb.SanPhamID
+          FROM sanpham sp
+          LEFT JOIN phienbansanpham pb ON sp.SanPhamID = pb.SanPhamID
           ${whereClause}
           GROUP BY sp.SanPhamID
        ) AS T
@@ -833,13 +833,13 @@ exports.getAdminProducts = async (req, res) => {
     const [products] = await pool.query(
       `SELECT 
         sp.SanPhamID, sp.TenSanPham, sp.Slug, sp.GiaGoc, sp.TrangThai, sp.NgayTao,
-        (SELECT HinhAnh.URL FROM HinhAnhSanPham AS HinhAnh 
+        (SELECT HinhAnh.URL FROM hinhanhsanpham AS HinhAnh 
          WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
          LIMIT 1) as HinhAnhChinh,
         MIN(pb.GiaBan) as GiaBanThapNhat,
         SUM(pb.SoLuongTonKho) as TongTonKho
-       FROM SanPham AS sp
-       LEFT JOIN PhienBanSanPham AS pb ON sp.SanPhamID = pb.SanPhamID
+       FROM sanpham AS sp
+       LEFT JOIN phienbansanpham AS pb ON sp.SanPhamID = pb.SanPhamID
        ${whereClause}
        GROUP BY sp.SanPhamID
        ORDER BY ${sortOrder}

@@ -27,7 +27,7 @@ exports.updateUserProfile = async (req, res) => {
     const { HoTen, DienThoai, NgaySinh, GioiTinh } = req.body;
 
     await pool.query(
-      "UPDATE NguoiDung SET HoTen = ?, DienThoai = ?, NgaySinh = ?, GioiTinh = ? WHERE NguoiDungID = ?",
+      "UPDATE nguoidung SET HoTen = ?, DienThoai = ?, NgaySinh = ?, GioiTinh = ? WHERE NguoiDungID = ?",
       [HoTen, DienThoai, NgaySinh, GioiTinh, NguoiDungID]
     );
 
@@ -54,12 +54,12 @@ exports.getWishlist = async (req, res) => {
          pb.PhienBanID, 
          pb.GiaBan,
          (SELECT HinhAnh.URL 
-          FROM HinhAnhSanPham AS HinhAnh 
+          FROM hinhanhsanpham AS HinhAnh 
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnhChinh
        FROM YeuThich AS yt
-       JOIN PhienBanSanPham AS pb ON yt.PhienBanID = pb.PhienBanID
-       JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
+       JOIN phienbansanpham AS pb ON yt.PhienBanID = pb.PhienBanID
+       JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
        WHERE yt.NguoiDungID = ?`,
       [NguoiDungID]
     );
@@ -80,7 +80,7 @@ exports.getMyVouchers = async (req, res) => {
     // THÊM: AND ndv.TrangThai = 'DA_NHAN'
     const [myVouchers] = await pool.query(
       `SELECT km.* FROM NguoiDung_Voucher AS ndv
-       JOIN KhuyenMai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
+       JOIN khuyenmai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
        WHERE ndv.NguoiDungID = ? 
          AND km.NgayKetThuc > NOW() 
          AND ndv.TrangThai = 'DA_NHAN'`, // Chỉ lấy voucher còn hạn và CHƯA DÙNG
@@ -110,8 +110,8 @@ exports.getMyApplicableVouchers = async (req, res) => {
     const phienBanIDs = cartItems.map((item) => item.PhienBanID);
     const [productInfoRows] = await connection.query(
       `SELECT DISTINCT sp.SanPhamID, sp.DanhMucID
-       FROM PhienBanSanPham pb
-       JOIN SanPham sp ON pb.SanPhamID = sp.SanPhamID
+       FROM phienbansanpham pb
+       JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
        WHERE pb.PhienBanID IN (?)`,
       [phienBanIDs]
     );
@@ -124,7 +124,7 @@ exports.getMyApplicableVouchers = async (req, res) => {
     const [myVouchers] = await connection.query(
       `SELECT km.* 
        FROM NguoiDung_Voucher AS ndv
-       JOIN KhuyenMai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
+       JOIN khuyenmai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
        WHERE ndv.NguoiDungID = ? 
          AND km.NgayKetThuc > NOW() 
          AND km.SoLuongToiDa > 0
@@ -157,7 +157,7 @@ exports.getMyReturns = async (req, res) => {
     const [returns] = await pool.query(
       `SELECT r.ReturnID, r.DonHangID, r.Reason, r.Status, r.NgayYeuCau
        FROM Returns AS r
-       JOIN DonHang AS dh ON r.DonHangID = dh.DonHangID
+       JOIN donhang AS dh ON r.DonHangID = dh.DonHangID
        WHERE dh.NguoiDungID = ?
        ORDER BY r.NgayYeuCau DESC`,
       [NguoiDungID]

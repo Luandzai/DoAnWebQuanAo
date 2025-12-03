@@ -9,7 +9,7 @@ exports.getAllCategories = async (req, res) => {
   try {
     // Lấy tất cả danh mục, sắp xếp theo Cha trước
     const [categories] = await pool.query(
-      "SELECT * FROM DanhMuc ORDER BY DanhMucChaID ASC, TenDanhMuc ASC"
+      "SELECT * FROM danhmuc ORDER BY DanhMucChaID ASC, TenDanhMuc ASC"
     );
     res.json(categories);
   } catch (error) {
@@ -45,7 +45,7 @@ exports.createCategory = async (req, res) => {
     // Check if parent category exists if provided
     if (DanhMucChaID) {
       const [parentExists] = await connection.query(
-        "SELECT DanhMucID FROM DanhMuc WHERE DanhMucID = ?",
+        "SELECT DanhMucID FROM danhmuc WHERE DanhMucID = ?",
         [DanhMucChaID]
       );
       if (parentExists.length === 0) {
@@ -56,7 +56,7 @@ exports.createCategory = async (req, res) => {
 
     // Check for duplicate slug
     const [existing] = await connection.query(
-      "SELECT DanhMucID FROM DanhMuc WHERE Slug = ?",
+      "SELECT DanhMucID FROM danhmuc WHERE Slug = ?",
       [finalSlug]
     );
     if (existing.length > 0) {
@@ -66,7 +66,7 @@ exports.createCategory = async (req, res) => {
 
     // Insert new category
     const [result] = await connection.query(
-      "INSERT INTO DanhMuc (TenDanhMuc, Slug, DanhMucChaID) VALUES (?, ?, ?)",
+      "INSERT INTO danhmuc (TenDanhMuc, Slug, DanhMucChaID) VALUES (?, ?, ?)",
       [TenDanhMuc, finalSlug, DanhMucChaID || null]
     );
 
@@ -106,7 +106,7 @@ exports.updateCategory = async (req, res) => {
 
     // 1. Check if category exists
     const [categoryExists] = await connection.query(
-      "SELECT DanhMucID FROM DanhMuc WHERE DanhMucID = ?",
+      "SELECT DanhMucID FROM danhmuc WHERE DanhMucID = ?",
       [id]
     );
     if (categoryExists.length === 0) {
@@ -131,7 +131,7 @@ exports.updateCategory = async (req, res) => {
 
     // 4. Check for duplicate slug (excluding current category)
     const [existing] = await connection.query(
-      "SELECT DanhMucID FROM DanhMuc WHERE Slug = ? AND DanhMucID != ?",
+      "SELECT DanhMucID FROM danhmuc WHERE Slug = ? AND DanhMucID != ?",
       [finalSlug, id]
     );
     if (existing.length > 0) {
@@ -149,7 +149,7 @@ exports.updateCategory = async (req, res) => {
       }
 
       const [parentExists] = await connection.query(
-        "SELECT DanhMucID FROM DanhMuc WHERE DanhMucID = ?",
+        "SELECT DanhMucID FROM danhmuc WHERE DanhMucID = ?",
         [DanhMucChaID]
       );
       if (parentExists.length === 0) {
@@ -167,7 +167,7 @@ exports.updateCategory = async (req, res) => {
             .json({ message: "Không thể tạo vòng lặp trong cây danh mục" });
         }
         const [parent] = await connection.query(
-          "SELECT DanhMucChaID FROM DanhMuc WHERE DanhMucID = ?",
+          "SELECT DanhMucChaID FROM danhmuc WHERE DanhMucID = ?",
           [parentId]
         );
         parentId = parent[0]?.DanhMucChaID;
@@ -176,7 +176,7 @@ exports.updateCategory = async (req, res) => {
 
     // 6. Update the category
     await connection.query(
-      "UPDATE DanhMuc SET TenDanhMuc = ?, Slug = ?, DanhMucChaID = ? WHERE DanhMucID = ?",
+      "UPDATE danhmuc SET TenDanhMuc = ?, Slug = ?, DanhMucChaID = ? WHERE DanhMucID = ?",
       [TenDanhMuc, finalSlug, DanhMucChaID || null, id]
     );
 
@@ -212,7 +212,7 @@ exports.deleteCategory = async (req, res) => {
 
     // TÙY CHỌN: Bạn có thể thêm logic kiểm tra khóa ngoại ở đây
     // Nếu có lỗi, MySQL sẽ tự báo lỗi khóa ngoại 400.
-    await pool.query("DELETE FROM DanhMuc WHERE DanhMucID = ?", [id]);
+    await pool.query("DELETE FROM danhmuc WHERE DanhMucID = ?", [id]);
 
     res.json({ message: "Xóa danh mục thành công!" });
   } catch (error) {

@@ -57,7 +57,7 @@ exports.requestReturn = async (req, res) => {
     // 4. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG GỐC sang DOI_TRA (Quan trọng: Loại khỏi báo cáo doanh thu)
     // Ngay khi yêu cầu được tạo, đơn hàng gốc chuyển sang DOI_TRA.
     await connection.query(
-      "UPDATE DonHang SET TrangThai = 'DOI_TRA', NgayCapNhat = NOW(), NguoiCapNhat = ? WHERE DonHangID = ?",
+      "UPDATE donhang SET TrangThai = 'DOI_TRA', NgayCapNhat = NOW(), NguoiCapNhat = ? WHERE DonHangID = ?",
       [NguoiDungID, DonHangID]
     );
 
@@ -108,8 +108,8 @@ exports.getAllReturns = async (req, res) => {
     const [countResult] = await pool.query(
       `SELECT COUNT(*) as total 
              FROM Returns r 
-             JOIN DonHang dh ON r.DonHangID = dh.DonHangID 
-             JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+             JOIN donhang dh ON r.DonHangID = dh.DonHangID 
+             JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
              ${whereClause}`,
       params
     );
@@ -122,8 +122,8 @@ exports.getAllReturns = async (req, res) => {
                 r.ReturnID, r.DonHangID, r.Status, r.NgayYeuCau, r.RefundAmount,
                 nd.HoTen AS TenKhachHang, nd.Email
              FROM Returns r
-             JOIN DonHang dh ON r.DonHangID = dh.DonHangID
-             JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+             JOIN donhang dh ON r.DonHangID = dh.DonHangID
+             JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
              ${whereClause}
              ORDER BY r.NgayYeuCau DESC
              LIMIT ? OFFSET ?`,
@@ -160,8 +160,8 @@ exports.getReturnDetail = async (req, res) => {
                 nd.HoTen AS TenKhachHang, nd.Email, 
                 dc.DiaChiChiTiet
              FROM Returns r
-             JOIN DonHang dh ON r.DonHangID = dh.DonHangID
-             JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+             JOIN donhang dh ON r.DonHangID = dh.DonHangID
+             JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
              JOIN DiaChiGiaoHang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
              WHERE r.ReturnID = ?`,
       [ReturnID]
@@ -183,8 +183,8 @@ exports.getReturnDetail = async (req, res) => {
                  WHERE ctpb.PhienBanID = ctr.PhienBanID
                 ) AS ThuocTinh
              FROM ChiTietReturns ctr
-             JOIN PhienBanSanPham pb ON ctr.PhienBanID = pb.PhienBanID
-             JOIN SanPham sp ON pb.SanPhamID = sp.SanPhamID
+             JOIN phienbansanpham pb ON ctr.PhienBanID = pb.PhienBanID
+             JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
              WHERE ctr.ReturnID = ?`,
       [ReturnID]
     );
@@ -246,7 +246,7 @@ exports.updateReturnStatus = async (req, res) => {
     } else if (newStatus === "REJECTED") {
       // TỪ CHỐI: Hoàn tác trạng thái đơn hàng gốc về DA_GIAO (Đơn hàng được coi là giao dịch thành công)
       await connection.query(
-        "UPDATE DonHang SET TrangThai = 'DA_GIAO', NgayCapNhat = NOW(), NguoiCapNhat = ? WHERE DonHangID = ?",
+        "UPDATE donhang SET TrangThai = 'DA_GIAO', NgayCapNhat = NOW(), NguoiCapNhat = ? WHERE DonHangID = ?",
         [AdminID, currentReturn.DonHangID]
       );
     } else if (newStatus === "COMPLETED") {
@@ -260,7 +260,7 @@ exports.updateReturnStatus = async (req, res) => {
           "Yêu cầu cần được phê duyệt (APPROVED) và có số tiền hoàn trả trước khi hoàn tất."
         );
       }
-      // KHÔNG CẦN UPDATE DonHang.TrangThai ở đây, nó vẫn là DOI_TRA
+      // KHÔNG CẦN UPDATE donhang.TrangThai ở đây, nó vẫn là DOI_TRA
     }
 
     updateQuery += " WHERE ReturnID = ?";

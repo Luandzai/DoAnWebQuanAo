@@ -55,7 +55,7 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Giỏ hàng trống." });
     }
     const [dbItems] = await connection.query(
-      "SELECT PhienBanID, GiaBan, SoLuongTonKho, SanPhamID FROM PhienBanSanPham WHERE PhienBanID IN (?)",
+      "SELECT PhienBanID, GiaBan, SoLuongTonKho, SanPhamID FROM phienbansanpham WHERE PhienBanID IN (?)",
       [phienBanIDs]
     );
     for (const item of cartItems) {
@@ -90,7 +90,7 @@ exports.createOrder = async (req, res) => {
       }
 
       const [vouchers] = await connection.query(
-        "SELECT * FROM KhuyenMai WHERE MaKhuyenMai = ? AND NgayKetThuc > NOW() AND ApDungToiThieu <= ? AND SoLuongToiDa > 0",
+        "SELECT * FROM khuyenmai WHERE MaKhuyenMai = ? AND NgayKetThuc > NOW() AND ApDungToiThieu <= ? AND SoLuongToiDa > 0",
         [MaKhuyenMai, TongTienHang]
       );
       if (vouchers.length === 0) {
@@ -110,7 +110,7 @@ exports.createOrder = async (req, res) => {
         [NguoiDungID, MaKhuyenMai]
       );
       await connection.query(
-        "UPDATE KhuyenMai SET SoLuongToiDa = SoLuongToiDa - 1 WHERE MaKhuyenMai = ?",
+        "UPDATE khuyenmai SET SoLuongToiDa = SoLuongToiDa - 1 WHERE MaKhuyenMai = ?",
         [MaKhuyenMai]
       );
     }
@@ -121,7 +121,7 @@ exports.createOrder = async (req, res) => {
     const initialTrangThai = isOnlinePayment ? "CHUA_THANH_TOAN" : "DANG_XU_LY";
 
     const [orderResult] = await connection.query(
-      "INSERT INTO DonHang (NguoiDungID, DiaChiGiaoHangID, MaKhuyenMai, PhuongThucID, TongTienHang, PhiVanChuyen, TongThanhToan, TrangThai, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO donhang (NguoiDungID, DiaChiGiaoHangID, MaKhuyenMai, PhuongThucID, TongTienHang, PhiVanChuyen, TongThanhToan, TrangThai, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         NguoiDungID,
         newDiaChiID,
@@ -139,7 +139,7 @@ exports.createOrder = async (req, res) => {
     for (const item of cartItems) {
       const dbItem = dbItems.find((p) => p.PhienBanID === item.PhienBanID);
       await connection.query(
-        "INSERT INTO ChiTietDonHang (DonHangID, PhienBanID, SoLuong, GiaLucMua) VALUES (?, ?, ?, ?)",
+        "INSERT INTO chitietdonhang (DonHangID, PhienBanID, SoLuong, GiaLucMua) VALUES (?, ?, ?, ?)",
         [newDonHangID, item.PhienBanID, item.SoLuong, dbItem.GiaBan]
       );
     }
@@ -214,7 +214,7 @@ exports.getMyOrders = async (req, res) => {
       `SELECT 
          dh.DonHangID, dh.NgayDatHang, dh.TongThanhToan, dh.TrangThai,
          (EXISTS (SELECT 1 FROM Returns r WHERE r.DonHangID = dh.DonHangID)) AS DaYeuCauTraHang
-       FROM DonHang AS dh
+       FROM donhang AS dh
        WHERE dh.NguoiDungID = ? 
        ORDER BY dh.NgayDatHang DESC`,
       [NguoiDungID]
@@ -232,16 +232,16 @@ exports.getMyOrders = async (req, res) => {
             JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
             WHERE ctpb.PhienBanID = ctdh.PhienBanID
            ) AS ThuocTinh,
-           (SELECT HinhAnh.URL FROM HinhAnhSanPham AS HinhAnh 
+           (SELECT HinhAnh.URL FROM hinhanhsanpham AS HinhAnh 
             WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
             LIMIT 1) as HinhAnh,
            (EXISTS (
              SELECT 1 FROM DanhGia dg 
              WHERE dg.PhienBanID = ctdh.PhienBanID AND dg.NguoiDungID = ?
            )) AS DaDanhGia
-         FROM ChiTietDonHang AS ctdh
-         JOIN PhienBanSanPham AS pb ON ctdh.PhienBanID = pb.PhienBanID
-         JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
+         FROM chitietdonhang AS ctdh
+         JOIN phienbansanpham AS pb ON ctdh.PhienBanID = pb.PhienBanID
+         JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
          WHERE ctdh.DonHangID = ?`,
           [NguoiDungID, order.DonHangID]
         );
@@ -264,7 +264,7 @@ exports.getOrderById = async (req, res) => {
     const [orderRows] = await pool.query(
       `SELECT dh.*, dc.TenNguoiNhan, dc.DienThoaiNhan, dc.DiaChiChiTiet, 
               ptt.TenPhuongThuc AS TenPhuongThucThanhToan
-       FROM DonHang AS dh
+       FROM donhang AS dh
        LEFT JOIN DiaChiGiaoHang AS dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
        LEFT JOIN ThanhToan AS tt ON dh.DonHangID = tt.DonHangID
        LEFT JOIN PaymentMethods AS ptt ON tt.MethodID = ptt.MethodID
@@ -285,12 +285,12 @@ exports.getOrderById = async (req, res) => {
             JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
             WHERE ctpb.PhienBanID = ctdh.PhienBanID
            ) AS ThuocTinh,
-         (SELECT HinhAnh.URL FROM HinhAnhSanPham AS HinhAnh 
+         (SELECT HinhAnh.URL FROM hinhanhsanpham AS HinhAnh 
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnh
-       FROM ChiTietDonHang AS ctdh
-       JOIN PhienBanSanPham AS pb ON ctdh.PhienBanID = pb.PhienBanID
-       JOIN SanPham AS sp ON pb.SanPhamID = sp.SanPhamID
+       FROM chitietdonhang AS ctdh
+       JOIN phienbansanpham AS pb ON ctdh.PhienBanID = pb.PhienBanID
+       JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
        WHERE ctdh.DonHangID = ?`,
       [DonHangID]
     );
@@ -310,7 +310,7 @@ exports.cancelOrder = async (req, res) => {
     const { NguoiDungID } = req.user;
     await connection.beginTransaction();
     const [orderRows] = await connection.query(
-      "SELECT * FROM DonHang WHERE DonHangID = ? AND NguoiDungID = ?",
+      "SELECT * FROM donhang WHERE DonHangID = ? AND NguoiDungID = ?",
       [DonHangID, NguoiDungID]
     );
     if (orderRows.length === 0) throw new Error("Không tìm thấy đơn hàng.");
@@ -325,7 +325,7 @@ exports.cancelOrder = async (req, res) => {
       );
     }
     await connection.query(
-      "UPDATE DonHang SET TrangThai = 'DA_HUY' WHERE DonHangID = ?",
+      "UPDATE donhang SET TrangThai = 'DA_HUY' WHERE DonHangID = ?",
       [DonHangID]
     );
 
@@ -389,8 +389,8 @@ exports.getAllOrders = async (req, res) => {
 
     const [countResult] = await pool.query(
       `SELECT COUNT(*) as total 
-       FROM DonHang dh
-       JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+       FROM donhang dh
+       JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
        ${whereClause}`,
       params
     );
@@ -406,8 +406,8 @@ exports.getAllOrders = async (req, res) => {
         dc.TenNguoiNhan,
         dc.DienThoaiNhan,
         dc.DiaChiChiTiet
-       FROM DonHang dh
-       JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+       FROM donhang dh
+       JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
        LEFT JOIN DiaChiGiaoHang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
        ${whereClause}
        ORDER BY ${sortOrder}
@@ -447,12 +447,12 @@ exports.getAdminOrderDetail = async (req, res) => {
         ptvc.TenPhuongThuc,
         km.MaKhuyenMai, km.TenKhuyenMai, km.GiaTriGiam, km.LoaiGiamGia,
         uc.HoTen AS NguoiCapNhatTen
-      FROM DonHang dh
-      JOIN NguoiDung nd ON dh.NguoiDungID = nd.NguoiDungID
+      FROM donhang dh
+      JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
       LEFT JOIN DiaChiGiaoHang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
       LEFT JOIN PhuongThucVanChuyen ptvc ON dh.PhuongThucID = ptvc.PhuongThucID
-      LEFT JOIN KhuyenMai km ON dh.MaKhuyenMai = km.MaKhuyenMai
-      LEFT JOIN NguoiDung uc ON dh.NguoiCapNhat = uc.NguoiDungID
+      LEFT JOIN khuyenmai km ON dh.MaKhuyenMai = km.MaKhuyenMai
+      LEFT JOIN nguoidung uc ON dh.NguoiCapNhat = uc.NguoiDungID
       WHERE dh.DonHangID = ?`,
       [orderId]
     );
@@ -480,13 +480,13 @@ exports.getAdminOrderDetail = async (req, res) => {
         ) AS ThuocTinh,
         (
           SELECT ha.URL 
-          FROM HinhAnhSanPham ha
+          FROM hinhanhsanpham ha
           WHERE ha.SanPhamID = sp.SanPhamID AND ha.LaAnhChinh = 1
           LIMIT 1
         ) AS HinhAnh
-      FROM ChiTietDonHang ctdh
-      JOIN PhienBanSanPham pb ON ctdh.PhienBanID = pb.PhienBanID
-      JOIN SanPham sp ON pb.SanPhamID = sp.SanPhamID
+      FROM chitietdonhang ctdh
+      JOIN phienbansanpham pb ON ctdh.PhienBanID = pb.PhienBanID
+      JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
       WHERE ctdh.DonHangID = ?`,
       [orderId]
     );
@@ -537,7 +537,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     try {
       const [orders] = await connection.query(
-        "SELECT TrangThai FROM DonHang WHERE DonHangID = ?",
+        "SELECT TrangThai FROM donhang WHERE DonHangID = ?",
         [id]
       );
       if (orders.length === 0)
@@ -549,7 +549,7 @@ exports.updateOrderStatus = async (req, res) => {
 
       // Cập nhật DonHang
       await connection.query(
-        "UPDATE DonHang SET TrangThai = ?, NguoiCapNhat = ?, NgayCapNhat = NOW() WHERE DonHangID = ?",
+        "UPDATE donhang SET TrangThai = ?, NguoiCapNhat = ?, NgayCapNhat = NOW() WHERE DonHangID = ?",
         [trangThaiMoi, adminId, id]
       );
 
@@ -559,12 +559,12 @@ exports.updateOrderStatus = async (req, res) => {
           [id]
         );
         const [items] = await connection.query(
-          "SELECT PhienBanID, SoLuong FROM ChiTietDonHang WHERE DonHangID = ?",
+          "SELECT PhienBanID, SoLuong FROM chitietdonhang WHERE DonHangID = ?",
           [id]
         );
         for (const item of items) {
           await connection.query(
-            "UPDATE PhienBanSanPham SET SoLuongTonKho = SoLuongTonKho + ? WHERE PhienBanID = ?",
+            "UPDATE phienbansanpham SET SoLuongTonKho = SoLuongTonKho + ? WHERE PhienBanID = ?",
             [item.SoLuong, item.PhienBanID]
           );
         }
