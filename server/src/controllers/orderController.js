@@ -408,7 +408,7 @@ exports.getAllOrders = async (req, res) => {
         dc.DiaChiChiTiet
        FROM donhang dh
        JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
-       LEFT JOIN DiaChiGiaoHang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
+       LEFT JOIN diachigiaohang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
        ${whereClause}
        ORDER BY ${sortOrder}
        LIMIT ? OFFSET ?`,

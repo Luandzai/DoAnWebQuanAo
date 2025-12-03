@@ -261,7 +261,7 @@ exports.getAllReviewsAdmin = async (req, res) => {
     // 1. Đếm tổng số đánh giá
     const [countResult] = await pool.query(
       `SELECT COUNT(*) as total 
-       FROM DanhGia dg
+       FROM danhgia dg
        JOIN nguoidung nd ON dg.NguoiDungID = nd.NguoiDungID
        JOIN phienbansanpham pb ON dg.PhienBanID = pb.PhienBanID
        JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
@@ -279,7 +279,7 @@ exports.getAllReviewsAdmin = async (req, res) => {
           dg.PhanHoi, -- [MỚI THÊM] Quan trọng để check trạng thái
           sp.TenSanPham, sp.Slug,
           nd.HoTen AS TenNguoiDung
-       FROM DanhGia dg
+       FROM danhgia dg
        JOIN nguoidung nd ON dg.NguoiDungID = nd.NguoiDungID
        JOIN phienbansanpham pb ON dg.PhienBanID = pb.PhienBanID
        JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID

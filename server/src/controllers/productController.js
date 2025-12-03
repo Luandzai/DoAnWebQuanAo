@@ -204,7 +204,7 @@ exports.getProductBySlug = async (req, res) => {
           JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
           WHERE ctpb.PhienBanID = dg.PhienBanID
          ) AS ThuocTinh
-       FROM DanhGia AS dg
+       FROM danhgia AS dg
        JOIN nguoidung AS nd ON dg.NguoiDungID = nd.NguoiDungID
        WHERE dg.PhienBanID IN (SELECT PhienBanID FROM phienbansanpham WHERE SanPhamID = ?)
        ORDER BY dg.NgayTao DESC`,
