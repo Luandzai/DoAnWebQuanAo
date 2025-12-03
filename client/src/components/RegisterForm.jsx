@@ -6,7 +6,7 @@ import axios from "axios"; // Import axios
 
 // Tạo một instance axios (bạn cũng có thể import 'api' từ AuthContext nếu muốn)
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 const RegisterForm = ({ onRegisterSuccess }) => {

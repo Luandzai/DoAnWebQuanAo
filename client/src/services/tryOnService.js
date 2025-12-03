@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const tryOnApi = axios.create({
-    baseURL: import.meta.env.VITE_TRYON_API_URL || 'http://localhost:5000/api',
+    baseURL: import.meta.env.VITE_TRYON_API_URL || import.meta.env.VITE_API_URL,
 });
 
 export const uploadForTryOn = async (personImage, clothImage) => {

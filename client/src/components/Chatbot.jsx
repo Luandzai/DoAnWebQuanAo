@@ -42,7 +42,7 @@ const Chatbot = () => {
       }));
 
       // Gọi API
-      const response = await axios.post("http://localhost:5000/api/chat", {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/chat`, {
         message: currentUserMessage,
         history: historyPayload,
       });
