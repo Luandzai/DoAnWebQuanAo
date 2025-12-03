@@ -265,9 +265,9 @@ exports.getOrderById = async (req, res) => {
       `SELECT dh.*, dc.TenNguoiNhan, dc.DienThoaiNhan, dc.DiaChiChiTiet, 
               ptt.TenPhuongThuc AS TenPhuongThucThanhToan
        FROM donhang AS dh
-       LEFT JOIN DiaChiGiaoHang AS dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
-       LEFT JOIN ThanhToan AS tt ON dh.DonHangID = tt.DonHangID
-       LEFT JOIN PaymentMethods AS ptt ON tt.MethodID = ptt.MethodID
+       LEFT JOIN diachigiaohang AS dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
+       LEFT JOIN thanhtoan AS tt ON dh.DonHangID = tt.DonHangID
+       LEFT JOIN paymentmethods AS ptt ON tt.MethodID = ptt.MethodID
        WHERE dh.DonHangID = ? AND dh.NguoiDungID = ?`,
       [DonHangID, NguoiDungID]
     );
