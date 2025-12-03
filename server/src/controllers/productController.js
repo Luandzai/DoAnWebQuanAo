@@ -39,9 +39,9 @@ exports.getAllProducts = async (req, res) => {
       LEFT JOIN danhmuc AS dm_child ON sp.DanhMucID = dm_child.DanhMucID
       LEFT JOIN danhmuc AS dm_parent ON dm_child.DanhMucChaID = dm_parent.DanhMucID
       LEFT JOIN phienbansanpham AS pb ON sp.SanPhamID = pb.SanPhamID
-      LEFT JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
-      LEFT JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-      LEFT JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+      LEFT JOIN chitietphienban AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
+      LEFT JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+      LEFT JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
     `;
 
     let whereClauses = ["sp.TrangThai = 'ACTIVE'"];
@@ -183,9 +183,9 @@ exports.getProductBySlug = async (req, res) => {
          pb.PhienBanID, pb.SKU, pb.GiaBan, pb.SoLuongTonKho,
          JSON_OBJECTAGG(tt.TenThuocTinh, gtt.GiaTri) AS options
        FROM phienbansanpham AS pb
-       JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
-       JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-       JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+       JOIN chitietphienban AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
+       JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+       JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
        WHERE pb.SanPhamID = ? AND pb.SoLuongTonKho > 0
        GROUP BY pb.PhienBanID`,
       [product.SanPhamID]
@@ -199,9 +199,9 @@ exports.getProductBySlug = async (req, res) => {
          dg.HinhAnhURL, dg.VideoURL,
          nd.HoTen,
          (SELECT GROUP_CONCAT(CONCAT(tt.TenThuocTinh, ': ', gtt.GiaTri) SEPARATOR ', ')
-          FROM ChiTietPhienBan AS ctpb
-          JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-          JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+          FROM chitietphienban AS ctpb
+          JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+          JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
           WHERE ctpb.PhienBanID = dg.PhienBanID
          ) AS ThuocTinh
        FROM DanhGia AS dg
@@ -308,8 +308,8 @@ exports.createProduct = async (req, res) => {
       for (const [attrName, attrValue] of Object.entries(version.options)) {
         const [attrValueRows] = await connection.query(
           `SELECT gtt.GiaTriID 
-                 FROM GiaTriThuocTinh AS gtt
-                 JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+                 FROM giatrithuoctinh AS gtt
+                 JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
                  WHERE tt.TenThuocTinh = ? AND gtt.GiaTri = ?`,
           [attrName, attrValue]
         );
@@ -321,7 +321,7 @@ exports.createProduct = async (req, res) => {
         }
 
         await connection.query(
-          `INSERT INTO ChiTietPhienBan (PhienBanID, GiaTriID) 
+          `INSERT INTO chitietphienban (PhienBanID, GiaTriID) 
                  VALUES (?, ?)`,
           [newPhienBanID, attrValueRows[0].GiaTriID]
         );
@@ -380,9 +380,9 @@ exports.getAdminProductById = async (req, res) => {
          pb.PhienBanID, pb.SKU, pb.GiaBan, pb.SoLuongTonKho,
          JSON_OBJECTAGG(tt.TenThuocTinh, gtt.GiaTri) AS options
        FROM phienbansanpham AS pb
-       JOIN ChiTietPhienBan AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
-       JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-       JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+       JOIN chitietphienban AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
+       JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+       JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
        WHERE pb.SanPhamID = ?
        GROUP BY pb.PhienBanID`,
       [id]
@@ -499,7 +499,7 @@ exports.updateProduct = async (req, res) => {
     // 4. Handle deleted variants
     if (deletedVariantIds && deletedVariantIds.length > 0) {
       await connection.query(
-        "DELETE FROM ChiTietPhienBan WHERE PhienBanID IN (?)",
+        "DELETE FROM chitietphienban WHERE PhienBanID IN (?)",
         [deletedVariantIds]
       );
       await connection.query(
@@ -527,8 +527,8 @@ exports.updateProduct = async (req, res) => {
         // Insert ChiTietPhienBan for the new variant
         for (const [attrName, attrValue] of Object.entries(version.options)) {
           const [attrValueRows] = await connection.query(
-            `SELECT gtt.GiaTriID FROM GiaTriThuocTinh AS gtt
-             JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+            `SELECT gtt.GiaTriID FROM giatrithuoctinh AS gtt
+             JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
              WHERE tt.TenThuocTinh = ? AND gtt.GiaTri = ?`,
             [attrName, attrValue]
           );
@@ -540,7 +540,7 @@ exports.updateProduct = async (req, res) => {
           }
 
           await connection.query(
-            `INSERT INTO ChiTietPhienBan (PhienBanID, GiaTriID) VALUES (?, ?)`,
+            `INSERT INTO chitietphienban (PhienBanID, GiaTriID) VALUES (?, ?)`,
             [newPhienBanID, attrValueRows[0].GiaTriID]
           );
         }
@@ -634,7 +634,7 @@ exports.deleteProduct = async (req, res) => {
       if (variantIds.length > 0) {
         // Delete from ChiTietPhienBan
         await connection.query(
-          "DELETE FROM ChiTietPhienBan WHERE PhienBanID IN (?)",
+          "DELETE FROM chitietphienban WHERE PhienBanID IN (?)",
           [variantIds]
         );
       }

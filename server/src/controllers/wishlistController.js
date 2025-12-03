@@ -28,7 +28,7 @@ exports.addWishlistItem = async (req, res) => {
 
     // 2. Thêm vào bảng YeuThich (dùng IGNORE để tránh lỗi trùng lặp)
     await pool.query(
-      "INSERT IGNORE INTO YeuThich (NguoiDungID, PhienBanID) VALUES (?, ?)",
+      "INSERT IGNORE INTO yeuthich (NguoiDungID, PhienBanID) VALUES (?, ?)",
       [NguoiDungID, firstPhienBanID]
     );
 
@@ -50,7 +50,7 @@ exports.removeWishlistItem = async (req, res) => {
     // Xóa dựa trên SanPhamID, bằng cách JOIN 2 bảng
     // (Vì YeuThich lưu PhienBanID, nhưng chúng ta xóa theo SanPhamID)
     await pool.query(
-      `DELETE yt FROM YeuThich AS yt
+      `DELETE yt FROM yeuthich AS yt
        JOIN phienbansanpham AS pb ON yt.PhienBanID = pb.PhienBanID
        WHERE yt.NguoiDungID = ? AND pb.SanPhamID = ?`,
       [NguoiDungID, sanPhamId]

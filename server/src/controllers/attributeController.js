@@ -6,8 +6,8 @@ const pool = require("../config/db");
 // @access  Public
 exports.getAllAttributes = async (req, res) => {
   try {
-    const [attributes] = await pool.query("SELECT * FROM ThuocTinh");
-    const [values] = await pool.query("SELECT * FROM GiaTriThuocTinh");
+    const [attributes] = await pool.query("SELECT * FROM thuoctinh");
+    const [values] = await pool.query("SELECT * FROM giatrithuoctinh");
 
     const attributeMap = {};
     attributes.forEach((attr) => {
@@ -35,7 +35,7 @@ exports.createAttribute = async (req, res) => {
   try {
     const { TenThuocTinh, Slug } = req.body;
     const [result] = await pool.query(
-      "INSERT INTO ThuocTinh (TenThuocTinh, Slug) VALUES (?, ?)",
+      "INSERT INTO thuoctinh (TenThuocTinh, Slug) VALUES (?, ?)",
       [TenThuocTinh, Slug]
     );
     res
@@ -53,7 +53,7 @@ exports.createAttributeValue = async (req, res) => {
     const { GiaTri } = req.body; // Ví dụ: "Xanh dương"
 
     const [result] = await pool.query(
-      "INSERT INTO GiaTriThuocTinh (ThuocTinhID, GiaTri) VALUES (?, ?)",
+      "INSERT INTO giatrithuoctinh (ThuocTinhID, GiaTri) VALUES (?, ?)",
       [ThuocTinhID, GiaTri]
     );
     res
@@ -71,7 +71,7 @@ exports.createAttributeValue = async (req, res) => {
 exports.deleteAttributeValue = async (req, res) => {
   try {
     const { id } = req.params; // GiaTriThuocTinhID
-    await pool.query("DELETE FROM GiaTriThuocTinh WHERE GiaTriID = ?", [id]);
+    await pool.query("DELETE FROM giatrithuoctinh WHERE GiaTriID = ?", [id]);
     res.json({ message: "Xóa giá trị thuộc tính thành công" });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server" });

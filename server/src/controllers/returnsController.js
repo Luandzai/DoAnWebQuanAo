@@ -18,7 +18,7 @@ exports.requestReturn = async (req, res) => {
 
     // 1. Kiểm tra trùng lặp
     const [existingReturns] = await connection.query(
-      "SELECT * FROM Returns WHERE DonHangID = ?",
+      "SELECT * FROM returns WHERE DonHangID = ?",
       [DonHangID]
     );
 
@@ -32,7 +32,7 @@ exports.requestReturn = async (req, res) => {
 
     // 2. Tạo Phiếu Trả Hàng (Returns)
     const [returnResult] = await connection.query(
-      "INSERT INTO Returns (DonHangID, Reason, Status) VALUES (?, ?, 'PENDING')",
+      "INSERT INTO returns (DonHangID, Reason, Status) VALUES (?, ?, 'PENDING')",
       [DonHangID, Reason]
     );
     const newReturnID = returnResult.insertId;
@@ -49,7 +49,7 @@ exports.requestReturn = async (req, res) => {
       }
 
       await connection.query(
-        "INSERT INTO ChiTietReturns (ReturnID, PhienBanID, SoLuongTra, GiaHoanTra) VALUES (?, ?, ?, ?)",
+        "INSERT INTO chitietreturns (ReturnID, PhienBanID, SoLuongTra, GiaHoanTra) VALUES (?, ?, ?, ?)",
         [newReturnID, item.PhienBanID, item.SoLuongTra, item.GiaHoanTra]
       );
     }
@@ -107,7 +107,7 @@ exports.getAllReturns = async (req, res) => {
     // 1. Đếm tổng số yêu cầu
     const [countResult] = await pool.query(
       `SELECT COUNT(*) as total 
-             FROM Returns r 
+             FROM returns r 
              JOIN donhang dh ON r.DonHangID = dh.DonHangID 
              JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
              ${whereClause}`,
@@ -121,7 +121,7 @@ exports.getAllReturns = async (req, res) => {
       `SELECT 
                 r.ReturnID, r.DonHangID, r.Status, r.NgayYeuCau, r.RefundAmount,
                 nd.HoTen AS TenKhachHang, nd.Email
-             FROM Returns r
+             FROM returns r
              JOIN donhang dh ON r.DonHangID = dh.DonHangID
              JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
              ${whereClause}
@@ -159,10 +159,10 @@ exports.getReturnDetail = async (req, res) => {
                 r.*, dh.TongThanhToan, dh.NgayDatHang, 
                 nd.HoTen AS TenKhachHang, nd.Email, 
                 dc.DiaChiChiTiet
-             FROM Returns r
+             FROM returns r
              JOIN donhang dh ON r.DonHangID = dh.DonHangID
              JOIN nguoidung nd ON dh.NguoiDungID = nd.NguoiDungID
-             JOIN DiaChiGiaoHang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
+             JOIN diachigiaohang dc ON dh.DiaChiGiaoHangID = dc.DiaChiID
              WHERE r.ReturnID = ?`,
       [ReturnID]
     );
@@ -177,12 +177,12 @@ exports.getReturnDetail = async (req, res) => {
                 ctr.PhienBanID, ctr.SoLuongTra, ctr.GiaHoanTra, 
                 sp.TenSanPham, sp.Slug, 
                 (SELECT GROUP_CONCAT(CONCAT(tt.TenThuocTinh, ': ', gtt.GiaTri) SEPARATOR ', ')
-                 FROM ChiTietPhienBan AS ctpb
-                 JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-                 JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+                 FROM chitietphienban AS ctpb
+                 JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+                 JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
                  WHERE ctpb.PhienBanID = ctr.PhienBanID
                 ) AS ThuocTinh
-             FROM ChiTietReturns ctr
+             FROM chitietreturns ctr
              JOIN phienbansanpham pb ON ctr.PhienBanID = pb.PhienBanID
              JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
              WHERE ctr.ReturnID = ?`,
@@ -215,7 +215,7 @@ exports.updateReturnStatus = async (req, res) => {
 
     // 2. Lấy thông tin yêu cầu hiện tại
     const [returns] = await connection.query(
-      "SELECT ReturnID, DonHangID, Status, RefundAmount FROM Returns WHERE ReturnID = ?",
+      "SELECT ReturnID, DonHangID, Status, RefundAmount FROM returns WHERE ReturnID = ?",
       [ReturnID]
     );
     if (returns.length === 0)
@@ -233,7 +233,7 @@ exports.updateReturnStatus = async (req, res) => {
 
     // 3. Xử lý logic theo trạng thái mới
     let updateQuery =
-      "UPDATE Returns SET Status = ?, NgayCapNhat = NOW(), NguoiCapNhat = ?";
+      "UPDATE returns SET Status = ?, NgayCapNhat = NOW(), NguoiCapNhat = ?";
     let updateParams = [newStatus, AdminID];
 
     if (newStatus === "APPROVED") {

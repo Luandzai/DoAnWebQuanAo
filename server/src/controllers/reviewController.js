@@ -47,7 +47,7 @@ exports.createReview = async (req, res) => {
       );
     }
     const [existingReview] = await pool.query(
-      "SELECT * FROM DanhGia WHERE NguoiDungID = ? AND PhienBanID = ?",
+      "SELECT * FROM danhgia WHERE NguoiDungID = ? AND PhienBanID = ?",
       [NguoiDungID, PhienBanID]
     );
     if (existingReview.length > 0) {
@@ -61,7 +61,7 @@ exports.createReview = async (req, res) => {
 
     // 2. Insert vào DB
     const [result] = await pool.query(
-      `INSERT INTO DanhGia 
+      `INSERT INTO danhgia 
          (PhienBanID, NguoiDungID, DiemSo, BinhLuan, 
           HinhAnhURL, HinhAnhPublicID, VideoURL, VideoPublicID) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -102,7 +102,7 @@ exports.getMyReviewByProduct = async (req, res) => {
 
   try {
     const [review] = await pool.query(
-      "SELECT * FROM DanhGia WHERE NguoiDungID = ? AND PhienBanID = ?",
+      "SELECT * FROM danhgia WHERE NguoiDungID = ? AND PhienBanID = ?",
       [NguoiDungID, phienBanId]
     );
 
@@ -134,7 +134,7 @@ exports.updateReview = async (req, res) => {
   try {
     // 1. Lấy đánh giá cũ
     const [rows] = await pool.query(
-      "SELECT * FROM DanhGia WHERE DanhGiaID = ? AND NguoiDungID = ?",
+      "SELECT * FROM danhgia WHERE DanhGiaID = ? AND NguoiDungID = ?",
       [DanhGiaID, NguoiDungID]
     );
     if (rows.length === 0) {
@@ -194,7 +194,7 @@ exports.updateReview = async (req, res) => {
 
     // 5. Cập nhật DB
     await pool.query(
-      `UPDATE DanhGia SET 
+      `UPDATE danhgia SET 
          DiemSo = ?, BinhLuan = ?,
          HinhAnhURL = ?, HinhAnhPublicID = ?,
          VideoURL = ?, VideoPublicID = ?,
@@ -317,7 +317,7 @@ exports.deleteReviewAdmin = async (req, res) => {
 
     // 1. Lấy thông tin media để xóa trên Cloudinary
     const [rows] = await connection.query(
-      "SELECT HinhAnhPublicID, VideoPublicID FROM DanhGia WHERE DanhGiaID = ?",
+      "SELECT HinhAnhPublicID, VideoPublicID FROM danhgia WHERE DanhGiaID = ?",
       [DanhGiaID]
     );
 
@@ -332,7 +332,7 @@ exports.deleteReviewAdmin = async (req, res) => {
 
     // 3. Xóa đánh giá khỏi CSDL
     const [result] = await connection.query(
-      "DELETE FROM DanhGia WHERE DanhGiaID = ?",
+      "DELETE FROM danhgia WHERE DanhGiaID = ?",
       [DanhGiaID]
     );
 
@@ -365,7 +365,7 @@ exports.replyToReview = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `UPDATE DanhGia 
+      `UPDATE danhgia 
        SET PhanHoi = ?, NgayPhanHoi = NOW() 
        WHERE DanhGiaID = ?`,
       [noiDung, DanhGiaID]

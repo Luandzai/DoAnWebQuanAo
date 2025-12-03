@@ -75,7 +75,7 @@ exports.vnpayIpn = async (req, res) => {
         );
         // Cập nhật trạng thái thanh toán -> SUCCESS
         await connection.query(
-          "UPDATE ThanhToan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
+          "UPDATE thanhtoan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
           ["SUCCESS", vnp_TransactionNo, vnp_TxnRef]
         );
       } else {
@@ -85,7 +85,7 @@ exports.vnpayIpn = async (req, res) => {
           ["DA_HUY", vnp_TxnRef]
         );
         await connection.query(
-          "UPDATE ThanhToan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
+          "UPDATE thanhtoan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
           ["FAILED", vnp_TransactionNo, vnp_TxnRef]
         );
         // Lưu ý: Trigger 'trig_before_update_don_hang_huy' sẽ tự động hoàn kho
@@ -186,7 +186,7 @@ exports.momoIpn = async (req, res) => {
           ["DANG_XU_LY", donHangID]
         );
         await connection.query(
-          "UPDATE ThanhToan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
+          "UPDATE thanhtoan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
           ["SUCCESS", transId, donHangID]
         );
       } else {
@@ -196,7 +196,7 @@ exports.momoIpn = async (req, res) => {
           ["DA_HUY", donHangID]
         );
         await connection.query(
-          "UPDATE ThanhToan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
+          "UPDATE thanhtoan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
           ["FAILED", transId, donHangID]
         );
       }

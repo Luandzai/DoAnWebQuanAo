@@ -57,7 +57,7 @@ exports.getWishlist = async (req, res) => {
           FROM hinhanhsanpham AS HinhAnh 
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnhChinh
-       FROM YeuThich AS yt
+       FROM yeuthich AS yt
        JOIN phienbansanpham AS pb ON yt.PhienBanID = pb.PhienBanID
        JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
        WHERE yt.NguoiDungID = ?`,
@@ -79,7 +79,7 @@ exports.getMyVouchers = async (req, res) => {
   try {
     // THÊM: AND ndv.TrangThai = 'DA_NHAN'
     const [myVouchers] = await pool.query(
-      `SELECT km.* FROM NguoiDung_Voucher AS ndv
+      `SELECT km.* FROM nguoidung_voucher AS ndv
        JOIN khuyenmai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
        WHERE ndv.NguoiDungID = ? 
          AND km.NgayKetThuc > NOW() 
@@ -123,7 +123,7 @@ exports.getMyApplicableVouchers = async (req, res) => {
     // Sau đó lọc ra những voucher có thể áp dụng cho giỏ hàng
     const [myVouchers] = await connection.query(
       `SELECT km.* 
-       FROM NguoiDung_Voucher AS ndv
+       FROM nguoidung_voucher AS ndv
        JOIN khuyenmai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
        WHERE ndv.NguoiDungID = ? 
          AND km.NgayKetThuc > NOW() 
@@ -156,7 +156,7 @@ exports.getMyReturns = async (req, res) => {
     // Lấy tất cả phiếu Returns của user
     const [returns] = await pool.query(
       `SELECT r.ReturnID, r.DonHangID, r.Reason, r.Status, r.NgayYeuCau
-       FROM Returns AS r
+       FROM returns AS r
        JOIN donhang AS dh ON r.DonHangID = dh.DonHangID
        WHERE dh.NguoiDungID = ?
        ORDER BY r.NgayYeuCau DESC`,

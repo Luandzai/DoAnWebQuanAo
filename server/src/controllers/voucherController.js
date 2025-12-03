@@ -81,7 +81,7 @@ exports.collectVoucher = async (req, res) => {
 
     // 2. Kiểm tra xem user đã nhận voucher này CHƯA (Giữ nguyên)
     const [existing] = await pool.query(
-      "SELECT * FROM NguoiDung_Voucher WHERE NguoiDungID = ? AND MaKhuyenMai = ?",
+      "SELECT * FROM nguoidung_voucher WHERE NguoiDungID = ? AND MaKhuyenMai = ?",
       [NguoiDungID, MaKhuyenMai]
     );
 
@@ -91,7 +91,7 @@ exports.collectVoucher = async (req, res) => {
 
     // 3. Nếu chưa có, thêm vào
     await pool.query(
-      "INSERT INTO NguoiDung_Voucher (NguoiDungID, MaKhuyenMai, TrangThai) VALUES (?, ?, 'DA_NHAN')",
+      "INSERT INTO nguoidung_voucher (NguoiDungID, MaKhuyenMai, TrangThai) VALUES (?, ?, 'DA_NHAN')",
       [NguoiDungID, MaKhuyenMai]
     );
 
@@ -118,7 +118,7 @@ exports.applyVoucher = async (req, res) => {
   try {
     // 1. Kiểm tra user có mã này, CHƯA SỬ DỤNG, VÀ VOUCHER CÒN ACTIVE
     const [myVoucher] = await pool.query(
-      `SELECT km.* FROM NguoiDung_Voucher AS ndv
+      `SELECT km.* FROM nguoidung_voucher AS ndv
        JOIN khuyenmai AS km ON ndv.MaKhuyenMai = km.MaKhuyenMai
        WHERE ndv.NguoiDungID = ? 
          AND ndv.MaKhuyenMai = ? 

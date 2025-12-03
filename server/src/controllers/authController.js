@@ -108,7 +108,7 @@ exports.login = async (req, res) => {
     hetHan.setDate(hetHan.getDate() + 30);
 
     await pool.query(
-      "INSERT INTO PhienDangNhap (NguoiDungID, Token, HetHan) VALUES (?, ?, ?)",
+      "INSERT INTO phiendangnhap (NguoiDungID, Token, HetHan) VALUES (?, ?, ?)",
       [user.NguoiDungID, token, hetHan]
     );
 
@@ -208,7 +208,7 @@ exports.googleLogin = async (req, res) => {
     const hetHan = new Date();
     hetHan.setDate(hetHan.getDate() + 30);
     await pool.query(
-      "INSERT INTO PhienDangNhap (NguoiDungID, Token, HetHan) VALUES (?, ?, ?)",
+      "INSERT INTO phiendangnhap (NguoiDungID, Token, HetHan) VALUES (?, ?, ?)",
       [user.NguoiDungID, appToken, hetHan]
     );
 

@@ -13,9 +13,9 @@ exports.getCart = async (req, res) => {
          ct.PhienBanID, ct.SoLuong, 
          sp.TenSanPham, sp.Slug, pb.GiaBan, pb.SKU,
          (SELECT GROUP_CONCAT(CONCAT(tt.TenThuocTinh, ': ', gtt.GiaTri) SEPARATOR ', ')
-          FROM ChiTietPhienBan AS ctpb
-          JOIN GiaTriThuocTinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
-          JOIN ThuocTinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
+          FROM chitietphienban AS ctpb
+          JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
+          JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
           WHERE ctpb.PhienBanID = ct.PhienBanID
          ) AS ThuocTinh,
         
@@ -26,8 +26,8 @@ exports.getCart = async (req, res) => {
           WHERE HinhAnh.SanPhamID = sp.SanPhamID AND HinhAnh.LaAnhChinh = 1 
           LIMIT 1) as HinhAnh
           
-       FROM ChiTietGioHang AS ct
-       JOIN GioHang AS gh ON ct.GioHangID = gh.NguoiDungID
+       FROM chitietgiohang AS ct
+       JOIN giohang AS gh ON ct.GioHangID = gh.NguoiDungID
        JOIN phienbansanpham AS pb ON ct.PhienBanID = pb.PhienBanID
        JOIN sanpham AS sp ON pb.SanPhamID = sp.SanPhamID
        WHERE gh.NguoiDungID = ?`,
@@ -68,13 +68,13 @@ exports.addToCart = async (req, res) => {
     }
 
     // Tìm hoặc tạo giỏ hàng
-    await pool.query("INSERT IGNORE INTO GioHang (NguoiDungID) VALUES (?)", [
+    await pool.query("INSERT IGNORE INTO giohang (NguoiDungID) VALUES (?)", [
       NguoiDungID,
     ]);
 
     // Thêm hoặc CỘNG DỒN số lượng (giỏ hàng cũ + số lượng mới)
     await pool.query(
-      `INSERT INTO ChiTietGioHang (GioHangID, PhienBanID, SoLuong) 
+      `INSERT INTO chitietgiohang (GioHangID, PhienBanID, SoLuong) 
        VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE SoLuong = SoLuong + VALUES(SoLuong)`,
       [NguoiDungID, PhienBanID, SoLuong]
@@ -117,7 +117,7 @@ exports.updateQuantity = async (req, res) => {
 
     // Cập nhật (SET) số lượng mới
     await pool.query(
-      "UPDATE ChiTietGioHang SET SoLuong = ? WHERE GioHangID = ? AND PhienBanID = ?",
+      "UPDATE chitietgiohang SET SoLuong = ? WHERE GioHangID = ? AND PhienBanID = ?",
       [SoLuong, NguoiDungID, PhienBanID]
     );
 
@@ -136,7 +136,7 @@ exports.removeFromCart = async (req, res) => {
     const { phienBanId } = req.params; // Lấy từ URL
 
     await pool.query(
-      "DELETE FROM ChiTietGioHang WHERE GioHangID = ? AND PhienBanID = ?",
+      "DELETE FROM chitietgiohang WHERE GioHangID = ? AND PhienBanID = ?",
       [NguoiDungID, phienBanId]
     );
 

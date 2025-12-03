@@ -7,7 +7,7 @@ const pool = require("../config/db");
 exports.getShippingMethods = async (req, res) => {
   try {
     const [methods] = await pool.query(
-      "SELECT * FROM PhuongThucVanChuyen"
+      "SELECT * FROM phuongthucvanchuyen"
       // Bạn có thể thêm "WHERE Active = TRUE" nếu có
     );
     res.json(methods);

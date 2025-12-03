@@ -8,7 +8,7 @@ exports.getSizeChartByCategory = async (req, res) => {
   try {
     const { danhMucId } = req.params;
     const [rows] = await pool.query(
-      "SELECT * FROM SizeChart WHERE DanhMucID = ?",
+      "SELECT * FROM sizechart WHERE DanhMucID = ?",
       [danhMucId]
     );
 
@@ -36,13 +36,13 @@ exports.upsertSizeChart = async (req, res) => {
 
     // Kiểm tra xem đã có chưa
     const [existing] = await pool.query(
-      "SELECT SizeChartID FROM SizeChart WHERE DanhMucID = ?",
+      "SELECT SizeChartID FROM sizechart WHERE DanhMucID = ?",
       [DanhMucID]
     );
 
     if (existing.length > 0) {
       // UPDATE
-      await pool.query("UPDATE SizeChart SET MoTa = ? WHERE DanhMucID = ?", [
+      await pool.query("UPDATE sizechart SET MoTa = ? WHERE DanhMucID = ?", [
         MoTa,
         DanhMucID,
       ]);
@@ -50,7 +50,7 @@ exports.upsertSizeChart = async (req, res) => {
     } else {
       // INSERT
       await pool.query(
-        "INSERT INTO SizeChart (DanhMucID, MoTa) VALUES (?, ?)",
+        "INSERT INTO sizechart (DanhMucID, MoTa) VALUES (?, ?)",
         [DanhMucID, MoTa]
       );
       res.status(201).json({ message: "Tạo bảng size thành công!" });
