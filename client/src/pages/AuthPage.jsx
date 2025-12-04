@@ -20,7 +20,7 @@ import AuthContext from "../context/AuthContext";
 import "./AuthPage.css";
 
 // Import ảnh minh họa (Bạn cần đảm bảo các đường dẫn này là đúng)
-import authImage from "../assets/MIKU.jpg";
+import authImage from "../assets/ANH_BIA.jpg";
 import authLogo from "../assets/LOGO.jpg";
 
 const AuthPage = () => {
