@@ -66,10 +66,10 @@ const searchProductsForAI = async (userMessage) => {
         MIN(pb.GiaBan) as GiaTu,
         SUM(pb.SoLuongTonKho) as TongTonKho,
         dm.TenDanhMuc,
-        (SELECT URL FROM HinhAnhSanPham WHERE SanPhamID = sp.SanPhamID AND LaAnhChinh = 1 LIMIT 1) as HinhAnh
-      FROM SanPham sp
-      LEFT JOIN DanhMuc dm ON sp.DanhMucID = dm.DanhMucID
-      LEFT JOIN PhienBanSanPham pb ON sp.SanPhamID = pb.SanPhamID
+        (SELECT URL FROM hinhanhsanpham WHERE SanPhamID = sp.SanPhamID AND LaAnhChinh = 1 LIMIT 1) as HinhAnh
+      FROM sanpham sp
+      LEFT JOIN danhmuc dm ON sp.DanhMucID = dm.DanhMucID
+      LEFT JOIN phienbansanpham pb ON sp.SanPhamID = pb.SanPhamID
       WHERE 
         sp.TrangThai = 'ACTIVE'
         AND (${likeClauses})
