@@ -25,18 +25,17 @@ const Footer = () => {
         <Row>
           {/* CỘT 1: VỀ CHÚNG TÔI - Chiếm 5/12 cột (theo tỉ lệ ảnh) */}
           <Col md={8} className="mb-4">
-            <h5 className="fw-bold mb-3">VỀ CHÚNG TÔI</h5>
-            <p className="footer-text large-text">
-              Vương-Group - Khoác lên mình niềm vui gia đình Việt Nam 2022. Công
-              ty cổ phần Thương mại và Dịch vụ Vương -Group được thành lập với
-              mục đích chính ban đầu là hoạt động trong lĩnh vực sản xuất hàng
-              thời trang xuất khẩu với các sản phẩm chủ yếu là tơ lụa và sợi.
-              Năm 2023 thương hiệu thời trang VPS ra đời, tự hào trở thành một
-              cột mốc đáng nhớ của doanh nghiệp Việt trong ngành thời trang.
-              Mang đến niềm vui cho hàng triệu gia đình Việt VPS hướng đến mục
-              tiêu mang lại niềm vui mỗi ngày cho hàng triệu người tiêu dùng
-              Việt. Chúng tôi tin rằng người dân Việt Nam cũng đang hướng đến
-              một cuộc sống năng động, tích cực hơn.
+            <h3 className="text-lg font-bold mb-4">VỀ CHÚNG TÔI</h3>
+            <p className="text-sm leading-relaxed text-gray-400">
+              <strong>Blank Canvas</strong> được hình thành từ niềm tin rằng mỗi ngày mới đều là một
+              "tấm toan trắng", và thời trang chính là ngôn ngữ để bạn vẽ nên màu sắc cá tính của riêng mình.
+              Không chỉ dừng lại ở việc cung cấp các sản phẩm may mặc bắt kịp xu hướng, chúng tôi khao khát
+              mang đến một phong cách sống hiện đại, nơi sự tối giản giao thoa cùng chất lượng đỉnh cao.
+            </p>
+            <p className="text-sm leading-relaxed text-gray-400 mt-3">
+              Tại Blank Canvas, trải nghiệm của khách hàng là kim chỉ nam cho mọi hoạt động.
+              Chúng tôi cam kết tỉ mỉ từ khâu chọn lựa chất liệu đến dịch vụ chăm sóc khách hàng,
+              giúp bạn tự tin khẳng định bản sắc riêng trên mọi hành trình.
             </p>
           </Col>
 
