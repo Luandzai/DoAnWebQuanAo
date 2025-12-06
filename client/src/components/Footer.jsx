@@ -25,14 +25,14 @@ const Footer = () => {
         <Row>
           {/* CỘT 1: VỀ CHÚNG TÔI - Chiếm 5/12 cột (theo tỉ lệ ảnh) */}
           <Col md={8} className="mb-4">
-            <h3 className="text-lg font-bold mb-4">VỀ CHÚNG TÔI</h3>
-            <p className="text-sm leading-relaxed text-gray-400">
+            <h3 className="fw-bold mb-3">VỀ CHÚNG TÔI</h3>
+            <p className="footer-text large-text">
               <strong>Blank Canvas</strong> được hình thành từ niềm tin rằng mỗi ngày mới đều là một
               "tấm toan trắng", và thời trang chính là ngôn ngữ để bạn vẽ nên màu sắc cá tính của riêng mình.
               Không chỉ dừng lại ở việc cung cấp các sản phẩm may mặc bắt kịp xu hướng, chúng tôi khao khát
               mang đến một phong cách sống hiện đại, nơi sự tối giản giao thoa cùng chất lượng đỉnh cao.
             </p>
-            <p className="text-sm leading-relaxed text-gray-400 mt-3">
+            <p className="footer-text large-text">
               Tại Blank Canvas, trải nghiệm của khách hàng là kim chỉ nam cho mọi hoạt động.
               Chúng tôi cam kết tỉ mỉ từ khâu chọn lựa chất liệu đến dịch vụ chăm sóc khách hàng,
               giúp bạn tự tin khẳng định bản sắc riêng trên mọi hành trình.
