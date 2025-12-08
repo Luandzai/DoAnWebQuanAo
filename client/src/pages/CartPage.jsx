@@ -1,23 +1,11 @@
-// client/src/pages/CartPage.jsx (ĐÃ SỬA LỖI)
+// client/src/pages/CartPage.jsx - REDESIGNED v3
 
 import React, { useContext, useState, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  ListGroup,
-  Image,
-  Button,
-  Card,
-  Form,
-  InputGroup, // <-- LỖI LÀ DO THIẾU DÒNG NÀY
-  Alert, // Thêm Alert
-  Spinner, // Thêm Spinner
-} from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
+import { Form, Spinner } from "react-bootstrap";
+import { X, Trash, Cart, ArrowLeft, ShieldCheck } from "react-bootstrap-icons";
 import CartContext from "../context/CartContext";
-import { X } from "react-bootstrap-icons";
-import "./CartPage.css"; // Import CSS responsive
+import "./CartPage.css";
 
 const CartPage = () => {
   const {
@@ -25,51 +13,42 @@ const CartPage = () => {
     updateCartQuantity,
     removeFromCart,
     loading,
-    selectItemsForCheckout, // <-- Lấy hàm mới từ context
+    selectItemsForCheckout,
   } = useContext(CartContext);
   const navigate = useNavigate();
 
-  // State mới để quản lý các item được chọn (lưu PhienBanID)
   const [selectedItems, setSelectedItems] = useState([]);
 
-  // Cập nhật danh sách item được chọn khi giỏ hàng thay đổi
+  // Auto-select all items on load
   useEffect(() => {
-    // Mặc định chọn tất cả khi tải trang
     setSelectedItems(cartItems.map((item) => item.PhienBanID));
   }, [cartItems]);
 
-  // Lọc ra các object item đầy đủ dựa trên ID đã chọn
   const itemsToCheckout = cartItems.filter((item) =>
     selectedItems.includes(item.PhienBanID)
   );
 
-  // Tính tổng tiền chỉ cho các sản phẩm được chọn
   const subtotal = itemsToCheckout.reduce(
     (acc, item) => acc + item.SoLuong * parseFloat(item.GiaBan),
     0
   );
 
-  // Hàm xử lý +/-
   const handleQuantityChange = (item, newQty) => {
     if (newQty > 0) {
       updateCartQuantity(item.PhienBanID, newQty);
     } else if (newQty === 0) {
-      // Nếu giảm về 0, thì xóa
       removeFromCart(item.PhienBanID);
     }
   };
 
-  // Hàm xử lý khi check/uncheck một item
   const handleSelectItem = (phienBanID) => {
-    setSelectedItems(
-      (prev) =>
-        prev.includes(phienBanID)
-          ? prev.filter((id) => id !== phienBanID) // Bỏ chọn
-          : [...prev, phienBanID] // Chọn
+    setSelectedItems((prev) =>
+      prev.includes(phienBanID)
+        ? prev.filter((id) => id !== phienBanID)
+        : [...prev, phienBanID]
     );
   };
 
-  // Hàm xử lý khi check/uncheck "Chọn tất cả"
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       setSelectedItems(cartItems.map((item) => item.PhienBanID));
@@ -78,217 +57,171 @@ const CartPage = () => {
     }
   };
 
-  // Hàm xử lý khi nhấn nút "Tiến hành đặt hàng"
   const handleCheckout = () => {
-    selectItemsForCheckout(itemsToCheckout); // <-- Gửi các item đã chọn vào context
+    selectItemsForCheckout(itemsToCheckout);
     navigate("/checkout");
   };
 
   if (loading) {
     return (
-      <Container fluid className="py-5 text-center">
+      <div className="cart-page cart-page--loading">
         <Spinner animation="border" />
-      </Container>
+        <span>Đang tải giỏ hàng...</span>
+      </div>
+    );
+  }
+
+  // Empty Cart State
+  if (cartItems.length === 0) {
+    return (
+      <div className="cart-page">
+        <div className="cart-empty">
+          <div className="cart-empty__icon">
+            <Cart size={64} />
+          </div>
+          <h2 className="cart-empty__title">Giỏ hàng trống</h2>
+          <p className="cart-empty__text">
+            Bạn chưa có sản phẩm nào trong giỏ hàng.
+          </p>
+          <Link to="/products" className="cart-empty__btn">
+            <ArrowLeft size={18} />
+            Tiếp tục mua sắm
+          </Link>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container fluid className="py-5">
-      <h2 className="mb-4">Giỏ hàng của bạn</h2>
-      <Row>
-        {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM */}
-        <Col md={8}>
-          {cartItems.length === 0 ? (
-            <Alert variant="info">
-              Giỏ hàng của bạn đang trống. <Link to="/">Quay lại mua sắm</Link>
-            </Alert>
-          ) : (
-            <>
-              {/* === THANH CHỌN TẤT CẢ === */}
-              <div className="d-flex justify-content-between align-items-center p-3 mb-3 bg-light rounded">
+    <div className="cart-page">
+      {/* Header */}
+      <div className="cart-header">
+        <h1 className="cart-header__title">Giỏ hàng</h1>
+        <span className="cart-header__count">{cartItems.length} sản phẩm</span>
+      </div>
+
+      <div className="cart-container">
+        {/* Items Column */}
+        <div className="cart-items">
+          {/* Select All */}
+          <div className="cart-select-all">
+            <Form.Check
+              type="checkbox"
+              id="select-all"
+              label={`Chọn tất cả (${cartItems.length})`}
+              checked={selectedItems.length === cartItems.length}
+              onChange={handleSelectAll}
+            />
+          </div>
+
+          {/* Cart Items */}
+          {cartItems.map((item) => (
+            <div 
+              key={item.PhienBanID} 
+              className={`cart-item ${selectedItems.includes(item.PhienBanID) ? 'cart-item--selected' : ''}`}
+            >
+              {/* Checkbox */}
+              <div className="cart-item__checkbox">
                 <Form.Check
                   type="checkbox"
-                  id="select-all"
-                  label={`Chọn tất cả (${cartItems.length} sản phẩm)`}
-                  checked={selectedItems.length === cartItems.length}
-                  onChange={handleSelectAll}
+                  checked={selectedItems.includes(item.PhienBanID)}
+                  onChange={() => handleSelectItem(item.PhienBanID)}
                 />
               </div>
-              {/* ========================== */}
 
-              <ListGroup variant="flush">
-                {cartItems.map((item) => (
-                  <ListGroup.Item
-                    key={item.PhienBanID}
-                    className="mb-3 p-2 p-md-3 shadow-sm position-relative"
-                  >
-                    {/* Mobile Layout */}
-                    <div className="d-md-none">
-                      {/* Checkbox and Delete Button */}
-                      <div className="d-flex align-items-start mb-2">
-                        <Form.Check
-                          type="checkbox"
-                          checked={selectedItems.includes(item.PhienBanID)}
-                          onChange={() => handleSelectItem(item.PhienBanID)}
-                          className="me-2"
-                        />
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          className="ms-auto"
-                          onClick={() => removeFromCart(item.PhienBanID)}
-                          style={{ padding: '0.25rem 0.5rem' }}
-                        >
-                          <X size={16} />
-                        </Button>
-                      </div>
-                      
-                      {/* Image and Info Row */}
-                      <div className="d-flex mb-2">
-                        <div className="cart-item-image-col me-2">
-                          <Image
-                            src={item.HinhAnh}
-                            alt={item.TenSanPham}
-                            fluid
-                            rounded
-                          />
-                        </div>
-                        <div className="cart-item-info-col flex-grow-1">
-                          <h6 className="cart-item-title mb-1">{item.TenSanPham}</h6>
-                          <p className="cart-item-attributes text-muted small mb-1">
-                            {item.ThuocTinh}
-                          </p>
-                          <strong className="cart-item-price text-danger">
-                            {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
-                          </strong>
-                        </div>
-                      </div>
-                      
-                      {/* Quantity Controls */}
-                      <div className="d-flex justify-content-center">
-                        <InputGroup size="sm" className="cart-quantity-group">
-                          <Button
-                            variant="outline-secondary"
-                            className="cart-quantity-btn"
-                            onClick={() => handleQuantityChange(item, item.SoLuong - 1)}
-                          >
-                            -
-                          </Button>
-                          <Form.Control
-                            type="text"
-                            value={item.SoLuong}
-                            readOnly
-                            className="text-center cart-quantity-input"
-                          />
-                          <Button
-                            variant="outline-secondary"
-                            className="cart-quantity-btn"
-                            onClick={() => handleQuantityChange(item, item.SoLuong + 1)}
-                          >
-                            +
-                          </Button>
-                        </InputGroup>
-                      </div>
-                    </div>
-                    
-                    {/* Desktop/Tablet Layout */}
-                    <Row className="align-items-center d-none d-md-flex">
-                      <Col xs="auto">
-                        <Form.Check
-                          type="checkbox"
-                          checked={selectedItems.includes(item.PhienBanID)}
-                          onChange={() => handleSelectItem(item.PhienBanID)}
-                        />
-                      </Col>
-                      <Col md={2}>
-                        <Image
-                          src={item.HinhAnh}
-                          alt={item.TenSanPham}
-                          fluid
-                          rounded
-                        />
-                      </Col>
-                      <Col md={4}>
-                        <h5>{item.TenSanPham}</h5>
-                        <p className="text-muted small mb-0">
-                          {item.ThuocTinh}
-                        </p>
-                      </Col>
-                      <Col md={2}>
-                        <strong>
-                          {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
-                        </strong>
-                      </Col>
-                      <Col md={2}>
-                        <InputGroup size="sm" style={{ maxWidth: "120px" }}>
-                          <Button
-                            variant="outline-secondary"
-                            onClick={() => handleQuantityChange(item, item.SoLuong - 1)}
-                          >
-                            -
-                          </Button>
-                          <Form.Control
-                            type="text"
-                            value={item.SoLuong}
-                            readOnly
-                            className="text-center"
-                          />
-                          <Button
-                            variant="outline-secondary"
-                            onClick={() => handleQuantityChange(item, item.SoLuong + 1)}
-                          >
-                            +
-                          </Button>
-                        </InputGroup>
-                      </Col>
-                      <Col md={1} className="text-end">
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => removeFromCart(item.PhienBanID)}
-                        >
-                          <X size={20} />
-                        </Button>
-                      </Col>
-                    </Row>
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-            </>
-          )}
-        </Col>
+              {/* Image */}
+              <Link to={`/product/${item.Slug}`} className="cart-item__image">
+                <img src={item.HinhAnh} alt={item.TenSanPham} />
+              </Link>
 
-        {/* CỘT PHẢI: TÓM TẮT ĐƠN HÀNG */}
-        <Col md={4}>
-          <Card className="shadow-sm">
-            <Card.Body>
-              <Card.Title className="fs-4">Tổng giá trị đơn hàng</Card.Title>
-              <ListGroup variant="flush" className="my-3">
-                <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                  <span>Tạm tính:</span>
-                  <strong>{subtotal.toLocaleString("vi-VN")} ₫</strong>
-                </ListGroup.Item>
-                <ListGroup.Item className="d-flex justify-content-between fs-5">
-                  <strong>Tổng cộng:</strong>
-                  <strong className="text-danger">
-                    {subtotal.toLocaleString("vi-VN")} ₫
-                  </strong>
-                </ListGroup.Item>
-              </ListGroup>
-              <Button
-                variant="primary"
-                className="w-100"
-                size="lg"
-                disabled={itemsToCheckout.length === 0} // <-- Disable nếu không có item nào được chọn
-                onClick={handleCheckout} // <-- Gọi hàm checkout mới
+              {/* Details */}
+              <div className="cart-item__details">
+                <Link to={`/product/${item.Slug}`} className="cart-item__name">
+                  {item.TenSanPham}
+                </Link>
+                <div className="cart-item__variant">{item.ThuocTinh}</div>
+                <div className="cart-item__price-mobile">
+                  {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
+                </div>
+              </div>
+
+              {/* Price (Desktop) */}
+              <div className="cart-item__price">
+                {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
+              </div>
+
+              {/* Quantity */}
+              <div className="cart-item__quantity">
+                <button
+                  className="qty-btn"
+                  onClick={() => handleQuantityChange(item, item.SoLuong - 1)}
+                >
+                  −
+                </button>
+                <span className="qty-value">{item.SoLuong}</span>
+                <button
+                  className="qty-btn"
+                  onClick={() => handleQuantityChange(item, item.SoLuong + 1)}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Subtotal (Desktop) */}
+              <div className="cart-item__subtotal">
+                {(item.SoLuong * parseFloat(item.GiaBan)).toLocaleString("vi-VN")} ₫
+              </div>
+
+              {/* Delete */}
+              <button
+                className="cart-item__delete"
+                onClick={() => removeFromCart(item.PhienBanID)}
+                title="Xóa sản phẩm"
               >
-                Tiến hành Đặt hàng
-              </Button>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+                <Trash size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Summary Column */}
+        <div className="cart-summary">
+          <div className="cart-summary__card">
+            <h3 className="cart-summary__title">Tóm tắt đơn hàng</h3>
+            
+            <div className="cart-summary__row">
+              <span>Sản phẩm đã chọn</span>
+              <span>{itemsToCheckout.length} sản phẩm</span>
+            </div>
+            
+            <div className="cart-summary__row">
+              <span>Tạm tính</span>
+              <span>{subtotal.toLocaleString("vi-VN")} ₫</span>
+            </div>
+            
+            <div className="cart-summary__row cart-summary__row--total">
+              <span>Tổng cộng</span>
+              <span className="cart-summary__total">
+                {subtotal.toLocaleString("vi-VN")} ₫
+              </span>
+            </div>
+
+            <button
+              className="cart-summary__btn"
+              disabled={itemsToCheckout.length === 0}
+              onClick={handleCheckout}
+            >
+              Tiến hành đặt hàng
+            </button>
+
+            <div className="cart-summary__secure">
+              <ShieldCheck size={16} />
+              <span>Thanh toán an toàn & bảo mật</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

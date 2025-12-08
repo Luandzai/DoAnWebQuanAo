@@ -25,15 +25,15 @@ const AdminLayout = ({ children }) => {
     <Container
       fluid
       className="p-0 admin-container bg-body-tertiary"
-      style={{ minHeight: "100vh" }}
+      style={{ height: "100vh", overflow: "hidden" }}
     >
       <Row className="g-0 h-100">
-        {/* Sidebar Admin - Thêm bg-body để đổi màu nền */}
+        {/* Sidebar Admin - Fixed position */}
         <Col
           md={3}
           lg={2}
-          className="bg-body border-end shadow-sm"
-          style={{ minHeight: "100vh" }}
+          className="bg-body border-end shadow-sm d-flex flex-column"
+          style={{ height: "100vh", position: "sticky", top: 0, overflowY: "auto" }}
         >
           <div className="p-3">
             <h4 className="mb-4 fw-bold text-primary px-2">Admin Panel</h4>
@@ -98,10 +98,10 @@ const AdminLayout = ({ children }) => {
           </div>
         </Col>
 
-        {/* Nội dung Admin */}
-        <Col md={9} lg={10}>
-          {/* Top Bar - Thêm bg-body */}
-          <div className="bg-body border-bottom shadow-sm p-3 d-flex justify-content-end align-items-center mb-4 gap-3">
+        {/* Nội dung Admin - Scrollable */}
+        <Col md={9} lg={10} className="d-flex flex-column" style={{ height: "100vh", overflow: "hidden" }}>
+          {/* Top Bar - Fixed */}
+          <div className="bg-body border-bottom shadow-sm p-3 d-flex justify-content-end align-items-center gap-3 flex-shrink-0">
             {/* 2. Nút Theme Toggle */}
             <ThemeToggle />
 
@@ -125,7 +125,10 @@ const AdminLayout = ({ children }) => {
             </Dropdown>
           </div>
 
-          <div className="px-4 pb-5">{children}</div>
+          {/* Content Area - Scrollable */}
+          <div className="px-4 pb-5 flex-grow-1" style={{ overflowY: "auto" }}>
+            {children}
+          </div>
         </Col>
       </Row>
     </Container>
