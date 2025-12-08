@@ -26,6 +26,7 @@ exports.getActiveVouchers = async (req, res) => {
 exports.getVouchersForProduct = async (req, res) => {
   const { sanPhamId } = req.params;
   try {
+    // 1. Lấy DanhMucID của sản phẩm
     const [productRows] = await pool.query(
       "SELECT DanhMucID FROM sanpham WHERE SanPhamID = ?",
       [sanPhamId]
@@ -35,14 +36,22 @@ exports.getVouchersForProduct = async (req, res) => {
     }
     const danhMucId = productRows[0].DanhMucID;
 
+    // 2. Lấy DanhMucChaID của danh mục sản phẩm (nếu có)
+    const [categoryRows] = await pool.query(
+      "SELECT DanhMucChaID FROM danhmuc WHERE DanhMucID = ?",
+      [danhMucId]
+    );
+    const danhMucChaId = categoryRows[0]?.DanhMucChaID || null;
+
+    // 3. Query voucher cho: sản phẩm cụ thể, danh mục sản phẩm, HOẶC danh mục cha
     const [vouchers] = await pool.query(
       `SELECT MaKhuyenMai, TenKhuyenMai, NgayKetThuc, GiaTriGiam, LoaiGiamGia
        FROM khuyenmai
-       WHERE (SanPhamID = ? OR DanhMucID = ?)
+       WHERE (SanPhamID = ? OR DanhMucID = ? OR DanhMucID = ?)
          AND NgayKetThuc > NOW() 
          AND NgayBatDau < NOW()
-         AND TrangThai = 'ACTIVE'`, // <<< ĐÃ THÊM ĐIỀU KIỆN TRẠNG THÁI
-      [sanPhamId, danhMucId]
+         AND TrangThai = 'ACTIVE'`,
+      [sanPhamId, danhMucId, danhMucChaId]
     );
 
     res.json(vouchers);

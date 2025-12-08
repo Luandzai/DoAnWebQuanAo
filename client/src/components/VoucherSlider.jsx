@@ -1,85 +1,109 @@
-// client/src/components/VoucherSlider.jsx (ĐÃ XÓA DỮ LIỆU GIẢ)
+// client/src/components/VoucherSlider.jsx - REDESIGNED v3
 
 import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
+import { ChevronLeft, ChevronRight, Ticket, Clock } from "react-bootstrap-icons";
 
 import "swiper/css";
 import "swiper/css/navigation";
-
-import { Badge } from "react-bootstrap";
+import "swiper/css/pagination";
 import "./VoucherSlider.css";
 
-// 1. Dữ liệu giả ĐÃ BỊ XÓA
-// const mockVouchers = [ ... ];
-
-// 2. Nhận 'vouchers' (dữ liệu thật) từ props
 const VoucherSlider = ({
   vouchers,
   onVoucherClick,
-  onApply,
   appliedVoucher,
   onClaimVoucher,
 }) => {
-  // 3. Nếu không có voucher thì không hiển thị gì cả
   if (!vouchers || vouchers.length === 0) {
-    return null; // (Hoặc bạn có thể hiển thị 1 thông báo nhỏ)
+    return null;
   }
 
   const handleClaimClick = (e, maKhuyenMai) => {
-    e.stopPropagation(); // Prevent triggering parent div's onClick
+    e.stopPropagation();
     if (onClaimVoucher) {
       onClaimVoucher(maKhuyenMai);
     }
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("vi-VN");
+  };
+
   return (
-    <Swiper
-      modules={[Navigation]}
-      spaceBetween={10}
-      slidesPerView={1}
-      navigation
-      className="voucher-swiper-container"
-    >
-      {/* 4. Lặp (map) qua 'vouchers' (dữ liệu thật) */}
-      {vouchers.map((voucher) => (
-        <SwiperSlide key={voucher.MaKhuyenMai}>
-          <div
-            className={`voucher-section ${
-              // 5. Dùng MaKhuyenMai (từ CSDL) để so sánh
-              appliedVoucher?.MaKhuyenMai === voucher.MaKhuyenMai
-                ? "voucher-applied"
-                : ""
-            }`}
-            onClick={onVoucherClick} // Click để mở Modal
-          >
-            <div className="d-flex justify-content-between align-items-center">
-              <span className="fw-bold">Voucher và khuyến mãi</span>
-              <Badge 
-                pill 
-                className="btn-apply-voucher"
-                onClick={(e) => handleClaimClick(e, voucher.MaKhuyenMai)}
-                style={{ cursor: 'pointer' }}
+    <div className="voucher-slider">
+      {/* Header */}
+      <div className="voucher-slider__header">
+        <Ticket size={16} />
+        <span>Mã khuyến mãi</span>
+        {vouchers.length > 1 && (
+          <span className="voucher-slider__count">{vouchers.length}</span>
+        )}
+      </div>
+
+      {/* Swiper Container */}
+      <Swiper
+        modules={[Navigation, Pagination]}
+        spaceBetween={8}
+        slidesPerView={1}
+        navigation={{
+          prevEl: '.voucher-nav-prev',
+          nextEl: '.voucher-nav-next',
+        }}
+        pagination={{ clickable: true }}
+        className="voucher-slider__swiper"
+      >
+        {vouchers.map((voucher) => {
+          const isApplied = appliedVoucher?.MaKhuyenMai === voucher.MaKhuyenMai;
+          
+          return (
+            <SwiperSlide key={voucher.MaKhuyenMai}>
+              <div
+                className={`voucher-card ${isApplied ? 'voucher-card--applied' : ''}`}
+                onClick={onVoucherClick}
               >
-                Nhận
-              </Badge>
-            </div>
-            <div className="mt-2">
-              {/* 6. Dùng MaKhuyenMai và TenKhuyenMai (từ CSDL) */}
-              <span className="voucher-code">{voucher.MaKhuyenMai}</span>
-              <span className="text-muted small ms-2">
-                {voucher.TenKhuyenMai}
-              </span>
-              <br />
-              <span className="voucher-expiry">
-                Hết hạn sau:{" "}
-                {new Date(voucher.NgayKetThuc).toLocaleDateString("vi-VN")}
-              </span>
-            </div>
-          </div>
-        </SwiperSlide>
-      ))}
-    </Swiper>
+                {/* Left: Icon Badge */}
+                <div className="voucher-card__badge">
+                  <span className="voucher-card__icon">🎁</span>
+                </div>
+
+                {/* Middle: Details */}
+                <div className="voucher-card__content">
+                  <div className="voucher-card__code">{voucher.MaKhuyenMai}</div>
+                  <div className="voucher-card__name">{voucher.TenKhuyenMai}</div>
+                  <div className="voucher-card__expiry">
+                    <Clock size={10} />
+                    <span>HSD: {formatDate(voucher.NgayKetThuc)}</span>
+                  </div>
+                </div>
+
+                {/* Right: Action */}
+                <button
+                  className={`voucher-card__btn ${isApplied ? 'voucher-card__btn--applied' : ''}`}
+                  onClick={(e) => handleClaimClick(e, voucher.MaKhuyenMai)}
+                  disabled={isApplied}
+                >
+                  {isApplied ? '✓' : 'Lưu'}
+                </button>
+              </div>
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
+
+      {/* Custom Navigation */}
+      {vouchers.length > 1 && (
+        <>
+          <button className="voucher-nav voucher-nav-prev">
+            <ChevronLeft size={14} />
+          </button>
+          <button className="voucher-nav voucher-nav-next">
+            <ChevronRight size={14} />
+          </button>
+        </>
+      )}
+    </div>
   );
 };
 
