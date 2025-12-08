@@ -28,7 +28,12 @@ exports.getAllProducts = async (req, res) => {
         IF(sp.NgayTao >= DATE_SUB(NOW(), INTERVAL 7 DAY), 1, 0) AS IsNew,
         (EXISTS (
             SELECT 1 FROM khuyenmai km
-            WHERE (km.SanPhamID = sp.SanPhamID OR km.DanhMucID = sp.DanhMucID)
+            LEFT JOIN danhmuc dm_sp ON sp.DanhMucID = dm_sp.DanhMucID
+            WHERE (
+              km.SanPhamID = sp.SanPhamID 
+              OR km.DanhMucID = sp.DanhMucID 
+              OR km.DanhMucID = dm_sp.DanhMucChaID
+            )
             AND km.NgayBatDau < NOW() AND km.NgayKetThuc > NOW()
         )) AS HasVoucher,
         COUNT(DISTINCT tt.ThuocTinhID) AS ThuocTinhKhop
@@ -694,7 +699,12 @@ exports.getBestSellingProducts = async (req, res) => {
          IF(sp.NgayTao >= DATE_SUB(NOW(), INTERVAL 7 DAY), 1, 0) AS IsNew,
          (EXISTS (
              SELECT 1 FROM khuyenmai km
-             WHERE (km.SanPhamID = sp.SanPhamID OR km.DanhMucID = sp.DanhMucID)
+             LEFT JOIN danhmuc dm_sp ON sp.DanhMucID = dm_sp.DanhMucID
+             WHERE (
+               km.SanPhamID = sp.SanPhamID 
+               OR km.DanhMucID = sp.DanhMucID 
+               OR km.DanhMucID = dm_sp.DanhMucChaID
+             )
              AND km.NgayBatDau < NOW() AND km.NgayKetThuc > NOW()
          )) AS HasVoucher
          -- =======================
@@ -735,7 +745,12 @@ exports.getNewestProducts = async (req, res) => {
           IF(sp.NgayTao >= DATE_SUB(NOW(), INTERVAL 7 DAY), 1, 0) AS IsNew,
           (EXISTS (
               SELECT 1 FROM khuyenmai km
-              WHERE (km.SanPhamID = sp.SanPhamID OR km.DanhMucID = sp.DanhMucID)
+              LEFT JOIN danhmuc dm_sp ON sp.DanhMucID = dm_sp.DanhMucID
+              WHERE (
+                km.SanPhamID = sp.SanPhamID 
+                OR km.DanhMucID = sp.DanhMucID 
+                OR km.DanhMucID = dm_sp.DanhMucChaID
+              )
               AND km.NgayBatDau < NOW() AND km.NgayKetThuc > NOW()
           )) AS HasVoucher
           -- =======================

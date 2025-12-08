@@ -1,71 +1,90 @@
-// client/src/pages/ProfilePage.jsx
+// client/src/pages/ProfilePage.jsx - REDESIGNED v3
 
 import React, { useContext } from "react";
-import { Container, Row, Col, Nav, Image } from "react-bootstrap";
-// NavLink: Giống như <Link> nhưng nó biết khi nào "active"
-// Outlet: Là nơi các component con (như Form) sẽ được render
 import { NavLink, Outlet } from "react-router-dom";
-import { PersonCircle } from "react-bootstrap-icons"; // Icon avatar
+import { 
+  PersonCircle, 
+  PersonGear, 
+  Bag, 
+  Heart, 
+  TagFill, 
+  ArrowRepeat 
+} from "react-bootstrap-icons";
 
 import AuthContext from "../context/AuthContext";
-import "./ProfilePage.css"; // Import CSS
+import "./ProfilePage.css";
+
+// Navigation items configuration
+const NAV_ITEMS = [
+  { path: "/profile", label: "Cập nhật tài khoản", icon: PersonGear, end: true },
+  { path: "/profile/orders", label: "Đơn hàng", icon: Bag },
+  { path: "/profile/wishlist", label: "Yêu thích", icon: Heart },
+  { path: "/profile/vouchers", label: "Mã khuyến mãi", icon: TagFill },
+  { path: "/profile/returns", label: "Đổi trả", icon: ArrowRepeat },
+];
 
 const ProfilePage = () => {
-  const { user } = useContext(AuthContext); // Lấy user từ context
+  const { user } = useContext(AuthContext);
 
-  // Nếu chưa kịp load user (ví dụ: F5)
+  // Loading state
   if (!user) {
     return (
-      <Container className="py-5 text-center">
-        <p>Đang tải thông tin...</p>
-      </Container>
+      <div className="profile-page">
+        <div className="profile-loading">
+          <p>Đang tải thông tin...</p>
+        </div>
+      </div>
     );
   }
 
+  // Get user initials for avatar
+  const getInitials = (name) => {
+    if (!name) return "U";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
+
   return (
-    <Container fluid className="py-5">
-      <Row>
-        {/* === CỘT 1: SIDEBAR (Menu) === */}
-        <Col md={3}>
-          <div className="profile-sidebar">
-            {/* Avatar và Tên */}
-            <div className="text-center mb-4">
-              <PersonCircle size={80} className="profile-avatar" />
-              <h5 className="mt-2 mb-0">{user.hoTen}</h5>
-              <small className="text-muted">{user.email}</small>
+    <div className="profile-page">
+      <div className="profile-page__container">
+        {/* Sidebar */}
+        <aside className="profile-sidebar">
+          {/* User Info */}
+          <div className="profile-sidebar__user">
+            <div className="profile-sidebar__avatar">
+              {getInitials(user.hoTen)}
             </div>
-
-            {/* Menu (Dùng NavLink) */}
-            <Nav className="flex-column profile-nav" variant="pills">
-              {/* 'end' đảm bảo link "/" chỉ active khi khớp chính xác */}
-              <Nav.Link as={NavLink} to="/profile" end>
-                Cập nhật tài khoản
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/profile/orders">
-                Đơn hàng
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/profile/wishlist">
-                Sản phẩm yêu thích
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/profile/vouchers">
-                Mã khuyến mãi
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/profile/returns">
-                Đổi trả của tôi
-              </Nav.Link>
-            </Nav>
+            <div className="profile-sidebar__info">
+              <h2 className="profile-sidebar__name">{user.hoTen}</h2>
+              <p className="profile-sidebar__email">{user.email}</p>
+            </div>
           </div>
-        </Col>
 
-        {/* === CỘT 2: NỘI DUNG (Content) === */}
-        <Col md={9}>
-          <div className="profile-content-card">
-            {/* Đây là nơi các component con (Update, Orders...) sẽ hiển thị */}
-            <Outlet />
-          </div>
-        </Col>
-      </Row>
-    </Container>
+          {/* Navigation */}
+          <nav className="profile-sidebar__nav">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.end}
+                className={({ isActive }) =>
+                  `profile-sidebar__link ${isActive ? "active" : ""}`
+                }
+              >
+                <item.icon className="profile-sidebar__link-icon" />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="profile-content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 };
 

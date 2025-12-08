@@ -55,9 +55,15 @@ export const useProductSearch = () => {
                 setAttributes(attrRes.data);
                 
                 // Initialize filters state with all possible attribute slugs
-                const initialFilters = { danhMuc: [], khoangGia: [] };
+                // AND read URL params at the same time to avoid race condition
+                const params = new URLSearchParams(location.search);
+                const initialFilters = { 
+                    danhMuc: params.get('danhMuc')?.split(',').filter(Boolean) || [], 
+                    khoangGia: params.get('khoangGia')?.split(',').filter(Boolean) || [] 
+                };
                 attrRes.data.forEach((attr) => {
-                    initialFilters[attr.Slug] = [];
+                    const urlValue = params.get(attr.Slug);
+                    initialFilters[attr.Slug] = urlValue?.split(',').filter(Boolean) || [];
                 });
                 setFilters(initialFilters);
             } catch (err) {
@@ -67,10 +73,12 @@ export const useProductSearch = () => {
             }
         };
         fetchSidebarData();
-    }, [api]);
+    }, [api, location.search]);
 
-    // Update filters based on URL query params
+    // Update filters based on URL query params ONLY after sidebar is loaded
     useEffect(() => {
+        if (loadingSidebar) return; // Wait for sidebar to be ready with all keys
+
         const params = new URLSearchParams(location.search);
         const pageFromURL = parseInt(params.get("page")) || 1;
         const searchFromURL = params.get("search") || '';
@@ -82,12 +90,12 @@ export const useProductSearch = () => {
             const newFilters = { ...prevFilters };
             Object.keys(newFilters).forEach(key => {
                 const value = params.get(key);
-                newFilters[key] = value ? value.split(',') : [];
+                newFilters[key] = value ? value.split(',').filter(Boolean) : [];
             });
             return newFilters;
         });
 
-    }, [location.search]);
+    }, [location.search, loadingSidebar]);
 
     // Main effect to fetch products when filters or page change
     useEffect(() => {

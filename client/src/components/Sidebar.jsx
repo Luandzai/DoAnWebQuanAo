@@ -151,7 +151,24 @@ const Sidebar = ({
       ) : (
         <>
           {/* 1. Accordion Danh mục (ĐỘNG) */}
-          <Accordion defaultActiveKey={["0"]} alwaysOpen>
+          <Accordion 
+            defaultActiveKey={
+              // Tìm index của danh mục được chọn trong activeFilters.danhMuc
+              categoryTree
+                .map((cat, index) => {
+                  // Check nếu danh mục cha hoặc bất kỳ danh mục con nào được chọn
+                  const isParentSelected = activeFilters.danhMuc?.includes(cat.Slug);
+                  const isChildSelected = cat.children?.some(child => 
+                    activeFilters.danhMuc?.includes(child.Slug)
+                  );
+                  return (isParentSelected || isChildSelected) ? String(index) : null;
+                })
+                .filter(Boolean)
+                .concat(["0"]) // Fallback: mở danh mục đầu tiên nếu không có gì được chọn
+                .slice(0, 1) // Chỉ lấy 1 accordion mở
+            } 
+            alwaysOpen
+          >
             {renderCategoryTree(categoryTree)}
 
             {/* 2. Accordion Khoảng giá (Tĩnh) */}
