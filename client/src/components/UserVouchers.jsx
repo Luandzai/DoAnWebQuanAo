@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Row, Col, Spinner, Alert, Card, Badge } from "react-bootstrap";
 import AuthContext from "../context/AuthContext";
+import "./UserVouchers.css";
 
 const UserVouchers = () => {
   const [vouchers, setVouchers] = useState([]);
@@ -43,14 +44,12 @@ const UserVouchers = () => {
         <Row>
           {vouchers.map((v) => (
             <Col md={6} key={v.MaKhuyenMai} className="mb-3">
-              {/* Sử dụng className thay vì style inline để dễ kiểm soát Dark Mode */}
               <Card className="voucher-card shadow-sm h-100">
                 <Card.Body className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 className="mb-1 fw-bold text-danger">
+                  <div className="voucher-info">
+                    <h5 className="voucher-code mb-1 fw-bold text-danger" title={v.MaKhuyenMai}>
                       {v.MaKhuyenMai}
                     </h5>
-                    {/* Dùng class text-body để màu chữ tự đổi theo theme (đen/trắng) */}
                     <p className="mb-0 small fw-bold text-body">
                       {v.TenKhuyenMai}
                     </p>
@@ -59,7 +58,7 @@ const UserVouchers = () => {
                       {new Date(v.NgayKetThuc).toLocaleDateString("vi-VN")}
                     </p>
                   </div>
-                  <Badge bg="danger" className="ms-2">
+                  <Badge bg="danger" className="voucher-badge ms-2">
                     {v.LoaiGiamGia === "SOTIEN"
                       ? `${parseFloat(v.GiaTriGiam) / 1000}K`
                       : `${parseFloat(v.GiaTriGiam)}%`}
@@ -75,3 +74,4 @@ const UserVouchers = () => {
 };
 
 export default UserVouchers;
+

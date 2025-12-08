@@ -26,14 +26,20 @@ exports.updateUserProfile = async (req, res) => {
     const NguoiDungID = req.user.NguoiDungID;
     const { HoTen, DienThoai, NgaySinh, GioiTinh } = req.body;
 
+    // Xử lý NgaySinh: chuyển chuỗi rỗng thành null
+    const ngaySinhValue = NgaySinh && NgaySinh.trim() !== '' ? NgaySinh : null;
+    // Xử lý GioiTinh: chuyển chuỗi rỗng thành null
+    const gioiTinhValue = GioiTinh && GioiTinh.trim() !== '' ? GioiTinh : null;
+
     await pool.query(
       "UPDATE nguoidung SET HoTen = ?, DienThoai = ?, NgaySinh = ?, GioiTinh = ? WHERE NguoiDungID = ?",
-      [HoTen, DienThoai, NgaySinh, GioiTinh, NguoiDungID]
+      [HoTen, DienThoai, ngaySinhValue, gioiTinhValue, NguoiDungID]
     );
 
     res.json({ message: "Cập nhật thông tin thành công" });
   } catch (error) {
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("Lỗi updateUserProfile:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
 

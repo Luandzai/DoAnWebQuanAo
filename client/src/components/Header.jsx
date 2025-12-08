@@ -178,12 +178,51 @@ const Header = () => {
               )}
             </Link>
 
-            <Link to="/cart" className="icon-btn">
-              <Cart size={20} />
-              {user && cartItemCount > 0 && (
-                <span className="badge">{cartItemCount}</span>
+            {/* Mini Cart Dropdown */}
+            <div className="mini-cart">
+              <Link to="/cart" className="icon-btn">
+                <Cart size={20} />
+                {user && cartItemCount > 0 && (
+                  <span className="badge">{cartItemCount}</span>
+                )}
+              </Link>
+              {user && cartItems && cartItems.length > 0 && (
+                <div className="mini-cart__dropdown">
+                  <div className="mini-cart__header">
+                    Giỏ hàng ({cartItemCount})
+                  </div>
+                  <div className="mini-cart__items">
+                    {cartItems.slice(0, 3).map((item) => (
+                      <div key={item.PhienBanID} className="mini-cart__item">
+                        <img src={item.HinhAnh} alt={item.TenSanPham} />
+                        <div className="mini-cart__info">
+                          <span className="mini-cart__name">{item.TenSanPham}</span>
+                          <span className="mini-cart__price">
+                            {item.SoLuong} x {parseFloat(item.GiaBan).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {cartItems.length > 3 && (
+                      <div className="mini-cart__more">
+                        +{cartItems.length - 3} sản phẩm khác
+                      </div>
+                    )}
+                  </div>
+                  <div className="mini-cart__footer">
+                    <div className="mini-cart__total">
+                      <span>Tổng:</span>
+                      <strong>
+                        {cartItems.reduce((acc, item) => acc + item.SoLuong * parseFloat(item.GiaBan), 0).toLocaleString("vi-VN")} ₫
+                      </strong>
+                    </div>
+                    <Link to="/cart" className="mini-cart__btn">
+                      Xem giỏ hàng
+                    </Link>
+                  </div>
+                </div>
               )}
-            </Link>
+            </div>
           </div>
 
           {/* Mobile Actions (visible on mobile only) */}
