@@ -123,28 +123,28 @@ const ProductCard = ({ product }) => {
         </Link>
 
         {/* HÀNG GIÁ VÀ GIỎ HÀNG */}
-        <div className="product-price-row">
-          {/* Giá */}
-          <Card.Text as="h5" className="my-0">
-            <span className="text-danger me-2">
+        <div className="product-price-container">
+          {/* Hàng 1: Giá giảm + Icon giỏ hàng */}
+          <div className="product-price-row">
+            <span className="product-price-current text-danger">
               {formatPrice(displayPrice)}
             </span>
-            {showOldPrice && (
-              <span className="text-muted product-price-old-v2">
-                {formatPrice(giaGocNum)}
-              </span>
-            )}
-          </Card.Text>
-
-          {/* Icon Giỏ hàng */}
-          <Button
-            variant="link"
-            className="product-cart-icon"
-            onClick={handleAddToCart}
-            title="Thêm vào giỏ hàng"
-          >
-            <Cart size={22} />
-          </Button>
+            <Button
+              variant="link"
+              className="product-cart-icon"
+              onClick={handleAddToCart}
+              title="Thêm vào giỏ hàng"
+            >
+              <Cart size={22} />
+            </Button>
+          </div>
+          
+          {/* Hàng 2: Giá gốc - LUÔN RENDER nhưng ẩn nếu không có giảm giá */}
+          <div className={`product-price-old-row ${!showOldPrice ? 'invisible' : ''}`}>
+            <span className="text-muted product-price-old-v2">
+              {showOldPrice ? formatPrice(giaGocNum) : '\u00A0'}
+            </span>
+          </div>
         </div>
 
         {/* NÚT "XEM CHI TIẾT" ĐÃ BỊ XÓA */}

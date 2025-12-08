@@ -41,11 +41,26 @@
 /* === CÁC STYLE MỚI CHO GIAO DIỆN V2 === */
 
 /* 4. Toàn bộ Card V2 */
-.product-card-v2 .card-body {
-  padding: 0.75rem; /* Giảm padding 1 chút */
+.product-card-v2 {
+  height: 100%; /* Đảm bảo card stretch full height trong grid */
+  display: flex;
+  flex-direction: column;
 }
+
+.product-card-v2 .card-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Cho phép card-body stretch */
+}
+
 .product-card-v2 .card-title {
-  margin-bottom: 0.25rem; /* Giảm margin dưới title */
+  margin-bottom: 0.25rem;
+}
+
+/* Đẩy price container xuống cuối card */
+.product-card-v2 .product-price-container {
+  margin-top: auto;
 }
 
 /* 5. Tiêu đề (Cho phép 1 dòng) */
@@ -97,22 +112,43 @@
   color: #000;
 }
 
-/* 7. Hàng chứa Giá và Icon Giỏ hàng */
+/* 7. Container chứa giá */
+.product-price-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-height: 2.5rem; /* Đảm bảo chiều cao đồng đều cho tất cả card */
+}
+
+/* Hàng 1: Giá giảm + Icon Giỏ hàng */
 .product-price-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.product-price-old-v2 {
-  text-decoration: line-through;
-  font-size: 0.9rem;
+
+.product-price-current {
+  font-size: 1rem;
+  font-weight: 600;
 }
+
 .product-cart-icon {
   color: #333;
   padding: 0.25rem;
+  flex-shrink: 0;
 }
 .product-cart-icon:hover {
   color: #0d6efd;
+}
+
+/* Hàng 2: Giá gốc */
+.product-price-old-row {
+  line-height: 1;
+}
+
+.product-price-old-v2 {
+  text-decoration: line-through;
+  font-size: 0.85rem;
 }
 
 /* ===== RESPONSIVE STYLES ===== */
@@ -195,19 +231,18 @@
     padding: 2px 4px;
   }
   
-  /* Adjust price row */
-  .product-price-row {
-    font-size: 0.8rem;
-    margin-top: 0.2rem;
-  }
-
-  .product-price-row h5 {
+  /* Adjust price */
+  .product-price-current {
     font-size: 0.85rem;
-    margin: 0;
   }
   
   .product-price-old-v2 {
     font-size: 0.7rem;
+  }
+
+  .product-cart-icon svg {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -233,16 +268,12 @@
     height: 12px;
   }
   
-  .product-price-row {
+  .product-price-current {
     font-size: 0.75rem;
   }
 
-  .product-price-row h5 {
-    font-size: 0.8rem;
-  }
-
   .product-price-old-v2 {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
 
   .discount-badge {
