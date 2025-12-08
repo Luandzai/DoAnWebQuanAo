@@ -1,28 +1,26 @@
-// client/src/components/ProductCard.jsx (ĐÃ THIẾT KẾ LẠI)
+// client/src/components/ProductCard.jsx - REDESIGNED v3
 
 import React, { useContext } from "react";
-import { Card, Button, Badge } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, HeartFill, Cart } from "react-bootstrap-icons";
 
-// Import 3 Context
+// Context
 import AuthContext from "../context/AuthContext";
 import WishlistContext from "../context/WishlistContext";
-import CartContext from "../context/CartContext"; // <-- THÊM CART CONTEXT
+import CartContext from "../context/CartContext";
 
-// Import CSS
+// CSS
 import "./ProductCard.css";
 
 const ProductCard = ({ product }) => {
-  // Lấy state và hàm từ Context
   const { user } = useContext(AuthContext);
-  const { addWishlist, removeWishlist, isFavorited } =
-    useContext(WishlistContext);
-  const { addToCart, cartItems } = useContext(CartContext); // <-- LẤY HÀM addToCart
+  const { addWishlist, removeWishlist, isFavorited } = useContext(WishlistContext);
+  const { addToCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   const favorited = isFavorited(product.SanPhamID);
 
+  // Format price to VND
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -30,19 +28,21 @@ const ProductCard = ({ product }) => {
     }).format(price);
   };
 
-  // Logic giá
+  // Price calculation
   const giaBanNum = parseFloat(product.GiaBan);
   const giaGocNum = parseFloat(product.GiaGoc);
   const displayPrice = giaBanNum > 0 ? giaBanNum : giaGocNum;
   const showOldPrice = giaBanNum > 0 && giaBanNum < giaGocNum;
+  
   let discountPercent = 0;
   if (showOldPrice) {
     discountPercent = Math.round(((giaGocNum - giaBanNum) / giaGocNum) * 100);
   }
 
-  // Hàm xử lý khi click Trái tim
+  // Handlers
   const handleWishlistClick = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!user) {
       navigate("/auth");
       return;
@@ -54,102 +54,86 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  // === HÀM MỚI: XỬ LÝ CLICK GIỎ HÀNG ===
   const handleAddToCart = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!user) {
       navigate("/auth");
       return;
     }
-    // Lấy PhienBanID đầu tiên của sản phẩm
-    // (Lưu ý: Logic này chỉ đúng nếu sản phẩm có ít nhất 1 phiên bản)
-    // Để làm đúng, chúng ta cần PhienBanID, nhưng product card chỉ có SanPhamID
-    // Tạm thời, chúng ta sẽ điều hướng đến trang chi tiết
+    // Navigate to product detail to select variant
     navigate(`/product/${product.Slug}`);
-
-    // NẾU BẠN MUỐN THÊM NGAY LẬP TỨC (cần sửa API /product)
-    // if(product.DefaultPhienBanID) {
-    //   addToCart(product.DefaultPhienBanID, 1);
-    // } else {
-    //   navigate(`/product/${product.Slug}`);
-    // }
   };
 
   return (
-    // 1. SỬA LẠI CARD (ĐƠN GIẢN HƠN)
-    <Card className="my-3 rounded shadow-sm product-card-v2">
-      {/* Badges Container - Giảm Giá, Hàng Mới, Voucher */}
-      <div className="product-badges-container">
-        {showOldPrice && discountPercent > 0 && (
-          <Badge bg="danger" className="discount-badge">
-            - {discountPercent}%
-          </Badge>
-        )}
-        {/* Chỉ hiển thị nếu IsNew = 1 (true) */}
-        {product.IsNew == 1 && <span className="badge-new">Hàng Mới</span>}
-        {/* Chỉ hiển thị nếu HasVoucher = 1 (true) */}
-        {product.HasVoucher == 1 && (
-          <span className="badge-voucher">Voucher</span>
-        )}
-      </div>
-
-      {/* NÚT TRÁI TIM */}
-      <Button
-        variant="light"
-        className="position-absolute shadow-sm product-card-wishlist-btn"
-        onClick={handleWishlistClick}
-      >
-        {favorited ? <HeartFill color="red" /> : <Heart />}
-      </Button>
-
-      <Link to={`/product/${product.Slug}`}>
-        <div className="product-card-image-wrapper">
-          <Card.Img
-            src={
-              product.HinhAnhChinh ||
-              "https://placehold.co/500x500?text=No+Image"
-            }
-            variant="top"
-          />
+    <article className="product-card">
+      {/* Image Section */}
+      <Link to={`/product/${product.Slug}`} className="product-card__image-wrapper">
+        {/* Badges */}
+        <div className="product-card__badges">
+          {showOldPrice && discountPercent > 0 && (
+            <span className="product-card__badge product-card__badge--discount">
+              -{discountPercent}%
+            </span>
+          )}
+          {product.IsNew == 1 && (
+            <span className="product-card__badge product-card__badge--new">
+              New
+            </span>
+          )}
+          {product.HasVoucher == 1 && (
+            <span className="product-card__badge product-card__badge--voucher">
+              Voucher
+            </span>
+          )}
         </div>
+
+        {/* Wishlist Button */}
+        <button
+          className={`product-card__wishlist ${favorited ? 'product-card__wishlist--active' : ''}`}
+          onClick={handleWishlistClick}
+          aria-label={favorited ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          {favorited ? <HeartFill /> : <Heart />}
+        </button>
+
+        {/* Product Image */}
+        <img
+          src={product.HinhAnhChinh || "https://placehold.co/500x500?text=No+Image"}
+          alt={product.TenSanPham}
+          className="product-card__image"
+          loading="lazy"
+        />
       </Link>
 
-      {/* 2. SỬA LẠI CARD BODY */}
-      <Card.Body>
-        <Link to={`/product/${product.Slug}`} className="text-decoration-none">
-          <Card.Title as="div" className="product-title">
-            {product.TenSanPham}
-          </Card.Title>
+      {/* Content Section */}
+      <div className="product-card__content">
+        <Link to={`/product/${product.Slug}`} className="product-card__title">
+          {product.TenSanPham}
         </Link>
 
-        {/* HÀNG GIÁ VÀ GIỎ HÀNG */}
-        <div className="product-price-container">
-          {/* Hàng 1: Giá giảm + Icon giỏ hàng */}
-          <div className="product-price-row">
-            <span className="product-price-current text-danger">
+        {/* Price Section */}
+        <div className="product-card__price-section">
+          <div className="product-card__price-row">
+            <span className="product-card__price-current">
               {formatPrice(displayPrice)}
             </span>
-            <Button
-              variant="link"
-              className="product-cart-icon"
+            <button
+              className="product-card__cart-btn"
               onClick={handleAddToCart}
-              title="Thêm vào giỏ hàng"
+              aria-label="Add to cart"
             >
-              <Cart size={22} />
-            </Button>
+              <Cart />
+            </button>
           </div>
           
-          {/* Hàng 2: Giá gốc - LUÔN RENDER nhưng ẩn nếu không có giảm giá */}
-          <div className={`product-price-old-row ${!showOldPrice ? 'invisible' : ''}`}>
-            <span className="text-muted product-price-old-v2">
-              {showOldPrice ? formatPrice(giaGocNum) : '\u00A0'}
-            </span>
+          {/* Old Price - Always render for consistent height */}
+          <div className={`product-card__price-old ${!showOldPrice ? 'invisible' : ''}`}>
+            {showOldPrice ? formatPrice(giaGocNum) : '\u00A0'}
           </div>
         </div>
-
-        {/* NÚT "XEM CHI TIẾT" ĐÃ BỊ XÓA */}
-      </Card.Body>
-    </Card>
+      </div>
+    </article>
   );
 };
 

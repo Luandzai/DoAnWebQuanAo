@@ -1,290 +1,376 @@
-/* client/src/components/ProductCard.css */
+/* client/src/components/ProductCard.css - REDESIGNED v3 */
 
-/* 1. Vỏ bọc cho ảnh (Wrapper) - Giữ nguyên */
-.product-card-image-wrapper {
+/* ===== CARD CONTAINER ===== */
+.product-card {
   position: relative;
-  width: 100%;
-  padding-top: 100%; /* Đây là mấu chốt: Tạo tỷ lệ 1:1 (vuông) */
-  overflow: hidden; /* Ẩn phần ảnh thừa */
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--bs-body-bg, #fff);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* 2. Ảnh bên trong - Giữ nguyên */
-.product-card-image-wrapper .card-img-top {
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== IMAGE SECTION ===== */
+.product-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* 1:1 Aspect Ratio */
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+}
+
+.product-card__image {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Đây là mấu chốt: Tự cắt ảnh vừa khung */
-  transition: transform 0.3s ease;
+  object-fit: cover;
+  transition: transform 0.4s ease;
 }
 
-.product-card-image-wrapper:hover .card-img-top {
-  transform: scale(1.05);
+.product-card:hover .product-card__image {
+  transform: scale(1.08);
 }
 
-/* 3. Nút Wishlist (Tùy chỉnh lại 1 chút) */
-.product-card-wishlist-btn {
-  top: 10px;
-  right: 10px;
-  z-index: 1;
-  border-radius: 50%;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  width: 40px;
-  height: 40px;
-}
-
-/* === CÁC STYLE MỚI CHO GIAO DIỆN V2 === */
-
-/* 4. Toàn bộ Card V2 */
-.product-card-v2 {
-  height: 100%; /* Đảm bảo card stretch full height trong grid */
-  display: flex;
-  flex-direction: column;
-}
-
-.product-card-v2 .card-body {
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  flex: 1; /* Cho phép card-body stretch */
-}
-
-.product-card-v2 .card-title {
-  margin-bottom: 0.25rem;
-}
-
-/* Đẩy price container xuống cuối card */
-.product-card-v2 .product-price-container {
-  margin-top: auto;
-}
-
-/* 5. Tiêu đề (Cho phép 1 dòng) */
-.product-title {
-  font-size: 0.9rem; /* Giảm cỡ chữ 1 chút */
-  font-weight: 500;
-  color: #333;
-  /* Cắt chữ nếu quá 1 dòng */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 6. Container chứa tất cả badges ở góc trên bên trái */
-.product-badges-container {
+/* ===== BADGES ===== */
+.product-card__badges {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 1;
+  top: 12px;
+  left: 12px;
   display: flex;
-  gap: 5px;
   flex-wrap: wrap;
-  max-width: calc(100% - 60px); /* Để tránh đè lên nút wishlist */
+  gap: 6px;
+  z-index: 2;
+  max-width: calc(100% - 60px);
 }
 
-/* Badge giảm giá */
-.discount-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-/* Badge Hàng Mới và Voucher */
-.badge-new,
-.badge-voucher {
+.product-card__badge {
+  padding: 4px 10px;
+  border-radius: 20px;
   font-size: 0.7rem;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.product-card__badge--discount {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
   color: white;
 }
-.badge-new {
-  background-color: #0d6efd;
-}
-.badge-voucher {
-  background-color: #ffc107;
-  color: #000;
+
+.product-card__badge--new {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
-/* 7. Container chứa giá */
-.product-price-container {
+.product-card__badge--voucher {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+/* ===== WISHLIST BUTTON ===== */
+.product-card__wishlist {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-card__wishlist:hover {
+  transform: scale(1.1);
+  background: white;
+}
+
+.product-card__wishlist svg {
+  width: 18px;
+  height: 18px;
+  transition: all 0.2s;
+}
+
+.product-card__wishlist--active svg {
+  fill: #ff4757;
+  color: #ff4757;
+}
+
+/* ===== CONTENT SECTION ===== */
+.product-card__content {
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  min-height: 2.5rem; /* Đảm bảo chiều cao đồng đều cho tất cả card */
+  flex: 1;
 }
 
-/* Hàng 1: Giá giảm + Icon Giỏ hàng */
-.product-price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.product-price-current {
-  font-size: 1rem;
+.product-card__title {
+  font-size: 0.95rem;
   font-weight: 600;
+  color: var(--bs-body-color, #1a1a2e);
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
-.product-cart-icon {
-  color: #333;
-  padding: 0.25rem;
-  flex-shrink: 0;
-}
-.product-cart-icon:hover {
+.product-card__title:hover {
   color: #0d6efd;
 }
 
-/* Hàng 2: Giá gốc */
-.product-price-old-row {
-  line-height: 1;
+/* ===== PRICE SECTION ===== */
+.product-card__price-section {
+  margin-top: auto;
 }
 
-.product-price-old-v2 {
-  text-decoration: line-through;
+.product-card__price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.product-card__price-current {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.product-card__cart-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #0d6efd 0%, #0056d6 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.product-card__cart-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+}
+
+.product-card__cart-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.product-card__price-old {
   font-size: 0.85rem;
+  color: #999;
+  text-decoration: line-through;
+  margin-top: 4px;
+  min-height: 1.2em;
 }
 
-/* ===== RESPONSIVE STYLES ===== */
-
-/* Tablet: Adjust spacing and font sizes */
+/* ===== RESPONSIVE: TABLET ===== */
 @media (max-width: 992px) {
-  .product-card-v2 .card-body {
-    padding: 0.6rem;
+  .product-card {
+    border-radius: 12px;
   }
-  
-  .product-title {
-    font-size: 0.875rem;
+
+  .product-card__content {
+    padding: 12px;
   }
-  
-  .product-price-row {
-    font-size: 0.95rem;
+
+  .product-card__title {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
   }
-  
-  .product-badges-row {
-    margin-bottom: 0.4rem;
+
+  .product-card__price-current {
+    font-size: 1rem;
+  }
+
+  .product-card__cart-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .product-card__badges {
+    top: 10px;
+    left: 10px;
+    gap: 4px;
+  }
+
+  .product-card__badge {
+    padding: 3px 8px;
+    font-size: 0.65rem;
+  }
+
+  .product-card__wishlist {
+    width: 32px;
+    height: 32px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .product-card__wishlist svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
-/* Mobile: Optimized for 2 products per row */
+/* ===== RESPONSIVE: MOBILE ===== */
 @media (max-width: 576px) {
-  .product-card-v2 {
-    margin-bottom: 0.75rem !important;
-    margin-top: 0.75rem !important;
+  .product-card {
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 
-  .product-card-v2 .card-body {
-    padding: 0.4rem;
+  .product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
   }
-  
-  .product-title {
+
+  .product-card__content {
+    padding: 10px;
+  }
+
+  .product-card__title {
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+    -webkit-line-clamp: 1;
+  }
+
+  .product-card__price-current {
+    font-size: 0.9rem;
+  }
+
+  .product-card__price-old {
     font-size: 0.75rem;
-    line-height: 1.2;
-    margin-bottom: 0.3rem;
-  }
-  
-  /* Smaller wishlist button */
-  .product-card-wishlist-btn {
-    width: 30px !important;
-    height: 30px !important;
-    top: 6px;
-    right: 6px;
   }
 
-  .product-card-wishlist-btn svg {
+  .product-card__cart-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+  }
+
+  .product-card__cart-btn svg {
     width: 14px;
     height: 14px;
   }
-  
-  /* Smaller cart icon */
-  .product-cart-icon {
-    padding: 0.2rem;
-  }
 
-  .product-cart-icon svg {
-    width: 18px;
-    height: 18px;
-  }
-  
-  /* Tighter badge spacing */
-  .product-badges-container {
-    gap: 2px;
-    top: 6px;
-    left: 6px;
+  .product-card__badges {
+    top: 8px;
+    left: 8px;
+    gap: 3px;
     max-width: calc(100% - 45px);
   }
-  
-  .discount-badge {
-    font-size: 0.6rem;
-    padding: 2px 4px;
-  }
-  
-  .badge-new,
-  .badge-voucher {
+
+  .product-card__badge {
+    padding: 2px 6px;
     font-size: 0.55rem;
-    padding: 2px 4px;
-  }
-  
-  /* Adjust price */
-  .product-price-current {
-    font-size: 0.85rem;
-  }
-  
-  .product-price-old-v2 {
-    font-size: 0.7rem;
+    border-radius: 12px;
   }
 
-  .product-cart-icon svg {
-    width: 18px;
-    height: 18px;
+  .product-card__wishlist {
+    width: 28px;
+    height: 28px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .product-card__wishlist svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
-/* Extra small mobile: Further optimizations for very small screens */
+/* ===== RESPONSIVE: EXTRA SMALL ===== */
 @media (max-width: 375px) {
-  .product-card-v2 .card-body {
-    padding: 0.35rem;
+  .product-card__content {
+    padding: 8px;
   }
-  
-  .product-title {
+
+  .product-card__title {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+  }
+
+  .product-card__price-current {
+    font-size: 0.85rem;
+  }
+
+  .product-card__price-old {
     font-size: 0.7rem;
   }
 
-  .product-card-wishlist-btn {
-    width: 28px !important;
-    height: 28px !important;
-    top: 5px;
-    right: 5px;
+  .product-card__cart-btn {
+    width: 28px;
+    height: 28px;
   }
 
-  .product-card-wishlist-btn svg {
+  .product-card__badge {
+    font-size: 0.5rem;
+    padding: 2px 5px;
+  }
+
+  .product-card__wishlist {
+    width: 26px;
+    height: 26px;
+  }
+
+  .product-card__wishlist svg {
     width: 12px;
     height: 12px;
   }
-  
-  .product-price-current {
-    font-size: 0.75rem;
-  }
-
-  .product-price-old-v2 {
-    font-size: 0.6rem;
-  }
-
-  .discount-badge {
-    font-size: 0.55rem;
-    padding: 2px 3px;
-  }
-  
-  .badge-new,
-  .badge-voucher {
-    font-size: 0.5rem;
-    padding: 1px 3px;
-  }
 }
 
+/* ===== DARK MODE SUPPORT ===== */
+[data-bs-theme="dark"] .product-card {
+  background: #1e1e2d;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .product-card__image-wrapper {
+  background: linear-gradient(135deg, #2a2a3d 0%, #1e1e2d 100%);
+}
+
+[data-bs-theme="dark"] .product-card__wishlist {
+  background: rgba(30, 30, 45, 0.95);
+  color: #fff;
+}
+
+[data-bs-theme="dark"] .product-card__title {
+  color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .product-card__title:hover {
+  color: #4da3ff;
+}
+
+[data-bs-theme="dark"] .product-card__price-old {
+  color: #666;
+}
