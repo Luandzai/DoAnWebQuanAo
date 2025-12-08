@@ -278,7 +278,9 @@
   right: 0;
   width: var(--sidebar-width);
   max-width: 85vw;
-  height: 100vh;
+  height: 100dvh;
+  /* Fallback for older browsers */
+  height: -webkit-fill-available;
   background: var(--bs-body-bg, #fff);
   z-index: 1200;
   transform: translateX(100%);
