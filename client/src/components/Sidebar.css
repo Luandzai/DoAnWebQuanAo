@@ -2,9 +2,10 @@
 
 .sidebar-container {
   padding: 1.5rem;
-  background-color: #fdfdfd;
+  background-color: var(--bs-body-bg, #fdfdfd);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: var(--bs-body-color, #1a1a2e);
 }
 
 .sidebar-title {

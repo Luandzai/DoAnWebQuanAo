@@ -1,33 +1,117 @@
-// client/src/pages/ProductListPage.jsx (Refactored)
-import React from 'react';
-import { Container, Row, Col, DropdownButton, Dropdown, Badge } from 'react-bootstrap';
+// client/src/pages/ProductListPage.jsx - REDESIGNED v3
+
+import React, { useState } from 'react';
+import { Badge, Spinner } from 'react-bootstrap';
+import { Funnel, X, ChevronDown, ChevronUp } from 'react-bootstrap-icons';
 import { useProductSearch } from '../hooks/useProductSearch';
 import Sidebar from '../components/Sidebar';
-import ProductGrid from '../components/ProductGrid';
+import ProductCard from '../components/ProductCard';
+import './ProductListPage.css';
 
+// Sort Dropdown Component
 const SortDropdown = ({ sortBy, onSortChange }) => {
-    const sortOptions = {
-        'newest': 'Mới nhất',
-        'price-asc': 'Giá: Thấp đến cao',
-        'price-desc': 'Giá: Cao đến thấp',
-    };
+    const [isOpen, setIsOpen] = useState(false);
+    
+    const sortOptions = [
+        { key: 'newest', label: 'Mới nhất' },
+        { key: 'price-asc', label: 'Giá: Thấp → Cao' },
+        { key: 'price-desc', label: 'Giá: Cao → Thấp' },
+    ];
+
+    const currentLabel = sortOptions.find(opt => opt.key === sortBy)?.label || 'Sắp xếp';
 
     return (
-        <DropdownButton
-            id="dropdown-sort"
-            title={sortOptions[sortBy] || 'Sắp xếp'}
-            size="sm"
-            onSelect={onSortChange}
-        >
-            <Dropdown.Item eventKey="newest">Mới nhất</Dropdown.Item>
-            <Dropdown.Item eventKey="price-asc">Giá: Thấp đến cao</Dropdown.Item>
-            <Dropdown.Item eventKey="price-desc">Giá: Cao đến thấp</Dropdown.Item>
-        </DropdownButton>
+        <div className="plp-sort">
+            <button 
+                className="plp-sort__btn"
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <span>{currentLabel}</span>
+                {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {isOpen && (
+                <div className="plp-sort__dropdown">
+                    {sortOptions.map(opt => (
+                        <button
+                            key={opt.key}
+                            className={`plp-sort__option ${sortBy === opt.key ? 'active' : ''}`}
+                            onClick={() => {
+                                onSortChange(opt.key);
+                                setIsOpen(false);
+                            }}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 };
 
+// Pagination Component
+const Pagination = ({ pagination, onPageChange }) => {
+    if (!pagination || pagination.totalPages <= 1) return null;
+    
+    const { currentPage, totalPages } = pagination;
+    const pages = [];
+    
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+    }
 
+    return (
+        <div className="plp-pagination">
+            <button 
+                className="plp-pagination__btn"
+                onClick={() => onPageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+            >
+                ←
+            </button>
+            
+            {startPage > 1 && (
+                <>
+                    <button className="plp-pagination__btn" onClick={() => onPageChange(1)}>1</button>
+                    {startPage > 2 && <span className="plp-pagination__dots">...</span>}
+                </>
+            )}
+            
+            {pages.map(page => (
+                <button
+                    key={page}
+                    className={`plp-pagination__btn ${page === currentPage ? 'active' : ''}`}
+                    onClick={() => onPageChange(page)}
+                >
+                    {page}
+                </button>
+            ))}
+            
+            {endPage < totalPages && (
+                <>
+                    {endPage < totalPages - 1 && <span className="plp-pagination__dots">...</span>}
+                    <button className="plp-pagination__btn" onClick={() => onPageChange(totalPages)}>{totalPages}</button>
+                </>
+            )}
+            
+            <button 
+                className="plp-pagination__btn"
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+            >
+                →
+            </button>
+        </div>
+    );
+};
+
+// Main Component
 const ProductListPage = () => {
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    
     const {
         products,
         loadingProducts,
@@ -45,10 +129,46 @@ const ProductListPage = () => {
         handlePageChange,
     } = useProductSearch();
 
+    // Count active filters
+    const activeFilterCount = Object.values(filters).reduce((count, arr) => {
+        return count + (Array.isArray(arr) ? arr.length : 0);
+    }, 0);
+
     return (
-        <Container fluid className="py-5">
-            <Row>
-                <Col md={3}>
+        <div className="plp">
+            {/* Mobile Filter Toggle Bar */}
+            <div className="plp-mobile-bar">
+                <button 
+                    className="plp-mobile-bar__filter-btn"
+                    onClick={() => setIsFilterOpen(true)}
+                >
+                    <Funnel size={18} />
+                    <span>Bộ lọc</span>
+                    {activeFilterCount > 0 && (
+                        <span className="plp-mobile-bar__count">{activeFilterCount}</span>
+                    )}
+                </button>
+                <SortDropdown sortBy={sortBy} onSortChange={handleSortChange} />
+            </div>
+
+            {/* Filter Drawer Overlay */}
+            <div 
+                className={`plp-drawer-overlay ${isFilterOpen ? 'active' : ''}`}
+                onClick={() => setIsFilterOpen(false)}
+            />
+
+            {/* Filter Drawer (Mobile) */}
+            <aside className={`plp-drawer ${isFilterOpen ? 'open' : ''}`}>
+                <div className="plp-drawer__header">
+                    <h3>Bộ lọc</h3>
+                    <button 
+                        className="plp-drawer__close"
+                        onClick={() => setIsFilterOpen(false)}
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
+                <div className="plp-drawer__content">
                     <Sidebar
                         onFilterChange={handleFilterChange}
                         activeFilters={filters}
@@ -56,32 +176,90 @@ const ProductListPage = () => {
                         attributes={attributes}
                         isLoading={loadingSidebar}
                     />
-                </Col>
-                <Col md={9}>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                        <div>
+                </div>
+                <div className="plp-drawer__footer">
+                    <button 
+                        className="plp-drawer__apply-btn"
+                        onClick={() => setIsFilterOpen(false)}
+                    >
+                        Xem {products.length} sản phẩm
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <div className="plp-container">
+                {/* Desktop Sidebar */}
+                <aside className="plp-sidebar">
+                    <Sidebar
+                        onFilterChange={handleFilterChange}
+                        activeFilters={filters}
+                        categoryTree={categoryTree}
+                        attributes={attributes}
+                        isLoading={loadingSidebar}
+                    />
+                </aside>
+
+                {/* Products Area */}
+                <main className="plp-main">
+                    {/* Top Bar */}
+                    <div className="plp-topbar">
+                        <div className="plp-topbar__left">
                             {searchKeyword && (
-                                <>
-                                    <span className="me-2">Kết quả cho:</span>
-                                    <Badge pill bg="info" className="me-1" style={{ cursor: 'pointer' }} onClick={removeSearch}>
-                                        {searchKeyword} <span className="fw-bold">X</span>
+                                <div className="plp-search-tag">
+                                    <span>Kết quả:</span>
+                                    <Badge 
+                                        pill 
+                                        bg="primary" 
+                                        className="plp-search-tag__badge"
+                                        onClick={removeSearch}
+                                    >
+                                        {searchKeyword} <X size={14} />
                                     </Badge>
-                                </>
+                                </div>
+                            )}
+                            {!loadingProducts && (
+                                <span className="plp-topbar__count">
+                                    {products.length} sản phẩm
+                                </span>
                             )}
                         </div>
-                        <SortDropdown sortBy={sortBy} onSortChange={handleSortChange} />
+                        <div className="plp-topbar__right">
+                            <SortDropdown sortBy={sortBy} onSortChange={handleSortChange} />
+                        </div>
                     </div>
 
-                    <ProductGrid
-                        products={products}
-                        loading={loadingProducts}
-                        error={error}
-                        pagination={pagination}
-                        onPageChange={handlePageChange}
-                    />
-                </Col>
-            </Row>
-        </Container>
+                    {/* Products Grid */}
+                    {loadingProducts ? (
+                        <div className="plp-loading">
+                            <Spinner animation="border" />
+                            <span>Đang tải sản phẩm...</span>
+                        </div>
+                    ) : error ? (
+                        <div className="plp-error">{error}</div>
+                    ) : products.length === 0 ? (
+                        <div className="plp-empty">
+                            <p>Không tìm thấy sản phẩm nào phù hợp.</p>
+                            <p className="text-muted">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="plp-grid">
+                                {products.map(product => (
+                                    <div key={product.SanPhamID} className="plp-grid__item">
+                                        <ProductCard product={product} />
+                                    </div>
+                                ))}
+                            </div>
+                            <Pagination 
+                                pagination={pagination} 
+                                onPageChange={handlePageChange} 
+                            />
+                        </>
+                    )}
+                </main>
+            </div>
+        </div>
     );
 };
 
