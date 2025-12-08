@@ -34,12 +34,14 @@ const Header = () => {
 
   const [keyword, setKeyword] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Đóng sidebar khi route thay đổi
+  // Đóng sidebar và dropdown khi route thay đổi
   useEffect(() => {
     setIsSidebarOpen(false);
+    setIsUserDropdownOpen(false);
   }, [location.pathname]);
 
   // Prevent scroll khi sidebar mở
@@ -53,6 +55,17 @@ const Header = () => {
       document.body.style.overflow = "";
     };
   }, [isSidebarOpen]);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isUserDropdownOpen && !e.target.closest('.user-dropdown')) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isUserDropdownOpen]);
 
   const searchHandler = (e) => {
     e.preventDefault();
@@ -129,17 +142,29 @@ const Header = () => {
             <ThemeToggle />
 
             {user ? (
-              <div className="user-dropdown">
-                <button className="user-btn">
+              <div className={`user-dropdown ${isUserDropdownOpen ? 'open' : ''}`}>
+                <button 
+                  className="user-btn" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsUserDropdownOpen(!isUserDropdownOpen);
+                  }}
+                >
                   <Person size={20} />
                   <span>{user.hoTen}</span>
                 </button>
-                <div className="dropdown-menu">
-                  <Link to="/profile">Thông tin tài khoản</Link>
+                <div className="user-menu">
+                  <Link to="/profile" onClick={() => setIsUserDropdownOpen(false)}>
+                    Thông tin tài khoản
+                  </Link>
                   {user.vaiTro === "ADMIN" && (
-                    <Link to="/admin/dashboard">Trang Admin</Link>
+                    <Link to="/admin/dashboard" onClick={() => setIsUserDropdownOpen(false)}>
+                      Trang Admin
+                    </Link>
                   )}
-                  <button onClick={logout}>Đăng xuất</button>
+                  <button onClick={() => { logout(); setIsUserDropdownOpen(false); }}>
+                    Đăng xuất
+                  </button>
                 </div>
               </div>
             ) : (
