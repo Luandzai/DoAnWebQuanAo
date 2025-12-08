@@ -24,7 +24,7 @@ export const useContactForm = () => {
         setSuccess("");
         try {
             const res = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/contact`,
+                `${import.meta.env.VITE_API_URL}/contact`,
                 formData
             );
             setSuccess(res.data.message);

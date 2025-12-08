@@ -1,23 +1,11 @@
-// client/src/components/Header.jsx (Đã thêm ThemeToggle)
-
-import React, { useContext, useState } from "react";
-import {
-  Navbar,
-  Nav,
-  Container,
-  Form,
-  InputGroup,
-  Button,
-  NavDropdown,
-  Badge,
-} from "react-bootstrap";
+// client/src/components/Header.jsx
+import React, { useContext, useState, useEffect } from "react";
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
-import { Telephone, Search, Person, Cart, Heart } from "react-bootstrap-icons";
+import { Telephone, Search, Person, Cart, Heart, List, X } from "react-bootstrap-icons";
 import "./Header.css";
 import AuthContext from "../context/AuthContext";
 import CartContext from "../context/CartContext";
 import WishlistContext from "../context/WishlistContext";
-// 1. Import ThemeToggle
 import ThemeToggle from "./ThemeToggle";
 
 const CATEGORIES = [
@@ -45,8 +33,26 @@ const Header = () => {
   const { wishlist: wishlistItems } = useContext(WishlistContext);
 
   const [keyword, setKeyword] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Đóng sidebar khi route thay đổi
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Prevent scroll khi sidebar mở
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isSidebarOpen]);
 
   const searchHandler = (e) => {
     e.preventDefault();
@@ -56,6 +62,7 @@ const Header = () => {
     } else {
       navigate("/products");
     }
+    setIsSidebarOpen(false);
   };
 
   const handleCategoryClick = (category) => {
@@ -64,147 +71,189 @@ const Header = () => {
     } else {
       navigate(`/products?danhMuc=${category}`);
     }
+    setIsSidebarOpen(false);
+  };
+
+  const handleNavClick = () => {
+    setIsSidebarOpen(false);
   };
 
   const cartItemCount = cartItems?.length || 0;
   const wishlistItemCount = wishlistItems?.length || 0;
 
   return (
-    <header className="header-container shadow-sm">
-      <div className="top-bar bg-dark text-white">
-        <Container fluid className="d-flex justify-content-between">
-          <span>
-            <Telephone size={14} /> Hỗ trợ khách hàng: 1800.1000
-          </span>
-          <span></span>
-        </Container>
+    <>
+      {/* TOP BAR */}
+      <div className="header-topbar">
+        <div className="topbar-content">
+          <span><Telephone size={14} /> Hỗ trợ: 1800.1000</span>
+        </div>
       </div>
 
-      <Navbar bg="body" variant="underline" expand="xl" className="main-navbar">
-        <Container fluid>
-          <Navbar.Brand as={Link} to="/" className="fw-bold fs-4">
+      {/* MAIN HEADER */}
+      <header className="header-main">
+        <div className="header-container">
+          {/* Logo */}
+          <Link to="/" className="header-logo" onClick={handleNavClick}>
             BLANK CANVAS
-          </Navbar.Brand>
+          </Link>
 
-          <Navbar.Toggle aria-controls="main-navbar-nav" />
-
-          <Navbar.Collapse id="main-navbar-nav">
-            <Nav className="mx-auto nav-links">
-              {CATEGORIES.map((item) => (
-                <Nav.Link
-                  key={item.category}
-                  as="div"
-                  onClick={() => handleCategoryClick(item.category)}
-                  className={`nav-link ${
-                    isCategoryActive(item.category, location) ? "active" : ""
-                  }`}
-                  style={{ cursor: "pointer" }}
-                >
-                  {item.name}
-                </Nav.Link>
-              ))}
-
-              <Nav.Link as={NavLink} to="/news">
-                TIN TỨC
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/virtual-try-on">
-                THỬ ĐỒ ẢO
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/contact">
-                LIÊN HỆ
-              </Nav.Link>
-            </Nav>
-
-            <Nav className="align-items-center nav-icons gap-2">
-              <Form
-                className="d-flex me-2 search-form"
-                onSubmit={searchHandler}
+          {/* Desktop Navigation */}
+          <nav className="header-nav-desktop">
+            {CATEGORIES.map((item) => (
+              <button
+                key={item.category}
+                onClick={() => handleCategoryClick(item.category)}
+                className={`nav-link ${isCategoryActive(item.category, location) ? "active" : ""}`}
               >
-                <InputGroup size="sm">
-                  <Form.Control
-                    type="search"
-                    placeholder="Tìm kiếm..."
-                    aria-label="Tìm kiếm"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                  />
-                  <Button
-                    type="submit"
-                    variant="outline-secondary"
-                    className="search-button"
-                  >
-                    <Search />
-                  </Button>
-                </InputGroup>
-              </Form>
+                {item.name}
+              </button>
+            ))}
+            <NavLink to="/news" className="nav-link">TIN TỨC</NavLink>
+            <NavLink to="/virtual-try-on" className="nav-link">THỬ ĐỒ ẢO</NavLink>
+            <NavLink to="/contact" className="nav-link">LIÊN HỆ</NavLink>
+          </nav>
 
-              {/* 2. THÊM NÚT THEME TOGGLE TẠI ĐÂY */}
-              <ThemeToggle />
+          {/* Desktop Actions */}
+          <div className="header-actions-desktop">
+            <form className="search-form" onSubmit={searchHandler}>
+              <input
+                type="search"
+                placeholder="Tìm kiếm..."
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+              <button type="submit"><Search size={16} /></button>
+            </form>
 
-              {user ? (
-                <NavDropdown
-                  title={`Xin chào, ${user.hoTen}`}
-                  id="user-nav-dropdown"
-                >
-                  <NavDropdown.Item as={Link} to="/profile">
-                    Thông tin tài khoản
-                  </NavDropdown.Item>
+            <ThemeToggle />
+
+            {user ? (
+              <div className="user-dropdown">
+                <button className="user-btn">
+                  <Person size={20} />
+                  <span>{user.hoTen}</span>
+                </button>
+                <div className="dropdown-menu">
+                  <Link to="/profile">Thông tin tài khoản</Link>
                   {user.vaiTro === "ADMIN" && (
-                    <NavDropdown.Item as={Link} to="/admin/dashboard">
-                      Trang Admin
-                    </NavDropdown.Item>
+                    <Link to="/admin/dashboard">Trang Admin</Link>
                   )}
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item onClick={logout}>
-                    Đăng xuất
-                  </NavDropdown.Item>
-                </NavDropdown>
-              ) : (
-                <Nav.Link as={Link} to="/auth" className="nav-icon-link">
-                  <Person size={22} />
-                </Nav.Link>
+                  <button onClick={logout}>Đăng xuất</button>
+                </div>
+              </div>
+            ) : (
+              <Link to="/auth" className="icon-btn"><Person size={20} /></Link>
+            )}
+
+            <Link to="/profile/wishlist" className="icon-btn">
+              <Heart size={20} />
+              {user && wishlistItemCount > 0 && (
+                <span className="badge">{wishlistItemCount}</span>
               )}
+            </Link>
 
-              <Nav.Link
-                as={Link}
-                to="/profile/wishlist"
-                className="nav-icon-link position-relative"
-              >
-                <Heart size={22} />
-                {user && wishlistItemCount > 0 && (
-                  <Badge
-                    pill
-                    bg="danger"
-                    className="position-absolute"
-                    style={{ top: "-5px", right: "-10px", fontSize: "0.7em" }}
-                  >
-                    {wishlistItemCount}
-                  </Badge>
-                )}
-              </Nav.Link>
+            <Link to="/cart" className="icon-btn">
+              <Cart size={20} />
+              {user && cartItemCount > 0 && (
+                <span className="badge">{cartItemCount}</span>
+              )}
+            </Link>
+          </div>
 
-              <Nav.Link
-                as={Link}
-                to="/cart"
-                className="nav-icon-link position-relative"
-              >
-                <Cart size={22} />
-                {user && cartItemCount > 0 && (
-                  <Badge
-                    pill
-                    bg="danger"
-                    className="position-absolute"
-                    style={{ top: "-5px", right: "-10px", fontSize: "0.7em" }}
-                  >
-                    {cartItemCount}
-                  </Badge>
+          {/* Mobile Actions (visible on mobile only) */}
+          <div className="header-actions-mobile">
+            <ThemeToggle />
+            <Link to="/profile/wishlist" className="icon-btn">
+              <Heart size={20} />
+              {user && wishlistItemCount > 0 && (
+                <span className="badge">{wishlistItemCount}</span>
+              )}
+            </Link>
+            <Link to="/cart" className="icon-btn">
+              <Cart size={20} />
+              {user && cartItemCount > 0 && (
+                <span className="badge">{cartItemCount}</span>
+              )}
+            </Link>
+            <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
+              <List size={24} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* MOBILE SIDEBAR */}
+      <div className={`sidebar-overlay ${isSidebarOpen ? "active" : ""}`} onClick={() => setIsSidebarOpen(false)} />
+      
+      <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
+        {/* Sidebar Header */}
+        <div className="sidebar-header">
+          <span className="sidebar-title">Menu</span>
+          <button className="close-btn" onClick={() => setIsSidebarOpen(false)}>
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Sidebar Search */}
+        <form className="sidebar-search" onSubmit={searchHandler}>
+          <input
+            type="search"
+            placeholder="Tìm kiếm sản phẩm..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+          />
+          <button type="submit"><Search size={18} /></button>
+        </form>
+
+        {/* Sidebar Navigation */}
+        <nav className="sidebar-nav">
+          {CATEGORIES.map((item, index) => (
+            <button
+              key={item.category}
+              onClick={() => handleCategoryClick(item.category)}
+              className={`sidebar-link ${isCategoryActive(item.category, location) ? "active" : ""}`}
+              style={{ animationDelay: `${index * 0.03}s` }}
+            >
+              {item.name}
+            </button>
+          ))}
+          <NavLink to="/news" className="sidebar-link" style={{ animationDelay: "0.18s" }} onClick={handleNavClick}>
+            TIN TỨC
+          </NavLink>
+          <NavLink to="/virtual-try-on" className="sidebar-link" style={{ animationDelay: "0.21s" }} onClick={handleNavClick}>
+            THỬ ĐỒ ẢO
+          </NavLink>
+          <NavLink to="/contact" className="sidebar-link" style={{ animationDelay: "0.24s" }} onClick={handleNavClick}>
+            LIÊN HỆ
+          </NavLink>
+        </nav>
+
+        {/* Sidebar Footer - User Info */}
+        <div className="sidebar-footer">
+          {user ? (
+            <div className="sidebar-user">
+              <div className="user-info">
+                <Person size={20} />
+                <span>{user.hoTen}</span>
+              </div>
+              <div className="user-actions">
+                <Link to="/profile" onClick={handleNavClick}>Tài khoản</Link>
+                {user.vaiTro === "ADMIN" && (
+                  <Link to="/admin/dashboard" onClick={handleNavClick}>Admin</Link>
                 )}
-              </Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-    </header>
+                <button onClick={() => { logout(); setIsSidebarOpen(false); }}>Đăng xuất</button>
+              </div>
+            </div>
+          ) : (
+            <Link to="/auth" className="login-btn" onClick={handleNavClick}>
+              <Person size={18} />
+              Đăng nhập / Đăng ký
+            </Link>
+          )}
+        </div>
+      </aside>
+    </>
   );
 };
 
