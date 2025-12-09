@@ -6,13 +6,15 @@ const pool = require("../config/db");
 // @access  Private (Admin)
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. DOANH SỐ THÁNG HIỆN TẠI (Đơn hàng đã giao)
+    // 1. DOANH SỐ THÁNG HIỆN TẠI (Đơn hàng đã giao - trừ số tiền đã hoàn trả)
     const [salesResult] = await pool.query(
-      `SELECT SUM(TongThanhToan) AS totalSales 
-       FROM donhang 
-       WHERE TrangThai = 'DA_GIAO' 
-         AND MONTH(NgayDatHang) = MONTH(NOW()) 
-         AND YEAR(NgayDatHang) = YEAR(NOW())`
+      `SELECT 
+         SUM(dh.TongThanhToan) - COALESCE(SUM(r.RefundAmount), 0) AS totalSales 
+       FROM donhang dh
+       LEFT JOIN returns r ON dh.DonHangID = r.DonHangID AND r.Status = 'COMPLETED'
+       WHERE dh.TrangThai IN ('DA_GIAO', 'DOI_TRA')
+         AND MONTH(dh.NgayDatHang) = MONTH(NOW()) 
+         AND YEAR(dh.NgayDatHang) = YEAR(NOW())`
     );
     const totalSales = parseFloat(salesResult[0].totalSales) || 0;
 
@@ -295,13 +297,14 @@ exports.getMonthlySales = async (req, res) => {
     const [monthlySales] = await pool.query(
       `
       SELECT 
-          MONTH(NgayDatHang) AS month,
-          SUM(TongThanhToan) AS totalRevenue
-      FROM donhang
+          MONTH(dh.NgayDatHang) AS month,
+          SUM(dh.TongThanhToan) - COALESCE(SUM(r.RefundAmount), 0) AS totalRevenue
+      FROM donhang dh
+      LEFT JOIN returns r ON dh.DonHangID = r.DonHangID AND r.Status = 'COMPLETED'
       WHERE 
-          TrangThai = 'DA_GIAO' AND YEAR(NgayDatHang) = ?
+          dh.TrangThai IN ('DA_GIAO', 'DOI_TRA') AND YEAR(dh.NgayDatHang) = ?
       GROUP BY 
-          MONTH(NgayDatHang)
+          MONTH(dh.NgayDatHang)
       ORDER BY 
           month ASC
       `,

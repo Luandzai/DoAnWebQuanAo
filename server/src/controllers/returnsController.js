@@ -87,12 +87,9 @@ exports.requestReturn = async (req, res) => {
       );
     }
 
-    // 4. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG GỐC sang DOI_TRA (Quan trọng: Loại khỏi báo cáo doanh thu)
-    // Ngay khi yêu cầu được tạo, đơn hàng gốc chuyển sang DOI_TRA.
-    await connection.query(
-      "UPDATE donhang SET TrangThai = 'DOI_TRA', NgayCapNhat = NOW(), NguoiCapNhat = ? WHERE DonHangID = ?",
-      [NguoiDungID, DonHangID]
-    );
+    // NOTE: Không tự động chuyển trạng thái sang DOI_TRA nữa
+    // Đơn hàng vẫn giữ DA_GIAO để doanh thu được tính đúng
+    // Admin sẽ quyết định khi nào chuyển trạng thái thủ công (nếu cần)
 
     await connection.commit();
     res.status(201).json({
@@ -236,7 +233,7 @@ exports.updateReturnStatus = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const { id: ReturnID } = req.params;
-    const { newStatus, refundAmount } = req.body;
+    const { newStatus, refundAmount, restoreInventory } = req.body;
     const AdminID = req.user.NguoiDungID;
 
     // 1. Kiểm tra trạng thái hợp lệ
@@ -293,7 +290,23 @@ exports.updateReturnStatus = async (req, res) => {
           "Yêu cầu cần được phê duyệt (APPROVED) và có số tiền hoàn trả trước khi hoàn tất."
         );
       }
-      // KHÔNG CẦN UPDATE donhang.TrangThai ở đây, nó vẫn là DOI_TRA
+
+      // 4. Nếu admin xác nhận hàng còn nguyên vẹn, cập nhật tồn kho
+      if (restoreInventory === true) {
+        // Lấy danh sách sản phẩm trả từ chitietreturns
+        const [returnItems] = await connection.query(
+          "SELECT PhienBanID, SoLuongTra FROM chitietreturns WHERE ReturnID = ?",
+          [ReturnID]
+        );
+
+        // Cộng lại số lượng trả vào tồn kho của từng phiên bản sản phẩm
+        for (const item of returnItems) {
+          await connection.query(
+            "UPDATE phienbansanpham SET SoLuongTonKho = SoLuongTonKho + ? WHERE PhienBanID = ?",
+            [item.SoLuongTra, item.PhienBanID]
+          );
+        }
+      }
     }
 
     updateQuery += " WHERE ReturnID = ?";

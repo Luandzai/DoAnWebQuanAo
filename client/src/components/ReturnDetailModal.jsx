@@ -23,6 +23,7 @@ const ReturnDetailModal = ({ show, onHide, returnId, onUpdate }) => {
     const [pendingUpdate, setPendingUpdate] = useState(null); // { newStatus, refundAmount }
     const [updating, setUpdating] = useState(false);
     const [refundAmount, setRefundAmount] = useState(0);
+    const [restoreInventory, setRestoreInventory] = useState(false); // Checkbox for inventory restore
 
     const formatCurrency = (amount) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount || 0);
     const formatDate = (dateString) => new Date(dateString).toLocaleString("vi-VN");
@@ -63,6 +64,7 @@ const ReturnDetailModal = ({ show, onHide, returnId, onUpdate }) => {
             initialRefund = parseFloat(returnDetail.RefundAmount);
         }
         setRefundAmount(initialRefund);
+        setRestoreInventory(false); // Reset checkbox when opening modal
         setPendingUpdate({ newStatus: targetStatus });
         setShowConfirmModal(true);
     };
@@ -75,6 +77,7 @@ const ReturnDetailModal = ({ show, onHide, returnId, onUpdate }) => {
             const payload = {
                 newStatus: pendingUpdate.newStatus,
                 refundAmount: pendingUpdate.newStatus === "APPROVED" ? parseFloat(refundAmount) : undefined,
+                restoreInventory: pendingUpdate.newStatus === "COMPLETED" ? restoreInventory : undefined,
             };
 
             const response = await api.put(`/admin/returns/${returnId}/status`, payload);
@@ -132,13 +135,31 @@ const ReturnDetailModal = ({ show, onHide, returnId, onUpdate }) => {
         if (newStatus === "COMPLETED") {
               return {
                 title: "Xác nhận Hoàn tất Thủ tục",
-                message: `Xác nhận **ĐÃ HOÀN TẤT** thủ tục và đã hoàn trả **${formatCurrency(returnDetail?.RefundAmount || 0)}** cho khách hàng.`,
+                message: (
+                    <div>
+                        <p>Xác nhận <strong>ĐÃ HOÀN TẤT</strong> thủ tục và đã hoàn trả <strong>{formatCurrency(returnDetail?.RefundAmount || 0)}</strong> cho khách hàng.</p>
+                        <Form.Check 
+                            type="checkbox"
+                            id="restoreInventory"
+                            label="Hàng còn nguyên vẹn, có thể tiếp tục bán (cập nhật tồn kho)"
+                            checked={restoreInventory}
+                            onChange={(e) => setRestoreInventory(e.target.checked)}
+                            className="mt-3"
+                        />
+                        {restoreInventory && (
+                            <small className="text-success d-block mt-2">
+                                <i className="bi bi-check-circle-fill me-1"></i>
+                                Số lượng sản phẩm sẽ được cộng lại vào tồn kho sau khi hoàn tất.
+                            </small>
+                        )}
+                    </div>
+                ),
                 confirmText: "Hoàn tất",
                 variant: "success",
               };
         }
         return {};
-    }, [pendingUpdate, refundAmount, returnDetail, returnId, maxRefund]);
+    }, [pendingUpdate, refundAmount, returnDetail, returnId, maxRefund, restoreInventory]);
 
 
     return (
