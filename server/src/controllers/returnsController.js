@@ -87,9 +87,32 @@ exports.requestReturn = async (req, res) => {
       );
     }
 
-    // NOTE: Không tự động chuyển trạng thái sang DOI_TRA nữa
-    // Đơn hàng vẫn giữ DA_GIAO để doanh thu được tính đúng
-    // Admin sẽ quyết định khi nào chuyển trạng thái thủ công (nếu cần)
+    // 4. Kiểm tra xem người dùng có đổi trả toàn bộ sản phẩm hay không
+    // Lấy danh sách sản phẩm gốc trong đơn hàng
+    const [orderItems] = await connection.query(
+      `SELECT PhienBanID, SoLuong FROM chitietdonhang WHERE DonHangID = ?`,
+      [DonHangID]
+    );
+
+    // So sánh số lượng trả với số lượng đặt ban đầu
+    let isFullReturn = true;
+    for (const orderItem of orderItems) {
+      const returnedItem = items.find(i => i.PhienBanID === orderItem.PhienBanID);
+      // Nếu sản phẩm không được trả hoặc số lượng trả < số lượng đặt → đổi trả một phần
+      if (!returnedItem || returnedItem.SoLuongTra < orderItem.SoLuong) {
+        isFullReturn = false;
+        break;
+      }
+    }
+
+    // Nếu đổi trả toàn bộ → cập nhật trạng thái đơn hàng thành DOI_TRA
+    if (isFullReturn) {
+      await connection.query(
+        `UPDATE donhang SET TrangThai = 'DOI_TRA', NgayCapNhat = NOW() WHERE DonHangID = ?`,
+        [DonHangID]
+      );
+    }
+    // Nếu đổi trả một phần → giữ nguyên trạng thái DA_GIAO (không làm gì cả)
 
     await connection.commit();
     res.status(201).json({
