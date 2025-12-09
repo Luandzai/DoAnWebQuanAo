@@ -679,6 +679,41 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
+// === HÀM KHÔI PHỤC SẢN PHẨM ===
+exports.restoreProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Kiểm tra sản phẩm tồn tại
+    const [product] = await pool.query(
+      "SELECT TrangThai FROM sanpham WHERE SanPhamID = ?",
+      [id]
+    );
+
+    if (product.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    }
+
+    // 2. Kiểm tra sản phẩm có đang ở trạng thái ARCHIVED không
+    if (product[0].TrangThai !== "ARCHIVED") {
+      return res.status(400).json({ 
+        message: "Chỉ có thể khôi phục sản phẩm đang ở trạng thái đã ẩn" 
+      });
+    }
+
+    // 3. Cập nhật trạng thái về ACTIVE
+    await pool.query(
+      "UPDATE sanpham SET TrangThai = 'ACTIVE' WHERE SanPhamID = ?",
+      [id]
+    );
+
+    res.json({ message: "Khôi phục sản phẩm thành công!" });
+  } catch (error) {
+    console.error("Lỗi khi khôi phục sản phẩm:", error);
+    res.status(500).json({ message: "Lỗi server khi khôi phục sản phẩm" });
+  }
+};
+
 // === HÀM BÁN CHẠY & MỚI NHẤT (ĐÃ NÂNG CẤP) ===
 exports.getBestSellingProducts = async (req, res) => {
   try {

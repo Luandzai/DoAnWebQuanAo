@@ -12,6 +12,13 @@ const SORT_OPTIONS = {
     STOCK_ASC: { key: 'STOCK_ASC', name: 'Tồn kho ít nhất' },
 };
 
+const STATUS_OPTIONS = {
+    ALL: { key: '', name: 'Tất cả trạng thái' },
+    ACTIVE: { key: 'ACTIVE', name: 'Đang bán' },
+    ARCHIVED: { key: 'ARCHIVED', name: 'Đã ẩn' },
+    DRAFT: { key: 'DRAFT', name: 'Bản nháp' },
+};
+
 export const useProductsAdmin = () => {
     // Data states
     const [products, setProducts] = useState([]);
@@ -21,10 +28,12 @@ export const useProductsAdmin = () => {
 
     // Action states
     const [deletingId, setDeletingId] = useState(null);
+    const [restoringId, setRestoringId] = useState(null);
     
     // Filter & Sort states
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState(SORT_OPTIONS.DATE_DESC.key);
+    const [statusFilter, setStatusFilter] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -36,6 +45,7 @@ export const useProductsAdmin = () => {
             const params = new URLSearchParams();
             if (filters.search) params.append('search', filters.search);
             if (filters.sortBy) params.append('sortBy', filters.sortBy);
+            if (filters.status) params.append('status', filters.status);
             if (filters.page) params.append('page', filters.page);
             if (filters.limit) params.append('limit', filters.limit);
 
@@ -62,13 +72,14 @@ export const useProductsAdmin = () => {
                 fetchProducts({
                     search: searchTerm,
                     sortBy: sortBy,
+                    status: statusFilter,
                     page: 1, // Fetch page 1
                     limit: pageSize,
                 });
             }
         }, 500);
         return () => clearTimeout(handler);
-    }, [searchTerm, sortBy, pageSize]);
+    }, [searchTerm, sortBy, statusFilter, pageSize]);
 
 
     // Effect for handling page changes
@@ -76,6 +87,7 @@ export const useProductsAdmin = () => {
         fetchProducts({
             search: searchTerm,
             sortBy: sortBy,
+            status: statusFilter,
             page: currentPage,
             limit: pageSize,
         });
@@ -90,6 +102,7 @@ export const useProductsAdmin = () => {
             fetchProducts({
                 search: searchTerm,
                 sortBy: sortBy,
+                status: statusFilter,
                 page: currentPage,
                 limit: pageSize,
             });
@@ -99,12 +112,33 @@ export const useProductsAdmin = () => {
             setDeletingId(null);
         }
     };
+
+    const restoreProduct = async (productId) => {
+        setRestoringId(productId);
+        try {
+            await api.patch(`/products/${productId}/restore`);
+            toast.success("Khôi phục sản phẩm thành công!");
+            // Refresh the list
+            fetchProducts({
+                search: searchTerm,
+                sortBy: sortBy,
+                status: statusFilter,
+                page: currentPage,
+                limit: pageSize,
+            });
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Khôi phục thất bại.");
+        } finally {
+            setRestoringId(null);
+        }
+    };
     
     // This function can be called after modal updates
     const refreshProducts = () => {
          fetchProducts({
             search: searchTerm,
             sortBy: sortBy,
+            status: statusFilter,
             page: currentPage,
             limit: pageSize,
         });
@@ -116,16 +150,21 @@ export const useProductsAdmin = () => {
         error,
         pagination,
         deletingId,
+        restoringId,
         searchTerm,
         setSearchTerm,
         sortBy,
         setSortBy,
+        statusFilter,
+        setStatusFilter,
         pageSize,
         setPageSize,
         currentPage,
         setCurrentPage,
         deleteProduct,
+        restoreProduct,
         refreshProducts,
         SORT_OPTIONS,
+        STATUS_OPTIONS,
     };
 };

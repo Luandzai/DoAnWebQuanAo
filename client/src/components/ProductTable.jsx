@@ -1,7 +1,7 @@
 // client/src/components/ProductTable.jsx
 import React from 'react';
-import { Table, Spinner, Alert, Pagination, Button, Image } from 'react-bootstrap';
-import { EyeFill, PencilSquare, Trash, ArrowDownUp } from 'react-bootstrap-icons';
+import { Table, Spinner, Alert, Pagination, Button, Image, Badge } from 'react-bootstrap';
+import { EyeFill, PencilSquare, Trash, ArrowDownUp, ArrowCounterclockwise } from 'react-bootstrap-icons';
 import { Link } from 'react-router-dom';
 
 const ProductTable = ({
@@ -12,7 +12,9 @@ const ProductTable = ({
     setCurrentPage,
     onEdit,
     onDelete,
+    onRestore,
     deletingId,
+    restoringId,
 }) => {
 
     const formatCurrency = (amount) => {
@@ -20,6 +22,21 @@ const ProductTable = ({
             style: "currency",
             currency: "VND",
         }).format(amount || 0);
+    };
+
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'ACTIVE':
+                return <Badge bg="success">Đang bán</Badge>;
+            case 'ARCHIVED':
+                return <Badge bg="secondary">Đã ẩn</Badge>;
+            case 'DRAFT':
+                return <Badge bg="warning" text="dark">Bản nháp</Badge>;
+            case 'HET_HANG':
+                return <Badge bg="danger">Hết hàng</Badge>;
+            default:
+                return <Badge bg="light" text="dark">{status}</Badge>;
+        }
     };
 
     const renderPagination = () => {
@@ -73,12 +90,13 @@ const ProductTable = ({
                         <th>Tên Sản phẩm</th>
                         <th><div className="d-flex align-items-center">Giá bán<ArrowDownUp className="ms-1" /></div></th>
                         <th><div className="d-flex align-items-center">Tồn kho<ArrowDownUp className="ms-1" /></div></th>
+                        <th>Trạng thái</th>
                         <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     {products.map((p) => (
-                        <tr key={p.SanPhamID}>
+                        <tr key={p.SanPhamID} className={p.TrangThai === 'ARCHIVED' ? 'table-secondary' : ''}>
                             <td>{p.SanPhamID}</td>
                             <td>
                                 <Image
@@ -90,16 +108,51 @@ const ProductTable = ({
                             <td>{p.TenSanPham}</td>
                             <td>{formatCurrency(p.GiaBanThapNhat)}</td>
                             <td>{p.TongTonKho}</td>
+                            <td>{getStatusBadge(p.TrangThai)}</td>
                             <td>
-                                <Button as={Link} to={`/product/${p.Slug}`} variant="info" size="sm" className="me-2" title="Xem trên website">
+                                <Button 
+                                    as={Link} 
+                                    to={`/product/${p.Slug}`} 
+                                    variant="info" 
+                                    size="sm" 
+                                    className="me-1" 
+                                    title="Xem trên website"
+                                    disabled={p.TrangThai === 'ARCHIVED'}
+                                >
                                     <EyeFill />
                                 </Button>
-                                <Button variant="warning" size="sm" className="me-2" onClick={() => onEdit(p)}>
+                                <Button variant="warning" size="sm" className="me-1" onClick={() => onEdit(p)} title="Chỉnh sửa">
                                     <PencilSquare />
                                 </Button>
-                                <Button variant="danger" size="sm" onClick={() => onDelete(p.SanPhamID)} disabled={deletingId === p.SanPhamID}>
-                                    {deletingId === p.SanPhamID ? <Spinner as="span" size="sm" animation="border" /> : <Trash />}
-                                </Button>
+                                {p.TrangThai === 'ARCHIVED' ? (
+                                    <Button 
+                                        variant="success" 
+                                        size="sm" 
+                                        onClick={() => onRestore(p.SanPhamID)} 
+                                        disabled={restoringId === p.SanPhamID}
+                                        title="Khôi phục sản phẩm"
+                                    >
+                                        {restoringId === p.SanPhamID ? (
+                                            <Spinner as="span" size="sm" animation="border" />
+                                        ) : (
+                                            <ArrowCounterclockwise />
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        variant="danger" 
+                                        size="sm" 
+                                        onClick={() => onDelete(p.SanPhamID)} 
+                                        disabled={deletingId === p.SanPhamID}
+                                        title="Ẩn sản phẩm"
+                                    >
+                                        {deletingId === p.SanPhamID ? (
+                                            <Spinner as="span" size="sm" animation="border" />
+                                        ) : (
+                                            <Trash />
+                                        )}
+                                    </Button>
+                                )}
                             </td>
                         </tr>
                     ))}

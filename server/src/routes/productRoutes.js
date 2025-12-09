@@ -7,6 +7,7 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  restoreProduct,
   getBestSellingProducts,
   getNewestProducts,
 } = require("../controllers/productController");
@@ -32,6 +33,7 @@ router.post(
   createProduct
 );
 router.put("/:id", protect, isAdmin, upload.array("images", 10), updateProduct);
+router.patch("/:id/restore", protect, isAdmin, restoreProduct);
 router.delete("/:id", protect, isAdmin, deleteProduct);
 
 module.exports = router;

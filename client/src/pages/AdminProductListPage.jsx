@@ -15,17 +15,22 @@ const AdminProductListPage = () => {
         error,
         pagination,
         deletingId,
+        restoringId,
         searchTerm,
         setSearchTerm,
         sortBy,
         setSortBy,
+        statusFilter,
+        setStatusFilter,
         pageSize,
         setPageSize,
         currentPage,
         setCurrentPage,
         deleteProduct,
+        restoreProduct,
         refreshProducts,
         SORT_OPTIONS,
+        STATUS_OPTIONS,
     } = useProductsAdmin();
 
     // State for modals
@@ -34,6 +39,8 @@ const AdminProductListPage = () => {
     const [productToEdit, setProductToEdit] = useState(null);
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const [productToDeleteId, setProductToDeleteId] = useState(null);
+    const [showConfirmRestore, setShowConfirmRestore] = useState(false);
+    const [productToRestoreId, setProductToRestoreId] = useState(null);
 
     const handleShowAddModal = () => {
         setIsEditMode(false);
@@ -62,6 +69,17 @@ const AdminProductListPage = () => {
         setProductToDeleteId(null);
     };
 
+    const handleRestoreClick = (productId) => {
+        setProductToRestoreId(productId);
+        setShowConfirmRestore(true);
+    };
+
+    const handleConfirmRestore = () => {
+        restoreProduct(productToRestoreId);
+        setShowConfirmRestore(false);
+        setProductToRestoreId(null);
+    };
+
     return (
         <AdminLayout>
             <Card className="shadow-sm">
@@ -71,9 +89,12 @@ const AdminProductListPage = () => {
                         setSearchTerm={setSearchTerm}
                         sortBy={sortBy}
                         setSortBy={setSortBy}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
                         pageSize={pageSize}
                         setPageSize={setPageSize}
                         sortOptions={SORT_OPTIONS}
+                        statusOptions={STATUS_OPTIONS}
                         totalProducts={pagination.total}
                         onShowAddModal={handleShowAddModal}
                     />
@@ -88,7 +109,9 @@ const AdminProductListPage = () => {
                         setCurrentPage={setCurrentPage}
                         onEdit={handleShowEditModal}
                         onDelete={handleDeleteClick}
+                        onRestore={handleRestoreClick}
                         deletingId={deletingId}
+                        restoringId={restoringId}
                     />
                 </Card.Body>
             </Card>
@@ -105,11 +128,22 @@ const AdminProductListPage = () => {
                 show={showConfirmDelete}
                 onHide={() => setShowConfirmDelete(false)}
                 onConfirm={handleConfirmDelete}
-                title="Xác nhận Xóa Sản phẩm"
-                message="Bạn có chắc chắn muốn xóa (lưu trữ) sản phẩm này không? Sản phẩm sẽ bị ẩn khỏi trang người dùng."
-                confirmText="Xóa"
+                title="Xác nhận Ẩn Sản phẩm"
+                message="Bạn có chắc chắn muốn ẩn sản phẩm này không? Sản phẩm sẽ không hiển thị trên trang người dùng nhưng vẫn có thể khôi phục lại."
+                confirmText="Ẩn"
                 confirmVariant="danger"
                 isProcessing={!!deletingId}
+            />
+
+            <ConfirmModal
+                show={showConfirmRestore}
+                onHide={() => setShowConfirmRestore(false)}
+                onConfirm={handleConfirmRestore}
+                title="Xác nhận Khôi phục Sản phẩm"
+                message="Bạn có chắc chắn muốn khôi phục sản phẩm này không? Sản phẩm sẽ hiển thị lại trên trang người dùng."
+                confirmText="Khôi phục"
+                confirmVariant="success"
+                isProcessing={!!restoringId}
             />
         </AdminLayout>
     );
