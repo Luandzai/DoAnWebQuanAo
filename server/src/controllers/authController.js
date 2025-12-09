@@ -271,8 +271,8 @@ exports.forgotPassword = async (req, res) => {
     );
 
     // 6. Tạo URL reset (gửi token PLAIN cho user)
-    // (Client URL của bạn là 5173)
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
     // 7. Tạo nội dung email
     const emailHtml = `
