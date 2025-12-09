@@ -54,16 +54,24 @@ exports.createOrder = async (req, res) => {
       await connection.rollback();
       return res.status(400).json({ message: "Giỏ hàng trống." });
     }
+    // JOIN với sanpham để kiểm tra trạng thái sản phẩm
     const [dbItems] = await connection.query(
-      "SELECT PhienBanID, GiaBan, SoLuongTonKho, SanPhamID FROM phienbansanpham WHERE PhienBanID IN (?)",
+      `SELECT pb.PhienBanID, pb.GiaBan, pb.SoLuongTonKho, pb.SanPhamID, 
+              sp.TenSanPham, sp.TrangThai 
+       FROM phienbansanpham pb
+       JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
+       WHERE pb.PhienBanID IN (?)`,
       [phienBanIDs]
     );
     for (const item of cartItems) {
       const dbItem = dbItems.find((p) => p.PhienBanID === item.PhienBanID);
       if (!dbItem)
         throw new Error(`Sản phẩm ID ${item.PhienBanID} không tồn tại.`);
+      // Kiểm tra sản phẩm có đang ACTIVE không
+      if (dbItem.TrangThai !== "ACTIVE")
+        throw new Error(`Sản phẩm "${dbItem.TenSanPham}" không còn được bán.`);
       if (dbItem.SoLuongTonKho < item.SoLuong)
-        throw new Error(`Sản phẩm không đủ tồn kho.`);
+        throw new Error(`Sản phẩm "${dbItem.TenSanPham}" không đủ tồn kho.`);
       TongTienHang += dbItem.GiaBan * item.SoLuong;
     }
 
@@ -100,6 +108,38 @@ exports.createOrder = async (req, res) => {
       }
 
       const voucher = vouchers[0];
+      
+      // Kiểm tra voucher có áp dụng cho sản phẩm/danh mục cụ thể không
+      if (voucher.SanPhamID || voucher.DanhMucID) {
+        // Lấy danh sách SanPhamID và DanhMucID từ các sản phẩm trong đơn hàng
+        const sanPhamIDs = dbItems.map(item => item.SanPhamID);
+        const [productCategories] = await connection.query(
+          "SELECT SanPhamID, DanhMucID FROM sanpham WHERE SanPhamID IN (?)",
+          [sanPhamIDs]
+        );
+        const danhMucIDs = productCategories.map(p => p.DanhMucID);
+        
+        // Kiểm tra voucher cho sản phẩm cụ thể
+        if (voucher.SanPhamID && !sanPhamIDs.includes(voucher.SanPhamID)) {
+          throw new Error("Mã giảm giá không áp dụng cho sản phẩm trong đơn hàng.");
+        }
+        
+        // Kiểm tra voucher cho danh mục
+        if (voucher.DanhMucID && !voucher.SanPhamID) {
+          // Lấy DanhMucChaID của các danh mục sản phẩm
+          const [categories] = await connection.query(
+            "SELECT DanhMucID, DanhMucChaID FROM danhmuc WHERE DanhMucID IN (?)",
+            [danhMucIDs]
+          );
+          const allDanhMucIDs = [...danhMucIDs, ...categories.map(c => c.DanhMucChaID).filter(id => id !== null)];
+          
+          if (!allDanhMucIDs.includes(voucher.DanhMucID)) {
+            throw new Error("Mã giảm giá không áp dụng cho danh mục sản phẩm trong đơn hàng.");
+          }
+        }
+      }
+      // Nếu cả SanPhamID và DanhMucID đều NULL -> voucher toàn sàn, áp dụng bình thường
+      
       if (voucher.LoaiGiamGia === "SOTIEN")
         GiamGia = parseFloat(voucher.GiaTriGiam);
       if (voucher.LoaiGiamGia === "PHANTRAM")

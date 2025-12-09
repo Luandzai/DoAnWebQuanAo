@@ -16,7 +16,40 @@ exports.requestReturn = async (req, res) => {
         .json({ message: "Vui lòng cung cấp đầy đủ thông tin." });
     }
 
-    // 1. Kiểm tra trùng lặp
+    // 1. Kiểm tra đơn hàng thuộc về user và trạng thái hợp lệ
+    const [orderRows] = await connection.query(
+      `SELECT DonHangID, TrangThai, NgayCapNhat 
+       FROM donhang 
+       WHERE DonHangID = ? AND NguoiDungID = ?`,
+      [DonHangID, NguoiDungID]
+    );
+    
+    if (orderRows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
+    }
+    
+    const order = orderRows[0];
+    
+    // Kiểm tra đơn hàng đã giao chưa
+    if (order.TrangThai !== "DA_GIAO") {
+      return res.status(400).json({ 
+        message: "Chỉ có thể yêu cầu đổi/trả cho đơn hàng đã giao thành công." 
+      });
+    }
+    
+    // Kiểm tra thời hạn đổi/trả (7 ngày kể từ ngày cập nhật trạng thái DA_GIAO)
+    const RETURN_DEADLINE_DAYS = 7;
+    const deliveredDate = new Date(order.NgayCapNhat);
+    const now = new Date();
+    const daysSinceDelivery = Math.floor((now - deliveredDate) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceDelivery > RETURN_DEADLINE_DAYS) {
+      return res.status(400).json({ 
+        message: `Đã quá thời hạn đổi/trả hàng (${RETURN_DEADLINE_DAYS} ngày kể từ ngày giao).` 
+      });
+    }
+
+    // 2. Kiểm tra trùng lặp
     const [existingReturns] = await connection.query(
       "SELECT * FROM returns WHERE DonHangID = ?",
       [DonHangID]

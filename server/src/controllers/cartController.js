@@ -53,13 +53,22 @@ exports.addToCart = async (req, res) => {
       return res.status(400).json({ message: "Số lượng phải lớn hơn 0" });
     }
 
-    // 1. Kiểm tra tồn kho
+    // 1. Kiểm tra tồn kho và trạng thái sản phẩm
     const [variant] = await pool.query(
-      "SELECT SoLuongTonKho FROM phienbansanpham WHERE PhienBanID = ?",
+      `SELECT pb.SoLuongTonKho, sp.TenSanPham, sp.TrangThai
+       FROM phienbansanpham pb
+       JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
+       WHERE pb.PhienBanID = ?`,
       [PhienBanID]
     );
     if (variant.length === 0) {
       return res.status(404).json({ message: "Sản phẩm không tồn tại" });
+    }
+    // Kiểm tra trạng thái ACTIVE
+    if (variant[0].TrangThai !== "ACTIVE") {
+      return res.status(400).json({
+        message: `Sản phẩm "${variant[0].TenSanPham}" không còn được bán`,
+      });
     }
     if (variant[0].SoLuongTonKho < SoLuong) {
       return res.status(400).json({
@@ -100,20 +109,28 @@ exports.updateQuantity = async (req, res) => {
       return exports.removeFromCart(req, res);
     }
 
-    // === THÊM LOGIC KIỂM TRA TỒN KHO ===
+    // Kiểm tra tồn kho và trạng thái sản phẩm
     const [variant] = await pool.query(
-      "SELECT SoLuongTonKho FROM phienbansanpham WHERE PhienBanID = ?",
+      `SELECT pb.SoLuongTonKho, sp.TenSanPham, sp.TrangThai
+       FROM phienbansanpham pb
+       JOIN sanpham sp ON pb.SanPhamID = sp.SanPhamID
+       WHERE pb.PhienBanID = ?`,
       [PhienBanID]
     );
     if (variant.length === 0) {
       return res.status(404).json({ message: "Sản phẩm không tồn tại" });
+    }
+    // Kiểm tra trạng thái ACTIVE
+    if (variant[0].TrangThai !== "ACTIVE") {
+      return res.status(400).json({
+        message: `Sản phẩm "${variant[0].TenSanPham}" không còn được bán`,
+      });
     }
     if (variant[0].SoLuongTonKho < SoLuong) {
       return res.status(400).json({
         message: `Số lượng tồn kho không đủ (chỉ còn ${variant[0].SoLuongTonKho} sản phẩm)`,
       });
     }
-    // =====================================
 
     // Cập nhật (SET) số lượng mới
     await pool.query(

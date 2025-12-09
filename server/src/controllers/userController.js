@@ -124,9 +124,23 @@ exports.getMyApplicableVouchers = async (req, res) => {
 
     const sanPhamIDsInCart = productInfoRows.map((p) => p.SanPhamID);
     const danhMucIDsInCart = productInfoRows.map((p) => p.DanhMucID);
+    
+    // 2. Lấy DanhMucChaID (danh mục cha) của các danh mục sản phẩm
+    let allDanhMucIDs = [...danhMucIDsInCart];
+    if (danhMucIDsInCart.length > 0) {
+      const [categoryRows] = await connection.query(
+        `SELECT DanhMucID, DanhMucChaID FROM danhmuc WHERE DanhMucID IN (?)`,
+        [danhMucIDsInCart]
+      );
+      // Thêm danh mục cha vào danh sách (nếu có)
+      const danhMucChaIDs = categoryRows
+        .map((c) => c.DanhMucChaID)
+        .filter((id) => id !== null);
+      allDanhMucIDs = [...new Set([...danhMucIDsInCart, ...danhMucChaIDs])];
+    }
 
-    // 2. Lấy tất cả voucher người dùng đã lưu, còn hạn, còn lượt và đang active
-    // Sau đó lọc ra những voucher có thể áp dụng cho giỏ hàng
+    // 3. Lấy tất cả voucher người dùng đã lưu, còn hạn, còn lượt và đang active
+    // Kiểm tra voucher áp dụng cho: toàn sàn, sản phẩm cụ thể, danh mục (bao gồm cả danh mục cha)
     const [myVouchers] = await connection.query(
       `SELECT km.* 
        FROM nguoidung_voucher AS ndv
@@ -139,9 +153,9 @@ exports.getMyApplicableVouchers = async (req, res) => {
          AND (
             (km.SanPhamID IS NULL AND km.DanhMucID IS NULL) -- Voucher toàn sàn
             OR (km.SanPhamID IS NOT NULL AND km.SanPhamID IN (?)) -- Voucher cho sản phẩm cụ thể
-            OR (km.DanhMucID IS NOT NULL AND km.DanhMucID IN (?)) -- Voucher cho danh mục cụ thể
+            OR (km.DanhMucID IS NOT NULL AND km.DanhMucID IN (?)) -- Voucher cho danh mục (bao gồm danh mục cha)
          )`,
-      [NguoiDungID, sanPhamIDsInCart, danhMucIDsInCart]
+      [NguoiDungID, sanPhamIDsInCart, allDanhMucIDs]
     );
 
     res.json(myVouchers);
