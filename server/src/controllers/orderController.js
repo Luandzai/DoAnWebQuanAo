@@ -142,6 +142,12 @@ exports.createOrder = async (req, res) => {
         "INSERT INTO chitietdonhang (DonHangID, PhienBanID, SoLuong, GiaLucMua) VALUES (?, ?, ?, ?)",
         [newDonHangID, item.PhienBanID, item.SoLuong, dbItem.GiaBan]
       );
+      
+      // Giảm tồn kho ngay khi đặt hàng
+      await connection.query(
+        "UPDATE phienbansanpham SET SoLuongTonKho = SoLuongTonKho - ? WHERE PhienBanID = ?",
+        [item.SoLuong, item.PhienBanID]
+      );
     }
     await connection.query(
       'INSERT INTO thanhtoan (DonHangID, MethodID, SoTienThanhToan, TrangThai) VALUES (?, ?, ?, "PENDING")',
@@ -333,6 +339,18 @@ exports.cancelOrder = async (req, res) => {
       "UPDATE thanhtoan SET TrangThai = 'FAILED' WHERE DonHangID = ?",
       [DonHangID]
     );
+
+    // Hoàn tồn kho khi hủy đơn
+    const [items] = await connection.query(
+      "SELECT PhienBanID, SoLuong FROM chitietdonhang WHERE DonHangID = ?",
+      [DonHangID]
+    );
+    for (const item of items) {
+      await connection.query(
+        "UPDATE phienbansanpham SET SoLuongTonKho = SoLuongTonKho + ? WHERE PhienBanID = ?",
+        [item.SoLuong, item.PhienBanID]
+      );
+    }
 
     await connection.commit();
     res.json({ message: "Đã hủy đơn hàng thành công!" });
@@ -558,6 +576,7 @@ exports.updateOrderStatus = async (req, res) => {
           "UPDATE thanhtoan SET TrangThai = 'FAILED' WHERE DonHangID = ?",
           [id]
         );
+        // Hoàn tồn kho khi Admin hủy đơn
         const [items] = await connection.query(
           "SELECT PhienBanID, SoLuong FROM chitietdonhang WHERE DonHangID = ?",
           [id]
