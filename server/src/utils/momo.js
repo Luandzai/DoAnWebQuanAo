@@ -99,27 +99,32 @@ exports.createPaymentRequest = async (
 
 /**
  * @param {object} body Body của IPN request
+ * MoMo IPN signature format (captureWallet):
+ * accessKey=$accessKey&amount=$amount&extraData=$extraData&message=$message
+ * &orderId=$orderId&orderInfo=$orderInfo&orderType=$orderType&partnerCode=$partnerCode
+ * &payType=$payType&requestId=$requestId&responseTime=$responseTime
+ * &resultCode=$resultCode&transId=$transId
  */
-// === LỖI ĐÃ ĐƯỢC SỬA Ở DÒNG NÀY (XÓA DẤU '_') ===
 exports.verifyIpnSignature = (body) => {
+  const accessKey = process.env.MOMO_ACCESS_KEY;
   const secretKey = process.env.MOMO_SECRET_KEY;
   const { signature } = body;
 
-  // Xóa chữ ký ra khỏi body
-  delete body.signature;
-
-  // Sắp xếp các key còn lại theo alphabet
-  const sortedBody = {};
-  Object.keys(body)
-    .sort()
-    .forEach((key) => {
-      sortedBody[key] = body[key];
-    });
-
-  // Tạo rawSignature từ các key đã sắp xếp
-  const rawSignature = Object.keys(sortedBody)
-    .map((key) => `${key}=${sortedBody[key]}`)
-    .join("&");
+  // Tạo rawSignature theo đúng format MoMo yêu cầu
+  const rawSignature =
+    `accessKey=${accessKey}` +
+    `&amount=${body.amount}` +
+    `&extraData=${body.extraData || ""}` +
+    `&message=${body.message}` +
+    `&orderId=${body.orderId}` +
+    `&orderInfo=${body.orderInfo}` +
+    `&orderType=${body.orderType}` +
+    `&partnerCode=${body.partnerCode}` +
+    `&payType=${body.payType}` +
+    `&requestId=${body.requestId}` +
+    `&responseTime=${body.responseTime}` +
+    `&resultCode=${body.resultCode}` +
+    `&transId=${body.transId}`;
 
   // Tạo chữ ký mới
   const expectedSignature = createSignature(rawSignature, secretKey);
@@ -130,26 +135,28 @@ exports.verifyIpnSignature = (body) => {
 
 /**
  * @param {object} queryParams Query params từ MoMo trả về (Return URL)
+ * Cùng format với IPN
  */
 exports.verifyReturnSignature = (queryParams) => {
+  const accessKey = process.env.MOMO_ACCESS_KEY;
   const secretKey = process.env.MOMO_SECRET_KEY;
   const { signature } = queryParams;
 
-  // Xóa chữ ký
-  delete queryParams.signature;
-
-  // Sắp xếp
-  const sortedParams = {};
-  Object.keys(queryParams)
-    .sort()
-    .forEach((key) => {
-      sortedParams[key] = queryParams[key];
-    });
-
-  // Tạo rawSignature
-  const rawSignature = Object.keys(sortedParams)
-    .map((key) => `${key}=${sortedParams[key]}`)
-    .join("&");
+  // Tạo rawSignature theo đúng format MoMo yêu cầu
+  const rawSignature =
+    `accessKey=${accessKey}` +
+    `&amount=${queryParams.amount}` +
+    `&extraData=${queryParams.extraData || ""}` +
+    `&message=${decodeURIComponent(queryParams.message || "")}` +
+    `&orderId=${queryParams.orderId}` +
+    `&orderInfo=${decodeURIComponent(queryParams.orderInfo || "")}` +
+    `&orderType=${queryParams.orderType}` +
+    `&partnerCode=${queryParams.partnerCode}` +
+    `&payType=${queryParams.payType}` +
+    `&requestId=${queryParams.requestId}` +
+    `&responseTime=${queryParams.responseTime}` +
+    `&resultCode=${queryParams.resultCode}` +
+    `&transId=${queryParams.transId}`;
 
   const expectedSignature = createSignature(rawSignature, secretKey);
 

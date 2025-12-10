@@ -119,8 +119,8 @@ exports.momoReturn = async (req, res) => {
     : null;
 
   try {
-    // 1. Xác thực chữ ký
-    const isVerified = exports.verifyReturnSignature(queryParams);
+    // 1. Xác thực chữ ký (sử dụng hàm đã import từ utils/momo.js)
+    const isVerified = verifyReturnSignature(queryParams);
     if (!isVerified) {
       console.error("Lỗi xác thực chữ ký MoMo Return");
       return res.redirect(
@@ -128,8 +128,8 @@ exports.momoReturn = async (req, res) => {
       );
     }
 
-    // 2. Kiểm tra kết quả
-    if (queryParams.resultCode === "0") {
+    // 2. Kiểm tra kết quả (so sánh cả string và number vì MoMo có thể trả về cả 2)
+    if (queryParams.resultCode === "0" || queryParams.resultCode === 0) {
       // Thành công
       // Chúng ta không cập nhật CSDL ở đây, chúng ta chờ IPN
       // Chỉ chuyển hướng người dùng
@@ -156,8 +156,8 @@ exports.momoIpn = async (req, res) => {
   const requestBody = req.body;
 
   try {
-    // 1. Xác thực chữ ký
-    const isVerified = exports.verifyIpnSignature(requestBody);
+    // 1. Xác thực chữ ký (sử dụng hàm đã import từ utils/momo.js)
+    const isVerified = verifyIpnSignature(requestBody);
     if (!isVerified) {
       console.error("Lỗi xác thực chữ ký MoMo IPN");
       return res.status(400).send("Invalid Signature");
@@ -179,7 +179,7 @@ exports.momoIpn = async (req, res) => {
         return res.status(204).send(); // Bỏ qua nếu đơn hàng đã được xử lý
       }
 
-      if (resultCode === 0) {
+      if (resultCode === 0 || resultCode === "0") {
         // Thành công
         await connection.query(
           "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
