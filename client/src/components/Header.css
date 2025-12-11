@@ -8,28 +8,6 @@
   --primary-color: #0d6efd;
 }
 
-/* ===== TOP BAR ===== */
-.header-topbar {
-  background-color: #1a1a1a;
-  color: #fff;
-  padding: 0.4rem 1rem;
-  font-size: 0.8rem;
-}
-
-.topbar-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.topbar-content span {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
 /* ===== MAIN HEADER ===== */
 .header-main {
   position: sticky;
@@ -612,18 +590,10 @@
   .sidebar-overlay {
     display: none;
   }
-
-  .header-topbar {
-    display: block;
-  }
 }
 
 /* Tablet and Mobile */
 @media (max-width: 1199.98px) {
-  .header-topbar {
-    display: none;
-  }
-
   .header-logo {
     font-size: 1.2rem;
   }

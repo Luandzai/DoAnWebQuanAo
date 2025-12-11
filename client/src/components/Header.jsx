@@ -1,7 +1,7 @@
 // client/src/components/Header.jsx
 import React, { useContext, useState, useEffect } from "react";
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
-import { Telephone, Search, Person, Cart, Heart, List, X } from "react-bootstrap-icons";
+import { Search, Person, Cart, Heart, List, X } from "react-bootstrap-icons";
 import "./Header.css";
 import AuthContext from "../context/AuthContext";
 import CartContext from "../context/CartContext";
@@ -96,13 +96,6 @@ const Header = () => {
 
   return (
     <>
-      {/* TOP BAR */}
-      <div className="header-topbar">
-        <div className="topbar-content">
-          <span><Telephone size={14} /> Hỗ trợ: 1800.1000</span>
-        </div>
-      </div>
-
       {/* MAIN HEADER */}
       <header className="header-main">
         <div className="header-container">

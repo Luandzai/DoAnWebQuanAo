@@ -75,7 +75,7 @@ const PaymentResultPage = () => {
                     src={successImage}
                     alt="Thanh toán thành công"
                     className="mb-4"
-                    style={{ maxWidth: "350px" }}
+                    style={{ maxWidth: "350px", width: "100%" }}
                   />
                   <h2 className="text-success fw-bold mb-3">
                     <CheckCircleFill className="me-2" /> Thanh toán Thành công!
@@ -88,7 +88,7 @@ const PaymentResultPage = () => {
                     src={failedImage}
                     alt="Thanh toán thất bại"
                     className="mb-4"
-                    style={{ maxWidth: "350px" }}
+                    style={{ maxWidth: "350px", width: "100%" }}
                   />
                   <h2 className="text-danger fw-bold mb-3">
                     <XCircleFill className="me-2" /> Thanh toán Thất bại!
