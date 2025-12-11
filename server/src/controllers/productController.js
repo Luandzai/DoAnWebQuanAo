@@ -30,11 +30,13 @@ exports.getAllProducts = async (req, res) => {
             SELECT 1 FROM khuyenmai km
             LEFT JOIN danhmuc dm_sp ON sp.DanhMucID = dm_sp.DanhMucID
             WHERE (
-              km.SanPhamID = sp.SanPhamID 
+              (km.SanPhamID IS NULL AND km.DanhMucID IS NULL)
+              OR km.SanPhamID = sp.SanPhamID 
               OR km.DanhMucID = sp.DanhMucID 
               OR km.DanhMucID = dm_sp.DanhMucChaID
             )
             AND km.NgayBatDau < NOW() AND km.NgayKetThuc > NOW()
+            AND km.TrangThai = 'ACTIVE'
         )) AS HasVoucher,
         COUNT(DISTINCT tt.ThuocTinhID) AS ThuocTinhKhop
     `;
@@ -736,11 +738,13 @@ exports.getBestSellingProducts = async (req, res) => {
              SELECT 1 FROM khuyenmai km
              LEFT JOIN danhmuc dm_sp ON sp.DanhMucID = dm_sp.DanhMucID
              WHERE (
-               km.SanPhamID = sp.SanPhamID 
+               (km.SanPhamID IS NULL AND km.DanhMucID IS NULL)
+               OR km.SanPhamID = sp.SanPhamID 
                OR km.DanhMucID = sp.DanhMucID 
                OR km.DanhMucID = dm_sp.DanhMucChaID
              )
              AND km.NgayBatDau < NOW() AND km.NgayKetThuc > NOW()
+             AND km.TrangThai = 'ACTIVE'
          )) AS HasVoucher
          -- =======================
 
@@ -782,11 +786,13 @@ exports.getNewestProducts = async (req, res) => {
               SELECT 1 FROM khuyenmai km
               LEFT JOIN danhmuc dm_sp ON sp.DanhMucID = dm_sp.DanhMucID
               WHERE (
-                km.SanPhamID = sp.SanPhamID 
+                (km.SanPhamID IS NULL AND km.DanhMucID IS NULL)
+                OR km.SanPhamID = sp.SanPhamID 
                 OR km.DanhMucID = sp.DanhMucID 
                 OR km.DanhMucID = dm_sp.DanhMucChaID
               )
               AND km.NgayBatDau < NOW() AND km.NgayKetThuc > NOW()
+              AND km.TrangThai = 'ACTIVE'
           )) AS HasVoucher
           -- =======================
 

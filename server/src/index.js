@@ -29,6 +29,9 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const tryOnRoutes = require("./routes/tryOnRoutes");
 const sizeChartRoutes = require("./routes/sizeChartRoutes");
 
+// Import scheduler for auto-updating voucher status
+const { startVoucherScheduler } = require("./utils/voucherScheduler");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -140,4 +143,6 @@ app.use("/api/admin/returns", returnsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  // Khởi động voucher scheduler để tự động vô hiệu hóa voucher hết hạn/hết lượt
+  startVoucherScheduler();
 });

@@ -43,11 +43,16 @@ exports.getVouchersForProduct = async (req, res) => {
     );
     const danhMucChaId = categoryRows[0]?.DanhMucChaID || null;
 
-    // 3. Query voucher cho: sản phẩm cụ thể, danh mục sản phẩm, HOẶC danh mục cha
+    // 3. Query voucher cho: toàn sàn, sản phẩm cụ thể, danh mục sản phẩm, HOẶC danh mục cha
     const [vouchers] = await pool.query(
       `SELECT MaKhuyenMai, TenKhuyenMai, NgayKetThuc, GiaTriGiam, LoaiGiamGia
        FROM khuyenmai
-       WHERE (SanPhamID = ? OR DanhMucID = ? OR DanhMucID = ?)
+       WHERE (
+         (SanPhamID IS NULL AND DanhMucID IS NULL)
+         OR SanPhamID = ? 
+         OR DanhMucID = ? 
+         OR DanhMucID = ?
+       )
          AND NgayKetThuc > NOW() 
          AND NgayBatDau < NOW()
          AND TrangThai = 'ACTIVE'`,
