@@ -260,11 +260,9 @@ const AdminVoucherModal = ({
             </Col>
           </Row>
 
-          {/* Lọc theo Danh mục/Sản phẩm */}
+          {/* Phạm vi áp dụng Voucher */}
           <Form.Group controlId="DanhMucID" className="mb-3">
-            <Form.Label>
-              Áp dụng cho Danh mục ID (Bỏ trống nếu Toàn bộ)
-            </Form.Label>
+            <Form.Label>Danh mục ID</Form.Label>
             <Form.Control
               name="DanhMucID"
               type="number"
@@ -273,11 +271,12 @@ const AdminVoucherModal = ({
               placeholder="Ví dụ: 401"
               min={1}
             />
+            <Form.Text className="text-muted">
+              Bỏ trống nếu voucher chỉ áp dụng cho một sản phẩm cụ thể
+            </Form.Text>
           </Form.Group>
           <Form.Group controlId="SanPhamID" className="mb-3">
-            <Form.Label>
-              Áp dụng cho Sản phẩm ID (Bỏ trống nếu Toàn bộ)
-            </Form.Label>
+            <Form.Label>Sản phẩm ID</Form.Label>
             <Form.Control
               name="SanPhamID"
               type="number"
@@ -286,7 +285,13 @@ const AdminVoucherModal = ({
               placeholder="Ví dụ: 201"
               min={1}
             />
+            <Form.Text className="text-muted">
+              Bỏ trống nếu voucher áp dụng cho tất cả sản phẩm trong danh mục
+            </Form.Text>
           </Form.Group>
+          <Alert variant="info" className="mb-0">
+            <strong>💡 Lưu ý:</strong> Bỏ trống cả Danh mục ID và Sản phẩm ID để voucher áp dụng cho <strong>tất cả sản phẩm</strong>.
+          </Alert>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={onHide} disabled={processing}>
