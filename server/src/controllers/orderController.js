@@ -3,6 +3,8 @@ const pool = require("../config/db");
 // 1. IMPORT TIỆN ÍCH VNPAY VÀ MOMO
 const { createPaymentUrl } = require("../utils/vnpay");
 const { createPaymentRequest } = require("../utils/momo");
+// Import hằng số timeout từ scheduler
+const { PAYMENT_TIMEOUT_MINUTES } = require("../utils/orderScheduler");
 
 // @desc    Tạo đơn hàng mới
 exports.createOrder = async (req, res) => {
@@ -259,8 +261,10 @@ exports.getMyOrders = async (req, res) => {
     const [orders] = await pool.query(
       `SELECT 
          dh.DonHangID, dh.NgayDatHang, dh.TongThanhToan, dh.TrangThai,
+         tt.MethodID,
          (EXISTS (SELECT 1 FROM returns r WHERE r.DonHangID = dh.DonHangID)) AS DaYeuCauTraHang
        FROM donhang AS dh
+       LEFT JOIN thanhtoan AS tt ON dh.DonHangID = tt.DonHangID
        WHERE dh.NguoiDungID = ? 
        ORDER BY dh.NgayDatHang DESC`,
       [NguoiDungID]
@@ -362,10 +366,23 @@ exports.cancelOrder = async (req, res) => {
     if (orderRows.length === 0) throw new Error("Không tìm thấy đơn hàng.");
     const order = orderRows[0];
 
-    if (
-      order.TrangThai !== "DANG_XU_LY" &&
-      order.TrangThai !== "CHUA_THANH_TOAN"
-    ) {
+    // Lấy phương thức thanh toán
+    const [paymentRows] = await connection.query(
+      "SELECT MethodID FROM thanhtoan WHERE DonHangID = ?",
+      [DonHangID]
+    );
+    const paymentMethodId = paymentRows.length > 0 ? paymentRows[0].MethodID : null;
+
+    if (order.TrangThai === "CHUA_THANH_TOAN") {
+      // Cho phép hủy đơn chưa thanh toán
+    } else if (order.TrangThai === "DANG_XU_LY") {
+      // Chỉ cho phép hủy COD (MethodID = 701) khi đang xử lý
+      if (paymentMethodId != 701) {
+        throw new Error(
+          "Không thể hủy đơn hàng đã thanh toán online. Vui lòng liên hệ hỗ trợ."
+        );
+      }
+    } else {
       throw new Error(
         "Chỉ có thể hủy đơn hàng ở trạng thái 'Đang xử lý' hoặc 'Chưa thanh toán'."
       );
@@ -652,5 +669,80 @@ exports.updateOrderStatus = async (req, res) => {
     });
   } finally {
     if (connection) connection.release();
+  }
+};
+
+// @desc    Thanh toán lại đơn hàng chưa thanh toán
+// @route   POST /api/orders/:id/retry-payment
+// @access  Private
+exports.retryPayment = async (req, res) => {
+  try {
+    const { id: DonHangID } = req.params;
+    const { NguoiDungID } = req.user;
+
+    // Kiểm tra đơn hàng
+    const [orderRows] = await pool.query(
+      `SELECT dh.*, tt.MethodID 
+       FROM donhang dh
+       JOIN thanhtoan tt ON dh.DonHangID = tt.DonHangID
+       WHERE dh.DonHangID = ? AND dh.NguoiDungID = ?`,
+      [DonHangID, NguoiDungID]
+    );
+
+    if (orderRows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
+    }
+
+    const order = orderRows[0];
+
+    if (order.TrangThai !== "CHUA_THANH_TOAN") {
+      return res
+        .status(400)
+        .json({ message: "Đơn hàng không ở trạng thái chờ thanh toán." });
+    }
+
+    // Kiểm tra thời gian (đảm bảo chưa quá 15 phút)
+    const orderDate = new Date(order.NgayDatHang);
+    const now = new Date();
+    const minutesPassed = (now - orderDate) / (1000 * 60);
+
+    if (minutesPassed >= PAYMENT_TIMEOUT_MINUTES) {
+      return res.status(400).json({
+        message: `Đơn hàng đã quá ${PAYMENT_TIMEOUT_MINUTES} phút. Vui lòng đặt lại đơn hàng mới.`,
+      });
+    }
+
+    // Tạo lại URL thanh toán
+    if (order.MethodID == 702) {
+      // VNPAY
+      const ipAddr =
+        req.headers["x-forwarded-for"] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
+      const paymentUrl = createPaymentUrl(
+        DonHangID,
+        parseFloat(order.TongThanhToan),
+        ipAddr,
+        `Thanh toan don hang ${DonHangID}`
+      );
+      return res.json({ paymentUrl });
+    } else if (order.MethodID == 703) {
+      // MOMO
+      const momoResponse = await createPaymentRequest(
+        DonHangID,
+        parseFloat(order.TongThanhToan),
+        `Thanh toan don hang ${DonHangID}`
+      );
+      return res.json({ paymentUrl: momoResponse.payUrl });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Phương thức thanh toán không hỗ trợ thanh toán lại." });
+    }
+  } catch (error) {
+    console.error("Lỗi retryPayment:", error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };

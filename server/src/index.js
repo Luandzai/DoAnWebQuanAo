@@ -31,6 +31,8 @@ const sizeChartRoutes = require("./routes/sizeChartRoutes");
 
 // Import scheduler for auto-updating voucher status
 const { startVoucherScheduler } = require("./utils/voucherScheduler");
+// Import scheduler for auto-canceling unpaid orders
+const { startOrderScheduler } = require("./utils/orderScheduler");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -145,4 +147,7 @@ app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
   // Khởi động voucher scheduler để tự động vô hiệu hóa voucher hết hạn/hết lượt
   startVoucherScheduler();
+  // Khởi động order scheduler để tự động hủy đơn chưa thanh toán sau 15 phút
+  startOrderScheduler();
 });
+
