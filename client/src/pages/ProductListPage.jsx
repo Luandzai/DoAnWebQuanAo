@@ -56,8 +56,12 @@ const Pagination = ({ pagination, onPageChange }) => {
     const { currentPage, totalPages } = pagination;
     const pages = [];
     
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
+    // Responsive sibling count: 1 for mobile, 2 for desktop
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+    const siblingCount = isMobile ? 1 : 2;
+    
+    let startPage = Math.max(1, currentPage - siblingCount);
+    let endPage = Math.min(totalPages, currentPage + siblingCount);
     
     for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
