@@ -17,6 +17,7 @@ const ProductInfo = ({
   availableAttributes,
   selectedOptions,
   onOptionSelect,
+  getAvailableOptionsForAttribute,
   quantity,
   onQuantityChange,
   onAddToCart,
@@ -119,7 +120,9 @@ const ProductInfo = ({
           <div className="d-flex justify-content-between align-items-center">
             <span className="product-option-label">
               {attr.name}:{" "}
-              <span className="text-dark">{selectedOptions[attr.name]}</span>
+              <span className="text-dark">
+                {selectedOptions[attr.name] || <span className="text-muted">Chọn {attr.name.toLowerCase()}</span>}
+              </span>
             </span>
             {/* Chỉ hiện link nếu thuộc tính là Kích cỡ/Size */}
             {(attr.name.toLowerCase().includes("size") ||
@@ -134,17 +137,30 @@ const ProductInfo = ({
           </div>
 
           <div className="option-chips-wrapper">
-            {attr.values.map((value) => (
-              <div
-                key={value}
-                className={`option-chip ${
-                  selectedOptions[attr.name] === value ? "active" : ""
-                }`}
-                onClick={() => onOptionSelect(attr.name, value)}
-              >
-                {value}
-              </div>
-            ))}
+            {attr.values.map((value) => {
+              const availability = getAvailableOptionsForAttribute
+                ? getAvailableOptionsForAttribute(attr.name)[value] || {}
+                : {};
+              const isSelected = selectedOptions[attr.name] === value;
+              // "Disabled" = variant doesn't exist for current selection - BLOCK click
+              const isDisabled = availability.disabled;
+              // "Out of stock" = variant exists but no stock - BLOCK click
+              const isOutOfStock = availability.outOfStock;
+              // Block click if disabled or out of stock
+              const isBlocked = isDisabled || isOutOfStock;
+
+              return (
+                <div
+                  key={value}
+                  className={`option-chip ${isSelected ? "active" : ""} ${isDisabled ? "disabled" : ""} ${isOutOfStock ? "out-of-stock" : ""}`}
+                  onClick={() => !isBlocked && onOptionSelect(attr.name, value)}
+                  title={isOutOfStock ? "Hết hàng" : isDisabled ? "Không khả dụng" : ""}
+                >
+                  {value}
+                  {isOutOfStock && <span className="stock-badge">Hết</span>}
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}

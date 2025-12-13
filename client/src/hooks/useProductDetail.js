@@ -65,7 +65,7 @@ export const useProductDetail = (slug) => {
         fetchProductData();
     }, [slug, fetchProductData]);
 
-    // Parse attributes and set default selections when product data is loaded
+    // Parse attributes when product data is loaded (NO auto-select - Shopee style)
     useEffect(() => {
         if (product?.PhienBan?.length > 0) {
             const attributesMap = new Map();
@@ -78,32 +78,54 @@ export const useProductDetail = (slug) => {
                 }
             });
             
-            const parsedAttributes = Array.from(attributesMap.entries()).map(([name, valueSet]) => ({
+            let parsedAttributes = Array.from(attributesMap.entries()).map(([name, valueSet]) => ({
                 name: name,
                 values: [...valueSet],
             }));
-            setAvailableAttributes(parsedAttributes);
 
-            // Set default options from the first variant
-            const defaultVariant = product.PhienBan[0];
-            if (defaultVariant.options) {
-                setSelectedOptions(defaultVariant.options);
-            }
+            // Sort: Màu Sắc/Color first, then Size
+            parsedAttributes.sort((a, b) => {
+                const aIsColor = a.name.toLowerCase().includes('màu') || a.name.toLowerCase().includes('color');
+                const bIsColor = b.name.toLowerCase().includes('màu') || b.name.toLowerCase().includes('color');
+                if (aIsColor && !bIsColor) return -1;
+                if (!aIsColor && bIsColor) return 1;
+                return 0;
+            });
+
+            setAvailableAttributes(parsedAttributes);
+            // Don't auto-select - let user choose (Shopee style)
+            setSelectedOptions({});
+            setSelectedVariant(null);
         }
     }, [product]);
 
     // Update selected variant when options change
     useEffect(() => {
-        if (product && availableAttributes.length > 0 && Object.keys(selectedOptions).length > 0) {
+        if (product && availableAttributes.length > 0) {
+            const selectedKeys = Object.keys(selectedOptions);
+            
+            // No selection = no variant
+            if (selectedKeys.length === 0) {
+                setSelectedVariant(null);
+                return;
+            }
+
+            // Find variant that matches ALL selected options
             const newVariant = product.PhienBan.find((variant) => {
                 if (!variant.options) return false;
-                return availableAttributes.every((attr) => {
-                    const selectedValue = selectedOptions[attr.name];
-                    return variant.options[attr.name] === selectedValue;
+                // Must match all currently selected options
+                return selectedKeys.every((key) => {
+                    return variant.options[key] === selectedOptions[key];
                 });
             });
-            setSelectedVariant(newVariant || null);
-            setQuantity(1); // Reset quantity when variant changes
+            
+            // Only set variant if ALL attributes are selected
+            if (selectedKeys.length === availableAttributes.length && newVariant) {
+                setSelectedVariant(newVariant);
+                setQuantity(1);
+            } else {
+                setSelectedVariant(null);
+            }
         }
     }, [product, selectedOptions, availableAttributes]);
 
@@ -114,39 +136,21 @@ export const useProductDetail = (slug) => {
         }
     }, [currentImageIndex, product]);
 
-    // Handlers
+    // Handlers - Shopee style: toggle selection, maintain other selections
     const handleOptionSelect = (name, value) => {
-        // 1. Find all variants that have this specific option value
-        const compatibleVariants = product.PhienBan.filter(v => 
-            v.options && v.options[name] === value
-        );
-
-        if (compatibleVariants.length === 0) return;
-
-        // 2. Find the "best" variant among them
-        // We score them based on how many OTHER currently selected options they match
-        let bestVariant = compatibleVariants[0];
-        let maxMatchCount = -1;
-
-        compatibleVariants.forEach(variant => {
-            let matchCount = 0;
-            Object.entries(selectedOptions).forEach(([currentKey, currentValue]) => {
-                if (currentKey !== name && variant.options[currentKey] === currentValue) {
-                    matchCount++;
-                }
-            });
-
-            if (matchCount > maxMatchCount) {
-                maxMatchCount = matchCount;
-                bestVariant = variant;
+        setSelectedOptions(prev => {
+            const newOptions = { ...prev };
+            
+            // Toggle: if already selected, deselect it
+            if (prev[name] === value) {
+                delete newOptions[name];
+                return newOptions;
             }
+            
+            // Select new value
+            newOptions[name] = value;
+            return newOptions;
         });
-
-        // 3. Select that variant's options entirely
-        // This automatically clears incompatible keys (like "Kích Cỡ Chung" vs "Kích Cỡ")
-        if (bestVariant && bestVariant.options) {
-            setSelectedOptions(bestVariant.options);
-        }
     };
 
     const handleQuantityChange = (amount) => {
@@ -192,6 +196,47 @@ export const useProductDetail = (slug) => {
         }
     };
     
+    // Calculate available options for each attribute based on current selections (Shopee-style logic)
+    const getAvailableOptionsForAttribute = useCallback((attributeName) => {
+        if (!product?.PhienBan) return {};
+
+        const result = {};
+        const currentAttribute = availableAttributes.find(a => a.name === attributeName);
+        if (!currentAttribute) return {};
+
+        // Get other selected options (excluding current attribute)
+        const otherSelectedOptions = Object.entries(selectedOptions).filter(
+            ([key]) => key !== attributeName
+        );
+
+        currentAttribute.values.forEach(value => {
+            // Find all variants that have this option value
+            const matchingVariants = product.PhienBan.filter(variant => {
+                if (!variant.options || variant.options[attributeName] !== value) return false;
+                
+                // If no other options selected, all variants with this value are valid
+                if (otherSelectedOptions.length === 0) return true;
+                
+                // Check if this variant matches ALL other selected options
+                return otherSelectedOptions.every(([key, selectedValue]) => {
+                    return variant.options[key] === selectedValue;
+                });
+            });
+
+            const isAvailable = matchingVariants.length > 0;
+            const hasStock = matchingVariants.some(v => v.SoLuongTonKho > 0);
+
+            result[value] = {
+                isAvailable,  // Does a variant with this option exist?
+                hasStock,     // Is there stock available?
+                disabled: !isAvailable,
+                outOfStock: isAvailable && !hasStock
+            };
+        });
+
+        return result;
+    }, [product, selectedOptions, availableAttributes]);
+
     // Memoized derived values
     const avgRating = useMemo(() => {
         if (product?.DanhGia?.length > 0) {
@@ -224,5 +269,6 @@ export const useProductDetail = (slug) => {
         handleAddToCart,
         handleClaimVoucher,
         claimingVoucher,
+        getAvailableOptionsForAttribute,
     };
 };

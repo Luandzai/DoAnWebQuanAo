@@ -40,6 +40,7 @@ const ProductDetailPage = () => {
     setCurrentImageIndex,
     handleAddToCart,
     handleClaimVoucher,
+    getAvailableOptionsForAttribute,
   } = useProductDetail(slug);
 
   if (loading) {
@@ -104,6 +105,7 @@ const ProductDetailPage = () => {
             availableAttributes={availableAttributes}
             selectedOptions={selectedOptions}
             onOptionSelect={handleOptionSelect}
+            getAvailableOptionsForAttribute={getAvailableOptionsForAttribute}
             quantity={quantity}
             onQuantityChange={handleQuantityChange}
             onAddToCart={handleAddToCart}

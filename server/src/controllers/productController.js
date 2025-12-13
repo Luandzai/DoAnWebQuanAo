@@ -193,7 +193,7 @@ exports.getProductBySlug = async (req, res) => {
        JOIN chitietphienban AS ctpb ON pb.PhienBanID = ctpb.PhienBanID
        JOIN giatrithuoctinh AS gtt ON ctpb.GiaTriID = gtt.GiaTriID
        JOIN thuoctinh AS tt ON gtt.ThuocTinhID = tt.ThuocTinhID
-       WHERE pb.SanPhamID = ? AND pb.SoLuongTonKho > 0
+       WHERE pb.SanPhamID = ?
        GROUP BY pb.PhienBanID`,
       [product.SanPhamID]
     );

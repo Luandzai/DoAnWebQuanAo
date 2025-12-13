@@ -244,6 +244,61 @@
   border-color: var(--pd-text-primary);
 }
 
+/* Disabled option (variant doesn't exist for current selection - BLOCKED) */
+.option-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--pd-card-bg);
+  border-color: var(--pd-border);
+  color: var(--pd-text-secondary);
+  position: relative;
+  pointer-events: none;
+}
+
+.option-chip.disabled::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  right: 5px;
+  height: 1px;
+  background: var(--pd-text-secondary);
+  transform: rotate(-12deg);
+}
+
+.option-chip.disabled:hover {
+  border-color: var(--pd-border);
+}
+
+/* Out of stock option (variant exists but no stock) */
+.option-chip.out-of-stock {
+  opacity: 0.6;
+  cursor: not-allowed;
+  position: relative;
+  border-style: dashed;
+}
+
+.option-chip.out-of-stock:not(.active) {
+  background: transparent;
+}
+
+.option-chip.out-of-stock:hover {
+  border-color: var(--pd-border);
+}
+
+/* Stock badge */
+.stock-badge {
+  font-size: 0.6rem;
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.12);
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
 /* ===== SIZE GUIDE ===== */
 .size-guide-link {
   color: var(--pd-accent);
@@ -704,6 +759,17 @@
     padding: 0 10px;
     font-size: 0.8rem;
     border-radius: 6px;
+  }
+
+  .option-chip.disabled::after {
+    left: 3px;
+    right: 3px;
+  }
+
+  .stock-badge {
+    font-size: 0.5rem;
+    padding: 1px 4px;
+    margin-left: 4px;
   }
 
   .qty-btn {

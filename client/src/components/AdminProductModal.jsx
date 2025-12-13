@@ -269,8 +269,8 @@ const AdminProductModal = ({
       return;
     }
     // Kiểm tra tính hợp lệ của Versions
-    if (versions.some((v) => !v.sku || v.price <= 0 || v.stock <= 0)) {
-      setError("SKU, Giá Bán, và Tồn Kho phải hợp lệ (Giá/Tồn kho > 0).");
+    if (versions.some((v) => !v.sku || v.price <= 0 || v.stock < 0)) {
+      setError("SKU và Giá Bán phải hợp lệ (Giá > 0, Tồn kho >= 0).");
       setSubmitLoading(false);
       return;
     }
@@ -661,12 +661,13 @@ const AdminProductModal = ({
                           }}
                         />
                       </td>
-                      <td>
+                        <td>
                         <Form.Control
                           type="number"
                           size="sm"
-                          // SỬA: Ép về chuỗi rỗng nếu giá trị là NULL/UNDEFINED
-                          value={v.price || ""}
+                          min="0"
+                          // FIX: Use ?? for nullish coalescing (0 is valid, null/undefined become "")
+                          value={v.price ?? ""}
                           onChange={(e) => {
                             const newVersions = [...versions];
                             newVersions[index].price = e.target.value;
@@ -678,8 +679,9 @@ const AdminProductModal = ({
                         <Form.Control
                           type="number"
                           size="sm"
-                          // SỬA: Ép về chuỗi rỗng nếu giá trị là NULL/UNDEFINED
-                          value={v.stock || ""}
+                          min="0"
+                          // FIX: Use ?? for nullish coalescing (0 is valid, null/undefined become "")
+                          value={v.stock ?? ""}
                           onChange={(e) => {
                             const newVersions = [...versions];
                             newVersions[index].stock = e.target.value;
