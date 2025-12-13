@@ -1,7 +1,10 @@
 // client/src/hooks/useProductSearch.js
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+
+// Kiểm tra có phải desktop không
+const isDesktop = () => typeof window !== 'undefined' && window.innerWidth > 992;
 
 const buildCategoryTree = (categories) => {
     const map = {};
@@ -35,11 +38,15 @@ export const useProductSearch = () => {
     const [error, setError] = useState(null);
 
     // Filter and pagination states
-    const [filters, setFilters] = useState({});
+    const [filters, setFilters] = useState({}); // Applied filters (from URL)
+    const [pendingFilters, setPendingFilters] = useState({}); // Pending filters (not yet applied)
     const [searchKeyword, setSearchKeyword] = useState('');
     const [sortBy, setSortBy] = useState('newest');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+
+    // Debounce timer ref cho desktop
+    const debounceTimerRef = useRef(null);
 
     // Initial setup for sidebar data (categories and attributes)
     useEffect(() => {
@@ -66,6 +73,7 @@ export const useProductSearch = () => {
                     initialFilters[attr.Slug] = urlValue?.split(',').filter(Boolean) || [];
                 });
                 setFilters(initialFilters);
+                setPendingFilters(initialFilters); // Sync pending with applied
             } catch (err) {
                 setError("Không thể tải dữ liệu bộ lọc.");
             } finally {
@@ -87,6 +95,16 @@ export const useProductSearch = () => {
         setSearchKeyword(searchFromURL);
         
         setFilters(prevFilters => {
+            const newFilters = { ...prevFilters };
+            Object.keys(newFilters).forEach(key => {
+                const value = params.get(key);
+                newFilters[key] = value ? value.split(',').filter(Boolean) : [];
+            });
+            return newFilters;
+        });
+        
+        // Sync pending filters with applied filters from URL
+        setPendingFilters(prevFilters => {
             const newFilters = { ...prevFilters };
             Object.keys(newFilters).forEach(key => {
                 const value = params.get(key);
@@ -124,7 +142,7 @@ export const useProductSearch = () => {
         fetchProducts();
     }, [location.search, currentPage, sortBy, loadingSidebar, api]);
 
-    const updateURLParams = (newFilters) => {
+    const updateURLParams = useCallback((newFilters) => {
         const params = new URLSearchParams();
         Object.keys(newFilters).forEach(key => {
             if (newFilters[key].length > 0) {
@@ -137,19 +155,67 @@ export const useProductSearch = () => {
         
         params.set('page', 1); // Reset to page 1 on filter change
         navigate({ search: params.toString() });
-    }
+    }, [searchKeyword, sortBy, navigate]);
 
-    const handleFilterChange = (filterType, value, isChecked) => {
-        const newFilters = { ...filters };
-        const currentValues = newFilters[filterType] || [];
-        
-        if (isChecked) {
-            newFilters[filterType] = [...currentValues, value];
-        } else {
-            newFilters[filterType] = currentValues.filter((item) => item !== value);
+    // Cập nhật pendingFilters và auto-apply trên Desktop với debounce
+    const handleFilterChange = useCallback((filterType, value, isChecked) => {
+        setPendingFilters(prev => {
+            const currentValues = prev[filterType] || [];
+            let newFilters;
+            if (isChecked) {
+                newFilters = { ...prev, [filterType]: [...currentValues, value] };
+            } else {
+                newFilters = { ...prev, [filterType]: currentValues.filter((item) => item !== value) };
+            }
+            
+            // Desktop: Auto-apply với debounce 500ms
+            if (isDesktop()) {
+                if (debounceTimerRef.current) {
+                    clearTimeout(debounceTimerRef.current);
+                }
+                debounceTimerRef.current = setTimeout(() => {
+                    updateURLParams(newFilters);
+                }, 500);
+            }
+            
+            return newFilters;
+        });
+    }, [updateURLParams]);
+
+    // Cleanup debounce timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
+    // Áp dụng pending filters (cho Mobile)
+    const applyFilters = useCallback(() => {
+        // Clear debounce nếu có
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
         }
-        updateURLParams(newFilters);
-    };
+        updateURLParams(pendingFilters);
+    }, [pendingFilters, updateURLParams]);
+
+    // Reset tất cả filters về rỗng
+    const resetFilters = useCallback(() => {
+        const emptyFilters = {};
+        Object.keys(pendingFilters).forEach(key => {
+            emptyFilters[key] = [];
+        });
+        setPendingFilters(emptyFilters);
+        
+        // Desktop: auto-apply reset
+        if (isDesktop()) {
+            updateURLParams(emptyFilters);
+        }
+    }, [pendingFilters, updateURLParams]);
+
+    // Kiểm tra xem có pending changes không
+    const hasPendingChanges = JSON.stringify(filters) !== JSON.stringify(pendingFilters);
 
     const handleSortChange = (newSortBy) => {
         setSortBy(newSortBy);
@@ -180,7 +246,11 @@ export const useProductSearch = () => {
         attributes,
         loadingSidebar,
         filters,
+        pendingFilters, // Pending filters cho UI
         handleFilterChange,
+        applyFilters, // Nút "Áp dụng"
+        resetFilters, // Nút "Đặt lại"
+        hasPendingChanges, // Có thay đổi chưa apply không
         searchKeyword,
         removeSearch,
         sortBy,

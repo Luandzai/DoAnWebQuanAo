@@ -85,16 +85,29 @@ exports.getAllProducts = async (req, res) => {
         !["danhMuc", "khoangGia", "sortBy", "search", "page"].includes(key)
     );
 
+    // Nếu có attribute filters, sử dụng subquery để tìm variant khớp TẤT CẢ thuộc tính
     if (attributeFilters.length > 0) {
+      // Xây dựng subquery: tìm các PhienBanID có TẤT CẢ thuộc tính được chọn
+      let attrConditions = [];
       attributeFilters.forEach((attrSlug) => {
         const values = filters[attrSlug].split(",");
-        whereClauses.push(`(tt.Slug = ? AND gtt.GiaTri IN (?))`);
+        // Mỗi thuộc tính phải match ít nhất 1 giá trị
+        attrConditions.push(`
+          EXISTS (
+            SELECT 1 FROM chitietphienban ctpb_sub
+            JOIN giatrithuoctinh gtt_sub ON ctpb_sub.GiaTriID = gtt_sub.GiaTriID
+            JOIN thuoctinh tt_sub ON gtt_sub.ThuocTinhID = tt_sub.ThuocTinhID
+            WHERE ctpb_sub.PhienBanID = pb.PhienBanID
+              AND tt_sub.Slug = ?
+              AND gtt_sub.GiaTri IN (?)
+          )
+        `);
         params.push(attrSlug);
         params.push(values);
       });
-      havingConditions.push(
-        `COUNT(DISTINCT tt.ThuocTinhID) = ${attributeFilters.length}`
-      );
+      
+      // Tất cả điều kiện phải thỏa mãn (AND)
+      whereClauses.push(`(${attrConditions.join(" AND ")})`);
     }
     // Kết thúc Logic Lọc
 

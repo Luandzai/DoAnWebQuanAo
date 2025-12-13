@@ -185,10 +185,35 @@
 .plp-drawer__footer {
   padding: 1rem;
   border-top: 1px solid var(--plp-border);
+  display: flex;
+  gap: 0.75rem;
+}
+
+.plp-drawer__reset-btn {
+  flex: 1;
+  padding: 0.85rem;
+  background: transparent;
+  color: var(--plp-text-primary);
+  border: 1px solid var(--plp-border);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plp-drawer__reset-btn:hover:not(:disabled) {
+  border-color: var(--plp-accent);
+  color: var(--plp-accent);
+}
+
+.plp-drawer__reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .plp-drawer__apply-btn {
-  width: 100%;
+  flex: 2;
   padding: 0.85rem;
   background: linear-gradient(135deg, #0d6efd 0%, #0056d6 100%);
   color: white;
@@ -203,6 +228,68 @@
 .plp-drawer__apply-btn:hover {
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+}
+
+/* ===== SIDEBAR ACTION BUTTONS (Desktop) ===== */
+.plp-sidebar__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--plp-border);
+}
+
+.plp-sidebar__reset-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: var(--plp-text-primary);
+  border: 1px solid var(--plp-border);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plp-sidebar__reset-btn:hover:not(:disabled) {
+  border-color: var(--plp-accent);
+  color: var(--plp-accent);
+}
+
+.plp-sidebar__reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.plp-sidebar__reset-btn--full {
+  flex: 1;
+  width: 100%;
+}
+
+.plp-sidebar__apply-btn {
+  flex: 1.5;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #0d6efd 0%, #0056d6 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plp-sidebar__apply-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+}
+
+.plp-sidebar__apply-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* ===== MAIN CONTENT ===== */

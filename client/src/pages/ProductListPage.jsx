@@ -124,7 +124,11 @@ const ProductListPage = () => {
         attributes,
         loadingSidebar,
         filters,
+        pendingFilters,
         handleFilterChange,
+        applyFilters,
+        resetFilters,
+        hasPendingChanges,
         searchKeyword,
         removeSearch,
         sortBy,
@@ -133,8 +137,8 @@ const ProductListPage = () => {
         handlePageChange,
     } = useProductSearch();
 
-    // Count active filters
-    const activeFilterCount = Object.values(filters).reduce((count, arr) => {
+    // Count active filters từ pendingFilters
+    const pendingFilterCount = Object.values(pendingFilters).reduce((count, arr) => {
         return count + (Array.isArray(arr) ? arr.length : 0);
     }, 0);
 
@@ -148,8 +152,8 @@ const ProductListPage = () => {
                 >
                     <Funnel size={18} />
                     <span>Bộ lọc</span>
-                    {activeFilterCount > 0 && (
-                        <span className="plp-mobile-bar__count">{activeFilterCount}</span>
+                    {pendingFilterCount > 0 && (
+                        <span className="plp-mobile-bar__count">{pendingFilterCount}</span>
                     )}
                 </button>
                 <SortDropdown sortBy={sortBy} onSortChange={handleSortChange} />
@@ -175,7 +179,7 @@ const ProductListPage = () => {
                 <div className="plp-drawer__content">
                     <Sidebar
                         onFilterChange={handleFilterChange}
-                        activeFilters={filters}
+                        activeFilters={pendingFilters}
                         categoryTree={categoryTree}
                         attributes={attributes}
                         isLoading={loadingSidebar}
@@ -183,10 +187,20 @@ const ProductListPage = () => {
                 </div>
                 <div className="plp-drawer__footer">
                     <button 
-                        className="plp-drawer__apply-btn"
-                        onClick={() => setIsFilterOpen(false)}
+                        className="plp-drawer__reset-btn"
+                        onClick={resetFilters}
+                        disabled={pendingFilterCount === 0}
                     >
-                        Xem {products.length} sản phẩm
+                        Đặt lại
+                    </button>
+                    <button 
+                        className="plp-drawer__apply-btn"
+                        onClick={() => {
+                            applyFilters();
+                            setIsFilterOpen(false);
+                        }}
+                    >
+                        Áp dụng {hasPendingChanges && '✓'}
                     </button>
                 </div>
             </aside>
@@ -197,11 +211,22 @@ const ProductListPage = () => {
                 <aside className="plp-sidebar">
                     <Sidebar
                         onFilterChange={handleFilterChange}
-                        activeFilters={filters}
+                        activeFilters={pendingFilters}
                         categoryTree={categoryTree}
                         attributes={attributes}
                         isLoading={loadingSidebar}
                     />
+                    {/* Desktop: Chỉ hiện nút Đặt lại (auto-apply với debounce) */}
+                    {!loadingSidebar && pendingFilterCount > 0 && (
+                        <div className="plp-sidebar__actions">
+                            <button 
+                                className="plp-sidebar__reset-btn plp-sidebar__reset-btn--full"
+                                onClick={resetFilters}
+                            >
+                                Đặt lại bộ lọc
+                            </button>
+                        </div>
+                    )}
                 </aside>
 
                 {/* Products Area */}
