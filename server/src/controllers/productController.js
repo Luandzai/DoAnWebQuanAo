@@ -844,14 +844,26 @@ exports.getAdminProducts = async (req, res) => {
     let conditions = [];
     let params = [];
 
-    // Điều kiện tìm kiếm (Tên sản phẩm, SKU)
+    // Điều kiện tìm kiếm (ID, Tên sản phẩm, SKU)
     if (search) {
-      conditions.push(`(
-        sp.TenSanPham LIKE ? OR
-        pb.SKU LIKE ?
-      )`);
-      const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm);
+      // Kiểm tra nếu search term là số (ID)
+      const searchAsNumber = parseInt(search);
+      if (!isNaN(searchAsNumber)) {
+        conditions.push(`(
+          sp.SanPhamID = ? OR
+          sp.TenSanPham LIKE ? OR
+          pb.SKU LIKE ?
+        )`);
+        const searchTerm = `%${search}%`;
+        params.push(searchAsNumber, searchTerm, searchTerm);
+      } else {
+        conditions.push(`(
+          sp.TenSanPham LIKE ? OR
+          pb.SKU LIKE ?
+        )`);
+        const searchTerm = `%${search}%`;
+        params.push(searchTerm, searchTerm);
+      }
     }
 
     // Điều kiện trạng thái

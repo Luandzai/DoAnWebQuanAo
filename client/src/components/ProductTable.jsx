@@ -30,8 +30,6 @@ const ProductTable = ({
                 return <Badge bg="success">Đang bán</Badge>;
             case 'ARCHIVED':
                 return <Badge bg="secondary">Đã ẩn</Badge>;
-            case 'DRAFT':
-                return <Badge bg="warning" text="dark">Bản nháp</Badge>;
             case 'HET_HANG':
                 return <Badge bg="danger">Hết hàng</Badge>;
             default:

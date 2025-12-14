@@ -27,7 +27,7 @@ const ProductFilters = ({
                 <InputGroup size="sm">
                     <InputGroup.Text><Search /></InputGroup.Text>
                     <Form.Control
-                        placeholder="Tìm theo tên, SKU..."
+                        placeholder="Tìm theo ID, tên, SKU..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />

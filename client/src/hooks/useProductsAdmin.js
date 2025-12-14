@@ -16,7 +16,6 @@ const STATUS_OPTIONS = {
     ALL: { key: '', name: 'Tất cả trạng thái' },
     ACTIVE: { key: 'ACTIVE', name: 'Đang bán' },
     ARCHIVED: { key: 'ARCHIVED', name: 'Đã ẩn' },
-    DRAFT: { key: 'DRAFT', name: 'Bản nháp' },
 };
 
 export const useProductsAdmin = () => {
