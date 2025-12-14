@@ -8,13 +8,27 @@ const ProductGrid = ({ products, loading, error, pagination, onPageChange }) => 
     const renderPagination = () => {
         if (!pagination || !pagination.totalPages || pagination.totalPages <= 1) return null;
         
-        let items = [];
         const { currentPage, totalPages } = pagination;
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, currentPage + 2);
+        const items = [];
+        const maxVisiblePages = 5;
+        const sidePages = Math.floor(maxVisiblePages / 2);
 
-        if (currentPage > 3) {
-            items.push(<Pagination.Ellipsis key="start-ellipsis" disabled />);
+        let startPage = Math.max(1, currentPage - sidePages);
+        let endPage = Math.min(totalPages, currentPage + sidePages);
+
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            if (startPage === 1) {
+                endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            } else if (endPage === totalPages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+        }
+
+        if (startPage > 1) {
+            items.push(<Pagination.Item key={1} onClick={() => onPageChange(1)}>1</Pagination.Item>);
+            if (startPage > 2) {
+                items.push(<Pagination.Ellipsis key="ellipsis-start" disabled />);
+            }
         }
 
         for (let number = startPage; number <= endPage; number++) {
@@ -24,9 +38,12 @@ const ProductGrid = ({ products, loading, error, pagination, onPageChange }) => 
                 </Pagination.Item>
             );
         }
-        
-        if (totalPages > endPage) {
-            items.push(<Pagination.Ellipsis key="end-ellipsis" disabled />);
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                items.push(<Pagination.Ellipsis key="ellipsis-end" disabled />);
+            }
+            items.push(<Pagination.Item key={totalPages} onClick={() => onPageChange(totalPages)}>{totalPages}</Pagination.Item>);
         }
 
         return (

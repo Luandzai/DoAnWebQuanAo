@@ -27,7 +27,7 @@
 
 /* ===== PAGE CONTAINER ===== */
 .profile-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--profile-bg);
   padding: 1.5rem 1rem;
 }

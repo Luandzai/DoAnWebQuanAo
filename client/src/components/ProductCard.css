@@ -135,6 +135,8 @@
   text-overflow: ellipsis;
   text-decoration: none;
   transition: color 0.2s;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .product-card__title:hover {

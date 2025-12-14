@@ -53,27 +53,52 @@ const OrderTable = ({
     const renderPagination = () => {
         if (!pagination.totalPages || pagination.totalPages <= 1) return null;
 
-        let items = [];
-        for (let number = 1; number <= pagination.totalPages; number++) {
+        const { page, totalPages } = pagination;
+        const items = [];
+        const maxVisiblePages = 5;
+        const sidePages = Math.floor(maxVisiblePages / 2);
+
+        let startPage = Math.max(1, page - sidePages);
+        let endPage = Math.min(totalPages, page + sidePages);
+
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            if (startPage === 1) {
+                endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            } else if (endPage === totalPages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+        }
+
+        if (startPage > 1) {
+            items.push(<Pagination.Item key={1} onClick={() => setCurrentPage(1)}>1</Pagination.Item>);
+            if (startPage > 2) {
+                items.push(<Pagination.Ellipsis key="ellipsis-start" disabled />);
+            }
+        }
+
+        for (let number = startPage; number <= endPage; number++) {
             items.push(
-                <Pagination.Item
-                    key={number}
-                    active={number === pagination.page}
-                    onClick={() => setCurrentPage(number)}
-                >
+                <Pagination.Item key={number} active={number === page} onClick={() => setCurrentPage(number)}>
                     {number}
-                </Pagination.Item>,
+                </Pagination.Item>
             );
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                items.push(<Pagination.Ellipsis key="ellipsis-end" disabled />);
+            }
+            items.push(<Pagination.Item key={totalPages} onClick={() => setCurrentPage(totalPages)}>{totalPages}</Pagination.Item>);
         }
 
         return (
             <div className="d-flex justify-content-center p-3">
                 <Pagination>
-                    <Pagination.First onClick={() => setCurrentPage(1)} disabled={pagination.page === 1} />
-                    <Pagination.Prev onClick={() => setCurrentPage(pagination.page - 1)} disabled={pagination.page === 1} />
+                    <Pagination.First onClick={() => setCurrentPage(1)} disabled={page === 1} />
+                    <Pagination.Prev onClick={() => setCurrentPage(page - 1)} disabled={page === 1} />
                     {items}
-                    <Pagination.Next onClick={() => setCurrentPage(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} />
-                    <Pagination.Last onClick={() => setCurrentPage(pagination.totalPages)} disabled={pagination.page === pagination.totalPages} />
+                    <Pagination.Next onClick={() => setCurrentPage(page + 1)} disabled={page === totalPages} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={page === totalPages} />
                 </Pagination>
             </div>
         );
@@ -107,61 +132,63 @@ const OrderTable = ({
 
     return (
         <>
-            <Table hover responsive className="align-middle mb-0">
-                <thead className="bg-light">
-                    <tr>
-                        <th className="text-nowrap">Mã ĐH</th>
-                        <th>Khách hàng</th>
-                        <th><div className="d-flex align-items-center">Ngày đặt<Calendar2Check className="ms-1" /></div></th>
-                        <th><div className="d-flex align-items-center">Tổng tiền<ArrowDownUp className="ms-1" /></div></th>
-                        <th>Trạng thái</th>
-                        <th style={{ width: "180px" }}>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {orders.map((order) => (
-                        <tr key={order.DonHangID}>
-                            <td><strong className="text-primary">#{order.DonHangID}</strong></td>
-                            <td>
-                                <div>{order.HoTen}</div>
-                                <small className="text-muted">{order.Email}</small>
-                            </td>
-                            <td>{formatDate(order.NgayDatHang)}</td>
-                            <td><strong>{formatCurrency(order.TongThanhToan)}</strong></td>
-                            <td>
-                                <Badge bg={STATUS_OPTIONS[order.TrangThai]?.color} className="d-inline-flex align-items-center">
-                                    <span className="me-1">{STATUS_OPTIONS[order.TrangThai]?.icon}</span>
-                                    {STATUS_OPTIONS[order.TrangThai]?.name}
-                                </Badge>
-                            </td>
-                            <td>
-                                <Dropdown size="sm" className="d-inline me-1">
-                                    <Dropdown.Toggle
-                                        variant="primary"
-                                        id={`dropdown-${order.DonHangID}`}
-                                        disabled={updatingId === order.DonHangID || !STATUS_TRANSITIONS[order.TrangThai]?.length}
-                                    >
-                                        {updatingId === order.DonHangID ? (
-                                            <><Spinner as="span" animation="border" size="sm" className="me-1" />Cập nhật</>
-                                        ) : ( "Cập nhật" )}
-                                    </Dropdown.Toggle>
-
-                                    <Dropdown.Menu>
-                                        {STATUS_TRANSITIONS[order.TrangThai]?.map((status) => (
-                                            <Dropdown.Item key={status} onClick={() => onStatusUpdate(order.DonHangID, status)}>
-                                                {STATUS_OPTIONS[status].icon}{" "}{STATUS_OPTIONS[status].name}
-                                            </Dropdown.Item>
-                                        ))}
-                                    </Dropdown.Menu>
-                                </Dropdown>
-                                <Button variant="info" size="sm" onClick={() => onViewDetail(order.DonHangID)}>
-                                    <EyeFill className="me-1" />Chi tiết
-                                </Button>
-                            </td>
+            <div key={pagination.page} className="table-content-wrapper">
+                <Table hover responsive className="align-middle mb-0">
+                    <thead className="bg-light">
+                        <tr>
+                            <th className="text-nowrap">Mã ĐH</th>
+                            <th>Khách hàng</th>
+                            <th><div className="d-flex align-items-center">Ngày đặt<Calendar2Check className="ms-1" /></div></th>
+                            <th><div className="d-flex align-items-center">Tổng tiền<ArrowDownUp className="ms-1" /></div></th>
+                            <th>Trạng thái</th>
+                            <th style={{ width: "180px" }}>Thao tác</th>
                         </tr>
-                    ))}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {orders.map((order) => (
+                            <tr key={order.DonHangID}>
+                                <td><strong className="text-primary">#{order.DonHangID}</strong></td>
+                                <td>
+                                    <div>{order.HoTen}</div>
+                                    <small className="text-muted">{order.Email}</small>
+                                </td>
+                                <td>{formatDate(order.NgayDatHang)}</td>
+                                <td><strong>{formatCurrency(order.TongThanhToan)}</strong></td>
+                                <td>
+                                    <Badge bg={STATUS_OPTIONS[order.TrangThai]?.color} className="d-inline-flex align-items-center">
+                                        <span className="me-1">{STATUS_OPTIONS[order.TrangThai]?.icon}</span>
+                                        {STATUS_OPTIONS[order.TrangThai]?.name}
+                                    </Badge>
+                                </td>
+                                <td>
+                                    <Dropdown size="sm" className="d-inline me-1">
+                                        <Dropdown.Toggle
+                                            variant="primary"
+                                            id={`dropdown-${order.DonHangID}`}
+                                            disabled={updatingId === order.DonHangID || !STATUS_TRANSITIONS[order.TrangThai]?.length}
+                                        >
+                                            {updatingId === order.DonHangID ? (
+                                                <><Spinner as="span" animation="border" size="sm" className="me-1" />Cập nhật</>
+                                            ) : ( "Cập nhật" )}
+                                        </Dropdown.Toggle>
+
+                                        <Dropdown.Menu>
+                                            {STATUS_TRANSITIONS[order.TrangThai]?.map((status) => (
+                                                <Dropdown.Item key={status} onClick={() => onStatusUpdate(order.DonHangID, status)}>
+                                                    {STATUS_OPTIONS[status].icon}{" "}{STATUS_OPTIONS[status].name}
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                    <Button variant="info" size="sm" onClick={() => onViewDetail(order.DonHangID)}>
+                                        <EyeFill className="me-1" />Chi tiết
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </div>
             {renderPagination()}
         </>
     );

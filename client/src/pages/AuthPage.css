@@ -25,7 +25,7 @@
   justify-content: center;
 
   /* Đảm bảo trang có chiều cao tối thiểu và có padding */
-  min-height: calc(100vh - 150px); /* Lấy 100% chiều cao trừ đi header/footer */
+  min-height: calc(100dvh - 150px); /* Lấy 100% chiều cao trừ đi header/footer */
   padding: 3rem 1rem;
 }
 
@@ -84,7 +84,7 @@
 @media (max-width: 768px) {
   .auth-page-wrapper {
     padding: 2rem 1rem;
-    min-height: calc(100vh - 100px);
+    min-height: calc(100dvh - 100px);
   }
   
   .auth-card-container {

@@ -23,7 +23,7 @@
 
 /* ===== PAGE CONTAINER ===== */
 .plp {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--plp-bg);
 }
 
@@ -46,7 +46,7 @@
   padding: 1.5rem;
   box-shadow: var(--plp-shadow);
   border: 1px solid var(--plp-border);
-  max-height: calc(100vh - 100px);
+  max-height: calc(100dvh - 100px);
   overflow-y: auto;
 }
 

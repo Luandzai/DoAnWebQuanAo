@@ -42,27 +42,65 @@ const ProductTable = ({
     const renderPagination = () => {
         if (!pagination.totalPages || pagination.totalPages <= 1) return null;
 
-        let items = [];
-        for (let number = 1; number <= pagination.totalPages; number++) {
+        const { page, totalPages } = pagination;
+        const items = [];
+        const maxVisiblePages = 5; // Số trang hiển thị tối đa (không tính First/Last/Prev/Next)
+        const sidePages = Math.floor(maxVisiblePages / 2);
+
+        // Tính toán phạm vi trang cần hiển thị
+        let startPage = Math.max(1, page - sidePages);
+        let endPage = Math.min(totalPages, page + sidePages);
+
+        // Điều chỉnh để luôn hiển thị đủ số trang
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            if (startPage === 1) {
+                endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            } else if (endPage === totalPages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+        }
+
+        // Thêm trang đầu và dấu "..."
+        if (startPage > 1) {
+            items.push(
+                <Pagination.Item key={1} onClick={() => setCurrentPage(1)}>1</Pagination.Item>
+            );
+            if (startPage > 2) {
+                items.push(<Pagination.Ellipsis key="ellipsis-start" disabled />);
+            }
+        }
+
+        // Thêm các trang giữa
+        for (let number = startPage; number <= endPage; number++) {
             items.push(
                 <Pagination.Item
                     key={number}
-                    active={number === pagination.page}
+                    active={number === page}
                     onClick={() => setCurrentPage(number)}
                 >
                     {number}
-                </Pagination.Item>,
+                </Pagination.Item>
+            );
+        }
+
+        // Thêm dấu "..." và trang cuối
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                items.push(<Pagination.Ellipsis key="ellipsis-end" disabled />);
+            }
+            items.push(
+                <Pagination.Item key={totalPages} onClick={() => setCurrentPage(totalPages)}>{totalPages}</Pagination.Item>
             );
         }
 
         return (
             <div className="d-flex justify-content-center p-3">
                 <Pagination>
-                    <Pagination.First onClick={() => setCurrentPage(1)} disabled={pagination.page === 1} />
-                    <Pagination.Prev onClick={() => setCurrentPage(pagination.page - 1)} disabled={pagination.page === 1} />
+                    <Pagination.First onClick={() => setCurrentPage(1)} disabled={page === 1} />
+                    <Pagination.Prev onClick={() => setCurrentPage(page - 1)} disabled={page === 1} />
                     {items}
-                    <Pagination.Next onClick={() => setCurrentPage(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} />
-                    <Pagination.Last onClick={() => setCurrentPage(pagination.totalPages)} disabled={pagination.page === pagination.totalPages} />
+                    <Pagination.Next onClick={() => setCurrentPage(page + 1)} disabled={page === totalPages} />
+                    <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={page === totalPages} />
                 </Pagination>
             </div>
         );
@@ -82,20 +120,21 @@ const ProductTable = ({
 
     return (
         <>
-            <Table hover responsive className="align-middle mb-0">
-                <thead className="bg-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Ảnh</th>
-                        <th>Tên Sản phẩm</th>
-                        <th><div className="d-flex align-items-center">Giá bán<ArrowDownUp className="ms-1" /></div></th>
-                        <th><div className="d-flex align-items-center">Tồn kho<ArrowDownUp className="ms-1" /></div></th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {products.map((p) => (
+            <div key={pagination.page} className="table-content-wrapper">
+                <Table hover responsive className="align-middle mb-0">
+                    <thead className="bg-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Ảnh</th>
+                            <th>Tên Sản phẩm</th>
+                            <th><div className="d-flex align-items-center">Giá bán<ArrowDownUp className="ms-1" /></div></th>
+                            <th><div className="d-flex align-items-center">Tồn kho<ArrowDownUp className="ms-1" /></div></th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {products.map((p) => (
                         <tr key={p.SanPhamID} className={p.TrangThai === 'ARCHIVED' ? 'table-secondary' : ''}>
                             <td>{p.SanPhamID}</td>
                             <td>
@@ -105,7 +144,11 @@ const ProductTable = ({
                                     thumbnail
                                 />
                             </td>
-                            <td>{p.TenSanPham}</td>
+                            <td style={{ maxWidth: '250px' }}>
+                                <span className="d-block text-truncate" title={p.TenSanPham}>
+                                    {p.TenSanPham}
+                                </span>
+                            </td>
                             <td>{formatCurrency(p.GiaBanThapNhat)}</td>
                             <td>{p.TongTonKho}</td>
                             <td>{getStatusBadge(p.TrangThai)}</td>
@@ -156,8 +199,9 @@ const ProductTable = ({
                             </td>
                         </tr>
                     ))}
-                </tbody>
-            </Table>
+                    </tbody>
+                </Table>
+            </div>
             {renderPagination()}
         </>
     );

@@ -211,6 +211,8 @@
   overflow: hidden;
   line-height: 1.4;
   margin-bottom: 0.25rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .cart-item__name:hover {
