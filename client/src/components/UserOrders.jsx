@@ -242,7 +242,7 @@ const UserOrders = () => {
                               className="me-3 rounded"
                             />
                             <div className="flex-grow-1">
-                              <small className="fw-bold d-block">
+                              <small className="fw-bold d-block order-item-name">
                                 {item.TenSanPham}
                               </small>
                               <small className="text-muted d-block">
@@ -441,7 +441,7 @@ const UserOrders = () => {
                         className="me-2 rounded border"
                       />
                       <div>
-                        <small className="fw-bold d-block">
+                        <small className="fw-bold d-block order-item-name">
                           {item.TenSanPham}
                         </small>
                         <small

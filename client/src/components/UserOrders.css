@@ -1,5 +1,15 @@
 /* client/src/components/UserOrders.css */
 
+/* Product name styling - prevent long names from breaking layout */
+.order-item-name {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Retry Payment Section - Bold & Vibrant */
 .retry-payment-section {
   background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);

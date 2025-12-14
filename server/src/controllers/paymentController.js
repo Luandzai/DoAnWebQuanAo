@@ -19,6 +19,45 @@ exports.vnpayReturn = async (req, res) => {
   if (isVerified) {
     const vnp_ResponseCode = vnp_Params["vnp_ResponseCode"];
     const vnp_TxnRef = vnp_Params["vnp_TxnRef"]; // Mã đơn hàng
+    const vnp_TransactionNo = vnp_Params["vnp_TransactionNo"]; // Mã giao dịch VNPAY
+
+    // === CẬP NHẬT DB NGAY TẠI ĐÂY (backup cho trường hợp IPN không tới được) ===
+    const connection = await pool.getConnection();
+    try {
+      const [orders] = await connection.query(
+        "SELECT * FROM donhang WHERE DonHangID = ?",
+        [vnp_TxnRef]
+      );
+
+      if (orders.length > 0 && orders[0].TrangThai === "CHUA_THANH_TOAN") {
+        if (vnp_ResponseCode === "00") {
+          // Thanh toán thành công -> DANG_XU_LY
+          await connection.query(
+            "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
+            ["DANG_XU_LY", vnp_TxnRef]
+          );
+          await connection.query(
+            "UPDATE thanhtoan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
+            ["SUCCESS", vnp_TransactionNo, vnp_TxnRef]
+          );
+        } else {
+          // Thanh toán thất bại -> DA_HUY
+          await connection.query(
+            "UPDATE donhang SET TrangThai = ? WHERE DonHangID = ?",
+            ["DA_HUY", vnp_TxnRef]
+          );
+          await connection.query(
+            "UPDATE thanhtoan SET TrangThai = ?, MaGiaoDich = ? WHERE DonHangID = ?",
+            ["FAILED", vnp_TransactionNo, vnp_TxnRef]
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật DB trong vnpayReturn:", error);
+    } finally {
+      connection.release();
+    }
+    // === KẾT THÚC CẬP NHẬT DB ===
 
     if (vnp_ResponseCode === "00") {
       // Thanh toán thành công -> Chuyển hướng về trang Kết quả
