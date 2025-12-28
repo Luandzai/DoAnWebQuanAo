@@ -16,18 +16,24 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  */
 const getGradioApp = async () => {
   if (!gradioApp) {
-    console.log("Connecting to Gradio space: yisol/IDM-VTON...");
-    try {
-      // THAY ĐỔI Ở ĐÂY: Thêm object chứa hf_token vào tham số thứ 2
-      gradioApp = await Client.connect("yisol/IDM-VTON", {
-        hf_token: process.env.HF_TOKEN,
-      });
-
-      console.log("Gradio connection established successfully.");
-    } catch (error) {
-      console.error("Failed to connect to Gradio:", error.message);
-      gradioApp = null;
-      throw error;
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        gradioApp = await Client.connect("levihsu/OOTDiffusion", {
+          hf_token: process.env.HF_TOKEN,
+        });
+        console.log("Gradio connection established successfully.");
+        break;
+      } catch (error) {
+        console.error(`Connection attempt ${i + 1} failed:`, error.message);
+        if (i === maxRetries - 1) {
+          console.error("All connection attempts failed.");
+          gradioApp = null;
+          throw error;
+        }
+        console.log("Waiting 2 seconds before retrying connection...");
+        await delay(2000);
+      }
     }
   }
   return gradioApp;
@@ -51,6 +57,7 @@ const handleTryOn = async (req, res) => {
     }
 
     // 2. Get the persistent Gradio client connection
+    // Switch to OOTDiffusion as IDM-VTON is down
     const app = await getGradioApp();
 
     const personBuffer = req.files.personImage[0].buffer;
@@ -59,14 +66,16 @@ const handleTryOn = async (req, res) => {
     const personBlob = new Blob([personBuffer]);
     const clothBlob = new Blob([clothBuffer]);
 
+    // Use /process_dc endpoint of OOTDiffusion
+    // Inputs: vton_img, garm_img, category, n_samples, n_steps, image_scale, seed
     const predictArgs = [
-      { background: personBlob, layers: [], composite: null },
-      clothBlob,
-      "clothing",
-      true,
-      false,
-      30,
-      42,
+      personBlob,          // vton_img
+      clothBlob,           // garm_img
+      "Upper-body",        // category (defaulting to Upper-body, could be dynamic)
+      1,                   // n_samples
+      20,                  // n_steps
+      2,                   // image_scale
+      -1,                  // seed
     ];
 
     let lastError;
@@ -76,17 +85,18 @@ const handleTryOn = async (req, res) => {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`Prediction attempt ${attempt}...`);
-        result = await app.predict("/tryon", predictArgs);
+        // Endpoint changed to /process_dc
+        result = await app.predict("/process_dc", predictArgs);
         console.log("Prediction successful.");
-        lastError = null; // Clear error on success
-        break; // Exit loop
+        lastError = null;
+        break;
       } catch (error) {
         console.error(`Attempt ${attempt} failed:`, error.message);
         lastError = error;
-        // If the connection seems to have dropped, reset the client for the next request
         if (
           error.message.includes("Could not connect") ||
-          error.message.includes("fetch failed")
+          error.message.includes("fetch failed") || 
+          error.message.includes("Could not resolve")
         ) {
           gradioApp = null;
         }
@@ -97,7 +107,6 @@ const handleTryOn = async (req, res) => {
       }
     }
 
-    // If all retries failed, throw the last recorded error
     if (lastError) {
       throw lastError;
     }
@@ -108,16 +117,27 @@ const handleTryOn = async (req, res) => {
       const output = result.data[0];
       let outputUrl = null;
 
-      if (typeof output === "string") {
+      if (Array.isArray(output) && output.length > 0) {
+          // Handle Gallery output (List of images)
+          const firstItem = output[0];
+          // Architecture: OOTDiffusion returns [{image: {url: "..."}}]
+          if (firstItem.image && firstItem.image.url) {
+             outputUrl = firstItem.image.url;
+          } else if (firstItem.url) {
+             outputUrl = firstItem.url;
+          } else if (typeof firstItem === 'string') {
+             outputUrl = firstItem;
+          }
+      } else if (typeof output === "string") {
         outputUrl = output;
       } else if (output && output.url) {
         outputUrl = output.url;
       }
 
-      if (outputUrl) {
+      if (outputUrl && typeof outputUrl === 'string') {
         // Fix relative URLs from Gradio
         if (outputUrl.startsWith("/")) {
-          outputUrl = "https://yisol-idm-vton.hf.space" + outputUrl;
+          outputUrl = "https://levihsu-ootdiffusion.hf.space" + outputUrl;
         }
         
         console.log("Extracted Output URL:", outputUrl);
